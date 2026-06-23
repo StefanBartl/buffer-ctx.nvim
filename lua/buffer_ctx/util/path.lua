@@ -1,0 +1,61 @@
+---@module 'buffer_ctx.util.path'
+local M = {}
+local fn = vim.fn
+
+---Derive the Lua module path from an absolute file path
+--- "/…/lua/foo/bar/init.lua" → "foo.bar"
+---@param filepath string
+---@return string|nil
+function M.get_module_path(filepath)
+  local norm = filepath:gsub("\\", "/")
+  local lua_idx = norm:find("/lua/")
+  if not lua_idx then return nil end
+  local after = norm:sub(lua_idx + 5)
+  local trimmed = after:gsub("%.lua$", ""):gsub("/init$", "")
+  return trimmed:gsub("/", ".")
+end
+
+---Return a path relative to cwd (strips leading "./")
+---@param abs_path string
+---@return string
+function M.relative_to_cwd(abs_path)
+  local rel = fn.fnamemodify(abs_path, ":.")
+  if rel:sub(1, 2) == "./" then rel = rel:sub(3) end
+  return rel
+end
+
+---Normalize path separators
+---@param path string
+---@param sep? string  default "/"
+---@return string
+function M.normalize_sep(path, sep)
+  sep = sep or "/"
+  return (path:gsub("[/\\]", sep))
+end
+
+---Return the last `count` segments of a path as a list
+---@param path string
+---@param count integer
+---@return string[]
+function M.pick_depth(path, count)
+  local norm = path:gsub("\\", "/")
+  local parts = {}
+  for p in norm:gmatch("[^/]+") do parts[#parts + 1] = p end
+  local n = #parts
+  local start = math.max(1, n - count + 1)
+  local result = {}
+  for i = start, n do result[#result + 1] = parts[i] end
+  return result
+end
+
+---Check whether an absolute path lives inside the Neovim config directory
+---@param abs_path string
+---@return boolean
+function M.is_inside_nvim_config(abs_path)
+  local config = fn.stdpath("config")
+  local norm_path   = abs_path:gsub("\\", "/"):lower()
+  local norm_config = (config:gsub("\\", "/")):lower()
+  return norm_path:sub(1, #norm_config) == norm_config
+end
+
+return M

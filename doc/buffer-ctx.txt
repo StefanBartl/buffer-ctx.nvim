@@ -1,0 +1,373 @@
+*buffer-ctx.txt*  Buffer context for Neovim              *buffer-ctx.nvim*
+
+Author:   Stefan Bartl
+License:  MIT
+Version:  0.1.0
+
+==============================================================================
+CONTENTS                                               *buffer-ctx-contents*
+
+  1. Introduction .............. |buffer-ctx-intro|
+  2. Requirements .............. |buffer-ctx-requirements|
+  3. Installation .............. |buffer-ctx-installation|
+  4. Configuration ............. |buffer-ctx-config|
+  5. Commands .................. |buffer-ctx-commands|
+     5.1  filepath .............. |:Insert-filepath|
+     5.2  filename .............. |:Insert-filename|
+     5.3  module ................ |:Insert-module|
+     5.4  location .............. |:Insert-location|
+     5.5  timestamp ............. |:Insert-timestamp|
+     5.6  uuid .................. |:Insert-uuid|
+     5.7  annotation ............ |:Insert-annotation|
+     5.8  boilerplate ........... |:Insert-boilerplate|
+     5.9  env ................... |:Insert-env|
+  6. Keymaps ................... |buffer-ctx-keymaps|
+  7. Lua API ................... |buffer-ctx-api|
+  8. Tab completion ............ |buffer-ctx-completion|
+  9. Health check .............. |buffer-ctx-health|
+ 10. Architecture .............. |buffer-ctx-architecture|
+
+==============================================================================
+1. INTRODUCTION                                           *buffer-ctx-intro*
+
+buffer-ctx.nvim provides two commands with an identical subcommand catalog:
+
+  :Insert {subcmd} [args…]   — write text at the current cursor position
+  :Copy   {subcmd} [args…]   — copy text to the system clipboard (+ register)
+
+All subcommands derive their output from the current buffer: its path, cursor
+position, Lua module hierarchy, or structured content patterns.
+
+No lib.nvim dependency. No shell calls. Pure Lua.
+
+==============================================================================
+2. REQUIREMENTS                                    *buffer-ctx-requirements*
+
+  - Neovim 0.9 or later
+  - No external plugins required
+
+==============================================================================
+3. INSTALLATION                                    *buffer-ctx-installation*
+
+lazy.nvim (local checkout): >lua
+  {
+    dir   = vim.env.REPOS_DIR .. "/buffer-ctx.nvim",
+    event = "VeryLazy",
+    opts  = {},
+  }
+<
+
+==============================================================================
+4. CONFIGURATION                                        *buffer-ctx-config*
+
+>lua
+  require("buffer_ctx").setup({
+    commands = true,
+    keymaps = {
+      location_copy = "<leader>cnl",
+      module_copy   = "<leader>cnm",
+      filepath_copy = "<leader>cnf",
+    },
+  })
+<
+
+commands ~
+  Register `:Insert` and `:Copy`. Default: `true`.
+
+keymaps ~
+  Table of keymap strings, or `false` to disable all keymaps.
+  See |buffer-ctx-keymaps| for defaults.
+
+==============================================================================
+5. COMMANDS                                          *buffer-ctx-commands*
+
+Both `:Insert` and `:Copy` accept the same subcommands and arguments.
+
+  :Insert {subcmd} [args…]   Insert at cursor
+  :Copy   {subcmd} [args…]   Copy to clipboard
+
+Tab completion is context-aware at every argument position.
+See |buffer-ctx-completion|.
+
+------------------------------------------------------------------------------
+5.1  filepath                                          *:Insert-filepath*
+
+  :Insert filepath [mode] [format] [depth]
+
+Get the current buffer's file path.
+
+mode ~
+  `cwd`   relative to working directory (default)
+  `abs`   absolute path
+  `nvim`  relative to `stdpath("config")`
+
+format ~
+  `unix`   forward slashes (default)
+  `lua`    dot-separated module notation (strips extension + /lua/ prefix)
+  `win`    backslashes
+  `system` OS-native separator
+
+depth ~
+  Integer 0–3: only include the last (depth+1) path segments.
+
+Examples: >
+  :Copy filepath                    → lua/buffer_ctx/ops/filepath.lua
+  :Copy filepath abs                → C:/…/filepath.lua
+  :Copy filepath lua                → buffer_ctx.ops.filepath
+  :Copy filepath 1                  → filepath.lua
+  :Copy filepath nvim               → relative to nvim config dir
+<
+
+------------------------------------------------------------------------------
+5.2  filename                                          *:Insert-filename*
+
+  :Insert filename [noext]
+
+Basename of the current buffer's file.
+
+  noext   strip the extension
+
+Examples: >
+  :Insert filename          → filepath.lua
+  :Insert filename noext    → filepath
+<
+
+------------------------------------------------------------------------------
+5.3  module                                              *:Insert-module*
+
+  :Insert module [style]
+
+Derive the Lua module path from the `/lua/` segment and emit it as a
+statement or annotation.
+
+style ~
+  `require`          require("foo.bar")           (default)
+  `lua_ls` / `luals` ---@module 'foo.bar'
+  `js`               import "foo/bar"
+  `c`                #include "foo/bar.h"
+  `generic`          foo.bar
+
+Examples: >
+  :Copy module               → require("buffer_ctx.ops.filepath")
+  :Copy module lua_ls        → ---@module 'buffer_ctx.ops.filepath'
+<
+
+------------------------------------------------------------------------------
+5.4  location                                          *:Insert-location*
+
+  :Insert location [mode]
+
+Current cursor position as `path:line`.
+
+mode ~
+  `cwd`  relative (default)
+  `abs`  absolute
+  `lua`  Lua module path
+
+Examples: >
+  :Copy location             → lua/buffer_ctx/ops/filepath.lua:42
+  :Copy location abs         → C:/…/filepath.lua:42
+  :Copy location lua         → buffer_ctx.ops.filepath:42
+<
+
+------------------------------------------------------------------------------
+5.5  timestamp                                        *:Insert-timestamp*
+
+  :Insert timestamp [format] [--utc]
+
+format ~
+  `iso`       2026-06-22T14:35:00   (default)
+  `iso-date`  2026-06-22
+  `iso-time`  14:35:00
+  `unix`      1750600500
+  `human`     June 22, 2026 14:35
+  `short`     22.06.2026
+  `log`       2026-06-22 14:35:00
+  `filename`  20260622_143500
+
+  `--utc`     output in UTC instead of local time
+
+Examples: >
+  :Insert timestamp               → 2026-06-22T14:35:00
+  :Insert timestamp short --utc   → 22.06.2026 (UTC)
+<
+
+------------------------------------------------------------------------------
+5.6  uuid                                                *:Insert-uuid*
+
+  :Insert uuid [format]
+
+UUID v4 (randomly generated).
+
+format ~
+  `standard`  550e8400-e29b-41d4-a716-446655440000   (default)
+  `compact`   550e8400e29b41d4a716446655440000
+  `upper`     550E8400-E29B-41D4-A716-446655440000
+  `braced`    {550e8400-e29b-41d4-a716-446655440000}
+
+------------------------------------------------------------------------------
+5.7  annotation                                      *:Insert-annotation*
+
+  :Insert annotation {type} [args…]
+
+type ~
+  `module`           ---@module 'foo.bar'   (from current buffer path)
+  `class`  [name]    ---@class Name
+  `field`  [n] [t]   ---@field name type
+  `param`  [n] [t]   ---@param name type
+  `return` [type]    ---@return type
+  `alias`  [n] [t]   ---@alias Name string
+  `function`         guided dialog → multi-line annotation block
+
+Arguments not provided on the command line are prompted via `vim.fn.input`.
+
+Examples: >
+  :Insert annotation module              → ---@module 'buffer_ctx.ops.module'
+  :Insert annotation class MyService     → ---@class MyService
+  :Insert annotation param name string   → ---@param name string
+  :Insert annotation function            → (interactive dialog)
+<
+
+------------------------------------------------------------------------------
+5.8  boilerplate                                    *:Insert-boilerplate*
+
+  :Insert boilerplate {template} [name]
+
+Insert (or copy) a multi-line code template. `:Copy boilerplate` joins lines
+with newline before copying.
+
+Templates: >
+  lua-module           Lua module skeleton with setup()
+  lua-class            OOP class with new() constructor
+  lua-function         Annotated function stub
+  nvim-autocmd         nvim_create_autocmd block
+  nvim-keymap          vim.keymap.set stub
+  guard-clause         Guard clause pattern (interactive)
+  html-figure          <figure> with <img> + <figcaption>
+  html-code            Code listing <figure>
+  html-quote           Blockquote <figure>
+  html-formula-table   Formula reference table
+  html-aside           <aside> block
+  html-pagination      Pagination <nav>
+  html-accordion       <details> accordion
+<
+
+Examples: >
+  :Insert boilerplate lua-module
+  :Insert boilerplate lua-class MyService
+  :Insert boilerplate nvim-autocmd MyAuGroup
+  :Copy   boilerplate html-figure intro
+<
+
+------------------------------------------------------------------------------
+5.9  env                                                  *:Insert-env*
+
+  :Insert env {VAR}
+
+Insert or copy the value of an environment variable. A leading `$` is
+stripped automatically.
+
+Examples: >
+  :Copy env GOPATH
+  :Insert env HOME
+  :Copy env $PATH
+<
+
+==============================================================================
+6. KEYMAPS                                          *buffer-ctx-keymaps*
+
+Registered only when `setup()` is called (or `keymaps = false` to disable).
+
+  `<leader>cnl`  Copy path:line  (location, cwd-relative)
+  `<leader>cnm`  Copy Lua module path
+  `<leader>cnf`  Copy filepath   (cwd-relative, unix format)
+
+All keys are configurable via the `keymaps` config table.
+
+==============================================================================
+7. LUA API                                             *buffer-ctx-api*
+
+>lua
+  local ctx = require("buffer_ctx")
+<
+
+setup({opts})                                      *buffer_ctx.setup()*
+  Configure and activate. Idempotent.
+
+insert({subcmd}, {args})                          *buffer_ctx.insert()*
+  Insert at cursor. Equivalent to `:Insert {subcmd} [args…]`.
+
+copy({subcmd}, {args})                              *buffer_ctx.copy()*
+  Copy to clipboard. Equivalent to `:Copy {subcmd} [args…]`.
+
+Examples: >lua
+  ctx.copy("location", {})
+  ctx.copy("module", { "lua_ls" })
+  ctx.insert("uuid", { "braced" })
+  ctx.insert("boilerplate", { "lua-class", "MyService" })
+<
+
+==============================================================================
+8. TAB COMPLETION                                 *buffer-ctx-completion*
+
+Both `:Insert` and `:Copy` provide context-aware tab completion:
+
+  `:Insert <Tab>`                 → list all subcommands
+  `:Insert filepath <Tab>`        → cwd, abs, nvim, lua, unix, win, system, 0–3
+  `:Insert module <Tab>`          → require, lua_ls, js, c, generic
+  `:Insert timestamp <Tab>`       → iso, iso-date, iso-time, unix, human, …
+  `:Insert uuid <Tab>`            → standard, compact, upper, braced
+  `:Insert annotation <Tab>`      → module, class, field, param, return, …
+  `:Insert boilerplate <Tab>`     → lua-module, lua-class, nvim-autocmd, …
+  `:Insert location <Tab>`        → cwd, abs, lua
+
+==============================================================================
+9. HEALTH CHECK                                     *buffer-ctx-health*
+
+>
+  :checkhealth buffer_ctx
+<
+
+Checks:
+  - Neovim >= 0.9
+  - `vim.uv` / `vim.loop` available
+  - `vim.fn.setreg` available
+  - Plugin loaded (guard flag set)
+
+==============================================================================
+10. ARCHITECTURE                                *buffer-ctx-architecture*
+
+  plugin/buffer_ctx.lua        Load guard
+  lua/buffer_ctx/
+    init.lua                   Public API, setup()
+    config.lua                 DEFAULTS + active config store
+    @types.lua                 LuaLS annotations
+    commands.lua               :Insert / :Copy + shared dispatch
+    keymaps.lua                Keymap registrations
+    health.lua                 checkhealth provider
+    util/
+      notify.lua               "[buffer-ctx] " prefixed vim.notify wrapper
+      cursor.lua               insert_text / insert_lines at cursor position
+      clip.lua                 setreg("+", …) + notify
+      path.lua                 get_module_path, relative_to_cwd, pick_depth
+    ops/
+      filepath.lua             Path formatting (mode + format + depth)
+      module.lua               Lua module path → statement
+      timestamp.lua            Timestamp generation (8 formats)
+      uuid.lua                 UUID v4 generation
+      annotation.lua           LuaLS annotation lines (with interactive dialog)
+      location.lua             path:line from cursor position
+      env.lua                  Environment variable lookup
+      boilerplate/
+        init.lua               Template registry + dispatch
+        templates/
+          lua.lua              Lua code templates
+          nvim.lua             Neovim-specific templates
+          html.lua             HTML snippet templates
+          guard.lua            Guard clause pattern
+          utils.lua            Shared prompt helpers
+
+Module load order: util → ops → commands/keymaps → init
+
+==============================================================================
+vim:tw=78:ts=8:noet:ft=help:norl:
