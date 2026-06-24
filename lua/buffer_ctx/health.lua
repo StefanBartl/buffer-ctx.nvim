@@ -69,6 +69,42 @@ function M.check()
       vim.health.warn(entry.name .. " failed to load (" .. entry.mod .. ")")
     end
   end
+
+  -- Mark subsystem
+  vim.health.start("buffer_ctx.mark")
+
+  local mark_enabled = false
+  if cfg_ok then
+    local cfg = cfg_mod.get()
+    local mk = cfg.mark
+    mark_enabled = mk ~= false and (mk == true or mk == nil or mk.enable ~= false)
+  end
+
+  if mark_enabled then
+    vim.health.ok("mark subsystem enabled")
+  else
+    vim.health.info("mark subsystem disabled (mark = false in opts)")
+    return
+  end
+
+  if vim.fn.exists(":Mark") == 2 then
+    vim.health.ok(":Mark command registered")
+  else
+    vim.health.warn(":Mark command not found — call setup() first")
+  end
+
+  if vim.fn.exists(":MarkLineToggle") == 2 then
+    vim.health.ok(":MarkLineToggle compat command registered")
+  else
+    vim.health.warn(":MarkLineToggle compat command not found")
+  end
+
+  local mark_ok = pcall(require, "buffer_ctx.mark")
+  if mark_ok then
+    vim.health.ok("buffer_ctx.mark loaded")
+  else
+    vim.health.warn("buffer_ctx.mark failed to load")
+  end
 end
 
 return M

@@ -36,6 +36,12 @@ function M.setup(user_opts)
     require("buffer_ctx.format").setup(fmt_opts)
   end
 
+  local mark = cfg.mark
+  if mark ~= false then
+    local mark_opts = (mark == true or mark == nil) and { enable = true } or mark
+    require("buffer_ctx.mark").setup(mark_opts)
+  end
+
   vim.g.loaded_buffer_ctx = 1
 end
 

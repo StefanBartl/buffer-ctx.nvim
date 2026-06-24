@@ -25,6 +25,17 @@
 ---@field module_copy? string     keymap to copy module path (default "<leader>cnm")
 ---@field filepath_copy? string   keymap to copy relative filepath (default "<leader>cnf")
 
+---@class BufferCtx.MarkKeymaps
+---@field toggle? string   keymap to toggle mark on current line (default "<S-m>")
+---@field yank?   string   keymap to yank all marked lines       (default "<C-p>")
+
+---@class BufferCtx.MarkConfig
+---@field enable?  boolean            Register :Mark command (default true)
+---@field command? string             Command name           (default "Mark")
+---@field keymaps? BufferCtx.MarkKeymaps | false
+
 ---@class BufferCtx.Config
----@field keymaps? BufferCtx.KeymapConfig | boolean
+---@field keymaps?  BufferCtx.KeymapConfig | boolean
 ---@field commands? boolean
+---@field format?   { enable?: boolean, command?: string } | boolean
+---@field mark?     BufferCtx.MarkConfig | boolean

@@ -3,11 +3,12 @@
 Buffer context for Neovim — insert or copy path, module, timestamp, UUID,
 annotations, boilerplate, and more from the current buffer.
 
-Three command trees:
+Four command trees:
 
 - **`:Insert {subcmd} [args…]`** — writes text at cursor position
 - **`:Copy   {subcmd} [args…]`** — copies text to the system clipboard
 - **`:Format {subcmd} [args…]`** — buffer/selection formatting operations
+- **`:Mark   {subcmd}`**         — toggle per-line marks and yank them to clipboard
 
 ---
 
@@ -24,6 +25,17 @@ Three command trees:
 | `annotation` | `module\|class\|field\|param\|return\|function\|alias` | LuaLS annotation line(s) |
 | `boilerplate` | `{template} [name]` | Multi-line code template |
 | `env` | `{VAR}` | Value of environment variable |
+
+---
+
+## Mark subcommands
+
+| Subcommand | Action |
+|---|---|
+| `toggle` | Toggle mark on current line (`●` in sign column or as extmark) |
+| `yank` | Yank all marked lines (buffer order) to system clipboard |
+
+Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Mark yank`
 
 ---
 
@@ -81,6 +93,15 @@ require("buffer_ctx").setup({
     command = "Format",      -- command name
   },
   -- format = false   to disable :Format entirely
+  mark = {
+    enable  = true,          -- register :Mark (default true)
+    command = "Mark",        -- command name
+    keymaps = {
+      toggle = "<S-m>",      -- toggle mark on current line
+      yank   = "<C-p>",      -- yank all marked lines
+    },
+  },
+  -- mark = false   to disable :Mark entirely
 })
 ```
 
@@ -265,6 +286,8 @@ lua/buffer_ctx/
     filter_lines.lua   Line filter (keep/remove)
     enum_lines.lua     Token enumeration for visual selection
     misc.lua           trim, sort, unique, case, indent, clear
+  mark/
+    init.lua           :Mark command + toggle/yank logic
   util/
     notify.lua         "[buffer-ctx] " prefixed vim.notify wrapper
     cursor.lua         insert_text / insert_lines at cursor
