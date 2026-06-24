@@ -9,6 +9,10 @@ local DEFAULTS = {
     filepath_copy = "<leader>cnf",
   },
   commands = true,
+  format = {
+    enable  = true,
+    command = "Format",
+  },
 }
 
 local _active = nil

@@ -21,11 +21,18 @@ CONTENTS                                               *buffer-ctx-contents*
      5.7  annotation ............ |:Insert-annotation|
      5.8  boilerplate ........... |:Insert-boilerplate|
      5.9  env ................... |:Insert-env|
-  6. Keymaps ................... |buffer-ctx-keymaps|
-  7. Lua API ................... |buffer-ctx-api|
-  8. Tab completion ............ |buffer-ctx-completion|
-  9. Health check .............. |buffer-ctx-health|
- 10. Architecture .............. |buffer-ctx-architecture|
+  6. Format command ............ |buffer-ctx-format|
+     6.1  column ................ |:Format-column|
+     6.2  table ................. |:Format-table|
+     6.3  textwidth ............. |:Format-textwidth|
+     6.4  filter ................ |:Format-filter|
+     6.5  enum .................. |:Format-enum|
+     6.6  misc .................. |:Format-misc|
+  7. Keymaps ................... |buffer-ctx-keymaps|
+  8. Lua API ................... |buffer-ctx-api|
+  9. Tab completion ............ |buffer-ctx-completion|
+ 10. Health check .............. |buffer-ctx-health|
+ 11. Architecture .............. |buffer-ctx-architecture|
 
 ==============================================================================
 1. INTRODUCTION                                           *buffer-ctx-intro*
@@ -44,7 +51,7 @@ No lib.nvim dependency. No shell calls. Pure Lua.
 2. REQUIREMENTS                                    *buffer-ctx-requirements*
 
   - Neovim 0.9 or later
-  - No external plugins required
+  - lib.nvim (https://github.com/StefanBartl/lib.nvim) — notify wrapper
 
 ==============================================================================
 3. INSTALLATION                                    *buffer-ctx-installation*
@@ -77,6 +84,14 @@ commands ~
 keymaps ~
   Table of keymap strings, or `false` to disable all keymaps.
   See |buffer-ctx-keymaps| for defaults.
+
+format ~
+  Table controlling the `:Format` command tree. Default: >lua
+    format = { enable = true, command = "Format" }
+<
+  `enable`   boolean  Register `:Format`. Default: `true`.
+  `command`  string   Command name. Default: `"Format"`.
+  Set `format = false` to disable the entire `:Format` tree.
 
 ==============================================================================
 5. COMMANDS                                          *buffer-ctx-commands*
@@ -274,7 +289,142 @@ Examples: >
 <
 
 ==============================================================================
-6. KEYMAPS                                          *buffer-ctx-keymaps*
+6. FORMAT COMMAND                                     *buffer-ctx-format*
+
+  :Format {subcmd} [args…]
+
+Unified buffer/selection formatting. All subcommands support tab completion.
+
+------------------------------------------------------------------------------
+6.1  column                                            *:Format-column*
+
+  :Format column [<N> [fill]]
+
+With a column number: align the character under the cursor (or visually
+selected block column) to column N, padding with `fill` (default: space).
+
+Without arguments: opens an interactive prompt for N and fill character.
+
+Examples: >
+  :Format column 40       → pad current char to column 40 with spaces
+  :Format column 40 =     → pad with "=" character
+  :Format column          → interactive prompt
+<
+
+------------------------------------------------------------------------------
+6.2  table                                              *:Format-table*
+
+  :Format table [ALIGN] [header=ALIGN] [cell=ALIGN] [skip=COL] [scope=SCOPE]
+
+Format Markdown tables in the current buffer, a file, or the entire cwd.
+
+ALIGN ~
+  `left`, `center`, `right`    Positional shorthand for header + cell align.
+
+header=ALIGN ~
+  Alignment for the header row (default: `center`).
+
+cell=ALIGN ~
+  Alignment for data rows (default: `center`).
+
+skip=COL ~
+  Column number(s) or name(s) to force-align left (comma-separated).
+
+scope=SCOPE ~
+  `cursor`  Format only the table under the cursor (default).
+  `buffer`  Format all tables in the current buffer.
+  `cwd`     Format all *.md files under the working directory.
+
+Examples: >
+  :Format table                          → format table at cursor
+  :Format table left                     → all columns left-aligned
+  :Format table header=left cell=right   → mixed alignment
+  :Format table scope=buffer             → format every table in buffer
+<
+
+------------------------------------------------------------------------------
+6.3  textwidth                                      *:Format-textwidth*
+
+  :Format textwidth <N|max>
+
+Set `textwidth` to N (or the current window width if `max`) and reflow the
+entire buffer using word-wrap, preserving paragraph breaks and list prefixes.
+
+Examples: >
+  :Format textwidth 80
+  :Format textwidth max
+<
+
+------------------------------------------------------------------------------
+6.4  filter                                            *:Format-filter*
+
+  :Format filter [--remove] <pattern> [<pattern>…]
+
+Keep lines that match ALL patterns. With `--remove` (or `-r`): remove
+matching lines instead.
+
+Examples: >
+  :Format filter TODO              → keep only lines containing "TODO"
+  :Format filter --remove FIXME   → remove lines containing "FIXME"
+  :Format filter foo bar           → keep lines containing both "foo" and "bar"
+<
+
+------------------------------------------------------------------------------
+6.5  enum                                                *:Format-enum*
+
+  :Format enum [STYLE] [sep=SEP] [start=N] [inline=true|false]
+
+Enumerate whitespace-separated tokens from the visual selection.
+
+STYLE ~
+  `decimal`  1. 2. 3.          (default)
+  `alpha`    a. b. c.
+  `ALPHA`    A. B. C.
+  `roman`    i. ii. iii.
+  `ROMAN`    I. II. III.
+
+sep=SEP ~
+  Separator string after each label. Default: `". "`.
+
+start=N ~
+  First counter value. Default: `1`.
+
+inline=true|false ~
+  `true`   emit all on one line.
+  `false`  emit one per line.
+  auto     single-line input → inline, multi-line → one per line.
+
+Examples: >
+  :Format enum                     → 1. foo  2. bar  (decimal, inline)
+  :Format enum roman               → i. foo  ii. bar
+  :Format enum alpha inline=false  → a. foo\nb. bar
+  :Format enum sep=) start=3       → 3) foo  4) bar
+<
+
+------------------------------------------------------------------------------
+6.6  misc subcommands                                   *:Format-misc*
+
+  :Format trim
+    Remove trailing whitespace from every line in the buffer.
+
+  :Format sort [-r] [-i] [-n]
+    Sort buffer lines.  -r reverse, -i ignore-case, -n numeric.
+
+  :Format unique [-i]
+    Remove duplicate lines.  -i ignore-case.
+
+  :Format case <upper|lower|title|sentence>
+    Change the case of every line.
+
+  :Format indent [--spaces|--tabs] [N]
+    Normalise indentation using the current `expandtab`/`shiftwidth`, or the
+    flags/width provided.
+
+  :Format clear
+    Erase all lines in the buffer.
+
+==============================================================================
+7. KEYMAPS                                          *buffer-ctx-keymaps*
 
 Registered only when `setup()` is called (or `keymaps = false` to disable).
 
@@ -285,7 +435,7 @@ Registered only when `setup()` is called (or `keymaps = false` to disable).
 All keys are configurable via the `keymaps` config table.
 
 ==============================================================================
-7. LUA API                                             *buffer-ctx-api*
+8. LUA API                                             *buffer-ctx-api*
 
 >lua
   local ctx = require("buffer_ctx")
@@ -308,7 +458,7 @@ Examples: >lua
 <
 
 ==============================================================================
-8. TAB COMPLETION                                 *buffer-ctx-completion*
+9. TAB COMPLETION                                 *buffer-ctx-completion*
 
 Both `:Insert` and `:Copy` provide context-aware tab completion:
 
@@ -322,7 +472,7 @@ Both `:Insert` and `:Copy` provide context-aware tab completion:
   `:Insert location <Tab>`        → cwd, abs, lua
 
 ==============================================================================
-9. HEALTH CHECK                                     *buffer-ctx-health*
+10. HEALTH CHECK                                     *buffer-ctx-health*
 
 >
   :checkhealth buffer_ctx
@@ -333,9 +483,11 @@ Checks:
   - `vim.uv` / `vim.loop` available
   - `vim.fn.setreg` available
   - Plugin loaded (guard flag set)
+  - Format subsystem: enabled flag, `:Format` command registered,
+    each format sub-module loadable
 
 ==============================================================================
-10. ARCHITECTURE                                *buffer-ctx-architecture*
+11. ARCHITECTURE                                *buffer-ctx-architecture*
 
   plugin/buffer_ctx.lua        Load guard
   lua/buffer_ctx/
@@ -345,6 +497,14 @@ Checks:
     commands.lua               :Insert / :Copy + shared dispatch
     keymaps.lua                Keymap registrations
     health.lua                 checkhealth provider
+    format/
+      init.lua                 :Format command + subcommand registry
+      column_align.lua         Column-alignment (visual selection)
+      table_fmt.lua            Markdown table formatter
+      text_width.lua           Text reflow (word-wrap)
+      filter_lines.lua         Line filter (keep / remove)
+      enum_lines.lua           Token enumeration for visual selection
+      misc.lua                 trim, sort, unique, case, indent, clear
     util/
       notify.lua               "[buffer-ctx] " prefixed vim.notify wrapper
       cursor.lua               insert_text / insert_lines at cursor position
@@ -367,7 +527,7 @@ Checks:
           guard.lua            Guard clause pattern
           utils.lua            Shared prompt helpers
 
-Module load order: util → ops → commands/keymaps → init
+Module load order: util → ops → commands/keymaps/format → init
 
 ==============================================================================
 vim:tw=78:ts=8:noet:ft=help:norl:
