@@ -13,6 +13,14 @@ local DEFAULTS = {
     enable  = true,
     command = "Format",
   },
+  mark = {
+    enable  = true,
+    command = "Mark",
+    keymaps = {
+      toggle = "<S-m>",
+      yank   = "<C-p>",
+    },
+  },
 }
 
 local _active = nil

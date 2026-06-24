@@ -28,11 +28,14 @@ CONTENTS                                               *buffer-ctx-contents*
      6.4  filter ................ |:Format-filter|
      6.5  enum .................. |:Format-enum|
      6.6  misc .................. |:Format-misc|
-  7. Keymaps ................... |buffer-ctx-keymaps|
-  8. Lua API ................... |buffer-ctx-api|
-  9. Tab completion ............ |buffer-ctx-completion|
- 10. Health check .............. |buffer-ctx-health|
- 11. Architecture .............. |buffer-ctx-architecture|
+  7. Mark command .............. |buffer-ctx-mark|
+     7.1  toggle ................ |:Mark-toggle|
+     7.2  yank .................. |:Mark-yank|
+  8. Keymaps ................... |buffer-ctx-keymaps|
+  9. Lua API ................... |buffer-ctx-api|
+ 10. Tab completion ............ |buffer-ctx-completion|
+ 11. Health check .............. |buffer-ctx-health|
+ 12. Architecture .............. |buffer-ctx-architecture|
 
 ==============================================================================
 1. INTRODUCTION                                           *buffer-ctx-intro*
@@ -92,6 +95,19 @@ format ~
   `enable`   boolean  Register `:Format`. Default: `true`.
   `command`  string   Command name. Default: `"Format"`.
   Set `format = false` to disable the entire `:Format` tree.
+
+mark ~
+  Table controlling the `:Mark` command tree. Default: >lua
+    mark = {
+      enable  = true,
+      command = "Mark",
+      keymaps = { toggle = "<S-m>", yank = "<C-p>" },
+    }
+<
+  `enable`   boolean  Register `:Mark`. Default: `true`.
+  `command`  string   Command name. Default: `"Mark"`.
+  `keymaps`  table    Normal-mode keymaps, or `false` to disable.
+  Set `mark = false` to disable the entire `:Mark` tree.
 
 ==============================================================================
 5. COMMANDS                                          *buffer-ctx-commands*
@@ -424,7 +440,47 @@ Examples: >
     Erase all lines in the buffer.
 
 ==============================================================================
-7. KEYMAPS                                          *buffer-ctx-keymaps*
+7. MARK COMMAND                                        *buffer-ctx-mark*
+
+  :Mark {subcmd}
+
+Toggle per-line marks and collect them to the system clipboard.  Marks are
+stored per buffer and survive buffer switches (until Neovim exits).
+
+A marked line is indicated by a `●` character:
+  • In the sign column when `signcolumn` ≠ "no"
+  • As a left-column extmark otherwise
+
+Tab completion is supported for the subcommand argument.
+
+Compat commands are registered automatically:
+  :MarkLineToggle   →  :Mark toggle
+  :MarkLinesYank    →  :Mark yank
+
+------------------------------------------------------------------------------
+7.1  toggle                                                  *:Mark-toggle*
+
+  :Mark toggle
+
+Toggle the mark on the current line.  If the line is already marked the mark
+is removed; otherwise it is added.
+
+Default keymap: `<S-m>`
+
+------------------------------------------------------------------------------
+7.2  yank                                                      *:Mark-yank*
+
+  :Mark yank
+
+Collect all marked lines in the current buffer (sorted by line number) and
+write them to the system clipboard (`+` register) as newline-separated text.
+
+A notification reports how many lines were copied.
+
+Default keymap: `<C-p>`
+
+==============================================================================
+8. KEYMAPS                                          *buffer-ctx-keymaps*
 
 Registered only when `setup()` is called (or `keymaps = false` to disable).
 
@@ -432,10 +488,13 @@ Registered only when `setup()` is called (or `keymaps = false` to disable).
   `<leader>cnm`  Copy Lua module path
   `<leader>cnf`  Copy filepath   (cwd-relative, unix format)
 
-All keys are configurable via the `keymaps` config table.
+  `<S-m>`        :Mark toggle    (toggle mark on current line)
+  `<C-p>`        :Mark yank      (yank all marked lines to clipboard)
+
+All keys are configurable via the respective config tables.
 
 ==============================================================================
-8. LUA API                                             *buffer-ctx-api*
+9. LUA API                                             *buffer-ctx-api*
 
 >lua
   local ctx = require("buffer_ctx")
@@ -458,7 +517,7 @@ Examples: >lua
 <
 
 ==============================================================================
-9. TAB COMPLETION                                 *buffer-ctx-completion*
+10. TAB COMPLETION                                *buffer-ctx-completion*
 
 Both `:Insert` and `:Copy` provide context-aware tab completion:
 
@@ -472,7 +531,7 @@ Both `:Insert` and `:Copy` provide context-aware tab completion:
   `:Insert location <Tab>`        → cwd, abs, lua
 
 ==============================================================================
-10. HEALTH CHECK                                     *buffer-ctx-health*
+11. HEALTH CHECK                                     *buffer-ctx-health*
 
 >
   :checkhealth buffer_ctx
@@ -483,11 +542,11 @@ Checks:
   - `vim.uv` / `vim.loop` available
   - `vim.fn.setreg` available
   - Plugin loaded (guard flag set)
-  - Format subsystem: enabled flag, `:Format` command registered,
-    each format sub-module loadable
+  - Format subsystem: enabled flag, `:Format` registered, each sub-module loadable
+  - Mark subsystem: enabled flag, `:Mark` and `:MarkLineToggle` registered
 
 ==============================================================================
-11. ARCHITECTURE                                *buffer-ctx-architecture*
+12. ARCHITECTURE                                *buffer-ctx-architecture*
 
   plugin/buffer_ctx.lua        Load guard
   lua/buffer_ctx/
@@ -505,6 +564,8 @@ Checks:
       filter_lines.lua         Line filter (keep / remove)
       enum_lines.lua           Token enumeration for visual selection
       misc.lua                 trim, sort, unique, case, indent, clear
+    mark/
+      init.lua                 :Mark command + toggle/yank logic + compat cmds
     util/
       notify.lua               "[buffer-ctx] " prefixed vim.notify wrapper
       cursor.lua               insert_text / insert_lines at cursor position
