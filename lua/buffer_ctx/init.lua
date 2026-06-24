@@ -30,6 +30,12 @@ function M.setup(user_opts)
     require("buffer_ctx.keymaps").attach(km)
   end
 
+  local fmt = cfg.format
+  if fmt ~= false then
+    local fmt_opts = (fmt == true or fmt == nil) and { enable = true } or fmt
+    require("buffer_ctx.format").setup(fmt_opts)
+  end
+
   vim.g.loaded_buffer_ctx = 1
 end
 

@@ -3,10 +3,11 @@
 Buffer context for Neovim — insert or copy path, module, timestamp, UUID,
 annotations, boilerplate, and more from the current buffer.
 
-Two commands share an identical subcommand catalog:
+Three command trees:
 
 - **`:Insert {subcmd} [args…]`** — writes text at cursor position
 - **`:Copy   {subcmd} [args…]`** — copies text to the system clipboard
+- **`:Format {subcmd} [args…]`** — buffer/selection formatting operations
 
 ---
 
@@ -26,10 +27,28 @@ Two commands share an identical subcommand catalog:
 
 ---
 
+## Format subcommands
+
+| Subcommand | Args | Action |
+|---|---|---|
+| `column <N> [fill]` | target column, fill char | Align visual selection to column |
+| `table [ALIGN] [opts]` | `header=`, `cell=`, `skip=`, `scope=` | Format Markdown table(s) |
+| `textwidth <N\|max>` | number or `max` (window width) | Set `textwidth` and reflow text |
+| `filter [--remove] <pat>` | pattern(s) | Keep or remove matching lines |
+| `enum [STYLE] [opts]` | `decimal`/`alpha`/`roman`, `sep=`, `start=`, `inline=` | Enumerate visual selection tokens |
+| `trim` | — | Remove trailing whitespace |
+| `sort [-r] [-i] [-n]` | flags | Sort lines |
+| `unique [-i]` | flag | Remove duplicate lines |
+| `case <mode>` | `upper`/`lower`/`title`/`sentence` | Change case |
+| `indent [--spaces\|--tabs] [N]` | flags, width | Fix indentation |
+| `clear` | — | Clear buffer |
+
+---
+
 ## Requirements
 
 - Neovim 0.9+
-- No external plugins required
+- [`lib.nvim`](https://github.com/StefanBartl/lib.nvim) (notify wrapper)
 
 ---
 
@@ -57,6 +76,11 @@ require("buffer_ctx").setup({
     filepath_copy = "<leader>cnf",   -- copy relative filepath
   },
   -- keymaps = false  to disable all keymaps
+  format = {
+    enable  = true,          -- register :Format (default true)
+    command = "Format",      -- command name
+  },
+  -- format = false   to disable :Format entirely
 })
 ```
 
@@ -233,6 +257,14 @@ lua/buffer_ctx/
   commands.lua         :Insert / :Copy dispatch + tab completion
   keymaps.lua          vim.keymap.set registrations
   health.lua           :checkhealth buffer_ctx
+  format/
+    init.lua           :Format command + subcommand registry
+    column_align.lua   Column-alignment logic
+    table_fmt.lua      Markdown table formatter
+    text_width.lua     Text reflow (word-wrap)
+    filter_lines.lua   Line filter (keep/remove)
+    enum_lines.lua     Token enumeration for visual selection
+    misc.lua           trim, sort, unique, case, indent, clear
   util/
     notify.lua         "[buffer-ctx] " prefixed vim.notify wrapper
     cursor.lua         insert_text / insert_lines at cursor
