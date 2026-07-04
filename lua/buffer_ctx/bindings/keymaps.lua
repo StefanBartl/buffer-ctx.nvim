@@ -1,4 +1,4 @@
----@module 'buffer_ctx.keymaps'
+---@module 'buffer_ctx.bindings.keymaps'
 local M = {}
 
 ---@param cfg BufferCtx.KeymapConfig

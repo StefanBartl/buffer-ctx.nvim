@@ -1,7 +1,6 @@
 *buffer-ctx.txt*  Buffer context for Neovim              *buffer-ctx.nvim*
 
 Author:   Stefan Bartl
-License:  MIT
 Version:  0.1.0
 
 ==============================================================================
@@ -48,22 +47,40 @@ buffer-ctx.nvim provides two commands with an identical subcommand catalog:
 All subcommands derive their output from the current buffer: its path, cursor
 position, Lua module hierarchy, or structured content patterns.
 
-No lib.nvim dependency. No shell calls. Pure Lua.
+No hard dependency. No shell calls. Pure Lua.
 
 ==============================================================================
 2. REQUIREMENTS                                    *buffer-ctx-requirements*
 
   - Neovim 0.9 or later
-  - lib.nvim (https://github.com/StefanBartl/lib.nvim) — notify wrapper
+  - (optional) lib.nvim (https://github.com/StefanBartl/lib.nvim)
+    Used for `notify` when installed; falls back to plain `vim.notify`.
+  - (optional) which-key.nvim (https://github.com/folke/which-key.nvim)
+    Labels the `<leader>cn` keymap group when installed.
 
 ==============================================================================
 3. INSTALLATION                                    *buffer-ctx-installation*
 
-lazy.nvim (local checkout): >lua
+lazy.nvim, recommended (load shortly after startup): >lua
   {
-    dir   = vim.env.REPOS_DIR .. "/buffer-ctx.nvim",
+    "stefanbartl/buffer-ctx.nvim",
     event = "VeryLazy",
     opts  = {},
+  }
+<
+lazy.nvim, lazy-loaded on command use: >lua
+  {
+    "stefanbartl/buffer-ctx.nvim",
+    cmd  = { "Insert", "Copy", "Format", "Mark" },
+    opts = {},
+  }
+<
+packer: >lua
+  use {
+    "stefanbartl/buffer-ctx.nvim",
+    config = function()
+      require("buffer_ctx").setup()
+    end,
   }
 <
 
@@ -88,6 +105,10 @@ keymaps ~
   Table of keymap strings, or `false` to disable all keymaps.
   See |buffer-ctx-keymaps| for defaults.
 
+which_key ~
+  boolean  Label the `<leader>cn` group with which-key when installed.
+  Default: `true`. No-op if which-key.nvim is not installed.
+
 format ~
   Table controlling the `:Format` command tree. Default: >lua
     format = { enable = true, command = "Format" }
@@ -102,11 +123,13 @@ mark ~
       enable  = true,
       command = "Mark",
       keymaps = { toggle = "<S-m>", yank = "<C-p>" },
+      sign    = { text = "●", hl = "ErrorMsg" },
     }
 <
   `enable`   boolean  Register `:Mark`. Default: `true`.
   `command`  string   Command name. Default: `"Mark"`.
   `keymaps`  table    Normal-mode keymaps, or `false` to disable.
+  `sign`     table    Sign column / extmark glyph + highlight group.
   Set `mark = false` to disable the entire `:Mark` tree.
 
 ==============================================================================
@@ -493,6 +516,9 @@ Registered only when `setup()` is called (or `keymaps = false` to disable).
 
 All keys are configurable via the respective config tables.
 
+When which-key.nvim is installed, the `<leader>cn` prefix is automatically
+labeled "buffer-ctx: copy context". Set `which_key = false` to disable this.
+
 ==============================================================================
 9. LUA API                                             *buffer-ctx-api*
 
@@ -542,6 +568,9 @@ Checks:
   - `vim.uv` / `vim.loop` available
   - `vim.fn.setreg` available
   - Plugin loaded (guard flag set)
+  - lib.nvim detected? (optional — notify upgrade)
+  - which-key detected? (optional — <leader>cn group label)
+  - `buffer_ctx.bindings` loadable
   - Format subsystem: enabled flag, `:Format` registered, each sub-module loadable
   - Mark subsystem: enabled flag, `:Mark` and `:MarkLineToggle` registered
 
@@ -551,11 +580,18 @@ Checks:
   plugin/buffer_ctx.lua        Load guard
   lua/buffer_ctx/
     init.lua                   Public API, setup()
-    config.lua                 DEFAULTS + active config store
+    config/
+      init.lua                 setup()/get() — deep-merge over DEFAULTS
+      DEFAULTS.lua              Pluginside default configuration
     @types.lua                 LuaLS annotations
     commands.lua               :Insert / :Copy + shared dispatch
-    keymaps.lua                Keymap registrations
     health.lua                 checkhealth provider
+    bindings/
+      init.lua                  Orchestrates usrcmds + keymaps + which_key + autocmds
+      usrcmds.lua                Registers :Insert / :Copy
+      keymaps.lua                The 3 core copy keymaps
+      which_key.lua              Optional <leader>cn group label
+      autocmds.lua               Extension point (no autocmds registered today)
     format/
       init.lua                 :Format command + subcommand registry
       column_align.lua         Column-alignment (visual selection)
@@ -567,7 +603,7 @@ Checks:
     mark/
       init.lua                 :Mark command + toggle/yank logic + compat cmds
     util/
-      notify.lua               "[buffer-ctx] " prefixed vim.notify wrapper
+      notify.lua               "[buffer-ctx] " notify wrapper; upgrades to lib.nvim if present
       cursor.lua               insert_text / insert_lines at cursor position
       clip.lua                 setreg("+", …) + notify
       path.lua                 get_module_path, relative_to_cwd, pick_depth
@@ -587,8 +623,11 @@ Checks:
           html.lua             HTML snippet templates
           guard.lua            Guard clause pattern
           utils.lua            Shared prompt helpers
+  docs/
+    BINDINGS.lua                Machine-readable keymap/command cheatsheet
+    ROADMAP.md                   Planned features
 
-Module load order: util → ops → commands/keymaps/format → init
+Module load order: util → ops → commands/format/mark → bindings → init
 
 ==============================================================================
 vim:tw=78:ts=8:noet:ft=help:norl:

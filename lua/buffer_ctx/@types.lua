@@ -29,13 +29,19 @@
 ---@field toggle? string   keymap to toggle mark on current line (default "<S-m>")
 ---@field yank?   string   keymap to yank all marked lines       (default "<C-p>")
 
+---@class BufferCtx.MarkSign
+---@field text? string   Sign/virt-text glyph (default "●")
+---@field hl?   string   Highlight group      (default "ErrorMsg")
+
 ---@class BufferCtx.MarkConfig
 ---@field enable?  boolean            Register :Mark command (default true)
 ---@field command? string             Command name           (default "Mark")
 ---@field keymaps? BufferCtx.MarkKeymaps | false
+---@field sign?    BufferCtx.MarkSign  Sign column / extmark appearance
 
 ---@class BufferCtx.Config
----@field keymaps?  BufferCtx.KeymapConfig | boolean
----@field commands? boolean
----@field format?   { enable?: boolean, command?: string } | boolean
----@field mark?     BufferCtx.MarkConfig | boolean
+---@field keymaps?   BufferCtx.KeymapConfig | boolean
+---@field commands?  boolean
+---@field format?    { enable?: boolean, command?: string } | boolean
+---@field mark?      BufferCtx.MarkConfig | boolean
+---@field which_key? boolean   Label configured keymaps in which-key when installed (default true)

@@ -15,11 +15,11 @@ function M.get_module_path(filepath)
   return trimmed:gsub("/", ".")
 end
 
----Return a path relative to cwd (strips leading "./")
+---Return a path relative to cwd (strips leading "./"), forward-slashed
 ---@param abs_path string
 ---@return string
 function M.relative_to_cwd(abs_path)
-  local rel = fn.fnamemodify(abs_path, ":.")
+  local rel = fn.fnamemodify(abs_path, ":."):gsub("\\", "/")
   if rel:sub(1, 2) == "./" then rel = rel:sub(3) end
   return rel
 end
