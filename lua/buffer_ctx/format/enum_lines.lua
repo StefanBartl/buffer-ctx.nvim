@@ -12,7 +12,7 @@
 ---   start   = first counter value, default 1
 ---   inline  = true  → all on one line; false → one per line; auto = single-line input
 
-local notify = require("lib.nvim.notify").create("[buffer_ctx.format.enum_lines]")
+local notify = require("buffer_ctx.util.notify")
 
 local M   = {}
 local api = vim.api
