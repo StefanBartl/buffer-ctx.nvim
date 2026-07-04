@@ -16,6 +16,8 @@ local H = dofile(dir .. "harness.lua")
 local specs = {
   "path_spec.lua",
   "ops_spec.lua",
+  "format_spec.lua",
+  "mark_spec.lua",
 }
 
 local failed = 0
