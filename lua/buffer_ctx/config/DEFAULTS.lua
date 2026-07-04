@@ -1,8 +1,8 @@
----@module 'buffer_ctx.config'
-local M = {}
+---@module 'buffer_ctx.config.DEFAULTS'
+---@brief Pluginside default configuration for buffer-ctx.nvim.
 
 ---@type BufferCtx.Config
-local DEFAULTS = {
+return {
   keymaps = {
     location_copy = "<leader>cnl",
     module_copy   = "<leader>cnm",
@@ -20,19 +20,10 @@ local DEFAULTS = {
       toggle = "<S-m>",
       yank   = "<C-p>",
     },
+    sign = {
+      text = "●",
+      hl   = "ErrorMsg",
+    },
   },
+  which_key = true,
 }
-
-local _active = nil
-
----@param user_opts? BufferCtx.Config
-function M.setup(user_opts)
-  _active = vim.tbl_deep_extend("force", DEFAULTS, user_opts or {})
-end
-
----@return BufferCtx.Config
-function M.get()
-  return _active or DEFAULTS
-end
-
-return M

@@ -28,6 +28,27 @@ function M.check()
     vim.health.warn("plugin guard not set — call require('buffer_ctx').setup()")
   end
 
+  local notify_ok, notify_mod = pcall(require, "buffer_ctx.util.notify")
+  if notify_ok and notify_mod.using_lib() then
+    vim.health.ok("lib.nvim detected — using lib.nvim.notify (optional dependency)")
+  else
+    vim.health.info("lib.nvim not found — using plain vim.notify (optional dependency)")
+  end
+
+  local wk_ok, wk_mod = pcall(require, "buffer_ctx.bindings.which_key")
+  if wk_ok and wk_mod.available() then
+    vim.health.ok("which-key detected — <leader>cn group label registered (optional dependency)")
+  else
+    vim.health.info("which-key not found — keymaps still work, no group label (optional dependency)")
+  end
+
+  local bindings_ok = pcall(require, "buffer_ctx.bindings")
+  if bindings_ok then
+    vim.health.ok("buffer_ctx.bindings loaded")
+  else
+    vim.health.warn("buffer_ctx.bindings failed to load")
+  end
+
   -- Format subsystem
   vim.health.start("buffer_ctx.format")
 

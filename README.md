@@ -1,4 +1,19 @@
-# buffer-ctx.nvim
+```
+██████╗ ██╗   ██╗███████╗███████╗███████╗██████╗      ██████╗████████╗██╗  ██╗
+██╔══██╗██║   ██║██╔════╝██╔════╝██╔════╝██╔══██╗    ██╔════╝╚══██╔══╝╚██╗██╔╝
+██████╔╝██║   ██║█████╗  █████╗  █████╗  ██████╔╝    ██║        ██║    ╚███╔╝
+██╔══██╗██║   ██║██╔══╝  ██╔══╝  ██╔══╝  ██╔══██╗    ██║        ██║    ██╔██╗
+██████╔╝╚██████╔╝██║     ██║     ███████╗██║  ██║    ╚██████╗   ██║   ██╔╝ ██╗
+╚═════╝  ╚═════╝ ╚═╝     ╚═╝     ╚══════╝╚═╝  ╚═╝     ╚═════╝   ╚═╝   ╚═╝  ╚═╝
+                                                                   .nvim
+```
+
+[![Neovim](https://img.shields.io/badge/Neovim-0.9+-57A143?logo=neovim&logoColor=white)](https://neovim.io)
+[![Lua](https://img.shields.io/badge/Made%20with-Lua-2C2D72?logo=lua&logoColor=white)](https://www.lua.org)
+
+> 💡 Pairs well with [gopath.nvim](https://github.com/StefanBartl/gopath.nvim):
+> use buffer-ctx to generate a `require("foo.bar")` / `path:line` reference,
+> and gopath to jump straight back to it from anywhere.
 
 Buffer context for Neovim — insert or copy path, module, timestamp, UUID,
 annotations, boilerplate, and more from the current buffer.
@@ -9,6 +24,21 @@ Four command trees:
 - **`:Copy   {subcmd} [args…]`** — copies text to the system clipboard
 - **`:Format {subcmd} [args…]`** — buffer/selection formatting operations
 - **`:Mark   {subcmd}`**         — toggle per-line marks and yank them to clipboard
+
+---
+
+## Table of contents
+
+- [Quick reference](#quick-reference)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Configuration](#configuration)
+- [Subcommand reference](#subcommand-reference)
+- [Keymaps](#keymaps)
+- [Lua API](#lua-api)
+- [Architecture](#architecture)
+- [Health check](#health-check)
+- [Tests](#tests)
 
 ---
 
@@ -26,9 +56,7 @@ Four command trees:
 | `boilerplate` | `{template} [name]` | Multi-line code template |
 | `env` | `{VAR}` | Value of environment variable |
 
----
-
-## Mark subcommands
+### Mark subcommands
 
 | Subcommand | Action |
 |---|---|
@@ -37,9 +65,7 @@ Four command trees:
 
 Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Mark yank`
 
----
-
-## Format subcommands
+### Format subcommands
 
 | Subcommand | Args | Action |
 |---|---|---|
@@ -59,19 +85,71 @@ Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Ma
 
 ## Requirements
 
-- Neovim 0.9+
-- [`lib.nvim`](https://github.com/StefanBartl/lib.nvim) (notify wrapper)
+- Neovim **0.9+**
+- *(optional)* [lib.nvim](https://github.com/StefanBartl/lib.nvim) — used for `notify` when installed, falls back to plain `vim.notify` otherwise
+- *(optional)* [which-key.nvim](https://github.com/folke/which-key.nvim) — labels the `<leader>cn` keymap group when installed
 
 ---
 
 ## Installation
 
+**When to use which:**
+
+| Variant | Startup impact | Commands available | When to use |
+|---|---|---|---|
+| **`cmd` (lazy)** | Minimal | ✓ (loads on first use) | Large config, many plugins |
+| **`event = "VeryLazy"`** | Minimal (after startup) | ✓ | **Recommended** — default below |
+| **`lazy = false`** | Immediate | ✓ | Want instant command availability |
+
+### lazy.nvim
+
+*Recommended (load shortly after startup):*
 ```lua
--- lazy.nvim (local checkout)
 {
-  dir   = vim.env.REPOS_DIR .. "/buffer-ctx.nvim",
+  "stefanbartl/buffer-ctx.nvim",
   event = "VeryLazy",
   opts  = {},
+}
+```
+
+*Lazy-loaded on command use:*
+```lua
+{
+  "stefanbartl/buffer-ctx.nvim",
+  cmd  = { "Insert", "Copy", "Format", "Mark" },
+  opts = {},
+}
+```
+
+*Load at startup (eager):*
+```lua
+{
+  "stefanbartl/buffer-ctx.nvim",
+  lazy = false,
+  opts = {},
+}
+```
+
+### packer
+
+*Default setup:*
+```lua
+use {
+  "stefanbartl/buffer-ctx.nvim",
+  config = function()
+    require("buffer_ctx").setup()
+  end,
+}
+```
+
+*With immediate load (packer equivalent of `lazy = false`):*
+```lua
+use {
+  "stefanbartl/buffer-ctx.nvim",
+  module_pattern = "buffer_ctx", -- eager
+  config = function()
+    require("buffer_ctx").setup()
+  end,
 }
 ```
 
@@ -88,6 +166,7 @@ require("buffer_ctx").setup({
     filepath_copy = "<leader>cnf",   -- copy relative filepath
   },
   -- keymaps = false  to disable all keymaps
+  which_key = true,          -- label <leader>cn group when which-key is installed
   format = {
     enable  = true,          -- register :Format (default true)
     command = "Format",      -- command name
@@ -99,6 +178,10 @@ require("buffer_ctx").setup({
     keymaps = {
       toggle = "<S-m>",      -- toggle mark on current line
       yank   = "<C-p>",      -- yank all marked lines
+    },
+    sign = {
+      text = "●",            -- sign column / extmark glyph
+      hl   = "ErrorMsg",     -- highlight group
     },
   },
   -- mark = false   to disable :Mark entirely
@@ -251,8 +334,15 @@ Templates:
 | `<leader>cnl` | Copy `path:line` (cwd-relative) |
 | `<leader>cnm` | Copy Lua module path |
 | `<leader>cnf` | Copy filepath (cwd-relative) |
+| `<S-m>` | `:Mark toggle` (toggle mark on current line) |
+| `<C-p>` | `:Mark yank` (yank all marked lines to clipboard) |
 
-All keymaps are configurable. Set `keymaps = false` to disable all.
+All keymaps are configurable. Set `keymaps = false` to disable the core 3;
+set `mark = { keymaps = false }` to disable the mark keymaps.
+
+When [which-key.nvim](https://github.com/folke/which-key.nvim) is installed,
+the `<leader>cn` prefix is automatically labeled "buffer-ctx: copy context".
+Set `which_key = false` to disable this.
 
 ---
 
@@ -273,44 +363,55 @@ ctx.copy(subcmd, args)    -- same as :Copy {subcmd} [args…]
 ```
 lua/buffer_ctx/
   init.lua             setup() + public API
-  config.lua           defaults + active config store
+  config/
+    init.lua           setup()/get() — deep-merges user opts over DEFAULTS
+    DEFAULTS.lua        pluginside default configuration
   @types.lua           LuaLS annotations
   commands.lua         :Insert / :Copy dispatch + tab completion
-  keymaps.lua          vim.keymap.set registrations
   health.lua           :checkhealth buffer_ctx
+  bindings/
+    init.lua            orchestrates usrcmds + keymaps + which_key + autocmds
+    usrcmds.lua          registers :Insert / :Copy
+    keymaps.lua          the 3 core copy keymaps
+    which_key.lua        optional <leader>cn group label
+    autocmds.lua         extension point (no autocmds registered today)
   format/
     init.lua           :Format command + subcommand registry
     column_align.lua   Column-alignment logic
-    table_fmt.lua      Markdown table formatter
-    text_width.lua     Text reflow (word-wrap)
-    filter_lines.lua   Line filter (keep/remove)
-    enum_lines.lua     Token enumeration for visual selection
-    misc.lua           trim, sort, unique, case, indent, clear
+    table_fmt.lua       Markdown table formatter
+    text_width.lua      Text reflow (word-wrap)
+    filter_lines.lua    Line filter (keep/remove)
+    enum_lines.lua       Token enumeration for visual selection
+    misc.lua             trim, sort, unique, case, indent, clear
   mark/
-    init.lua           :Mark command + toggle/yank logic
+    init.lua             :Mark command + toggle/yank logic + its own keymaps
   util/
-    notify.lua         "[buffer-ctx] " prefixed vim.notify wrapper
-    cursor.lua         insert_text / insert_lines at cursor
-    clip.lua           setreg("+", …) + notify
-    path.lua           get_module_path, relative_to_cwd, normalize_sep
+    notify.lua           "[buffer-ctx] " prefixed notify; upgrades to lib.nvim if present
+    cursor.lua           insert_text / insert_lines at cursor
+    clip.lua             setreg("+", …) + notify
+    path.lua             get_module_path, relative_to_cwd, normalize_sep
   ops/
-    filepath.lua       path formatting
-    module.lua         Lua module path → statement
-    timestamp.lua      timestamp generation
-    uuid.lua           UUID v4
-    annotation.lua     LuaLS annotation lines
-    location.lua       path:line
-    env.lua            env var lookup
+    filepath.lua        path formatting
+    module.lua           Lua module path → statement
+    timestamp.lua        timestamp generation
+    uuid.lua              UUID v4
+    annotation.lua        LuaLS annotation lines
+    location.lua          path:line
+    env.lua               env var lookup
     boilerplate/
-      init.lua         template registry + dispatch
+      init.lua            template registry + dispatch
       templates/
-        lua.lua        Lua code templates
-        nvim.lua       Neovim-specific templates
-        html.lua       HTML snippet templates
-        guard.lua      Guard clause templates
-        utils.lua      Shared prompt helpers
+        lua.lua           Lua code templates
+        nvim.lua          Neovim-specific templates
+        html.lua          HTML snippet templates
+        guard.lua         Guard clause templates
+        utils.lua         Shared prompt helpers
 plugin/
   buffer_ctx.lua       load guard
+docs/
+  BINDINGS.lua         machine-readable keymap/command cheatsheet
+  ROADMAP.md           planned features
+  TESTS/               headless spec suite (see docs/TESTS/README.md)
 ```
 
 ---
@@ -323,6 +424,10 @@ plugin/
 
 ---
 
-## License
+## Tests
 
-MIT
+```sh
+nvim --headless -u NONE -c "set rtp+=." -c "luafile docs/TESTS/run.lua" -c "qa!"
+```
+
+See [docs/TESTS/README.md](docs/TESTS/README.md).

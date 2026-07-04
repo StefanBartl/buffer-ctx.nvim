@@ -8,7 +8,7 @@
 ---   :MarkLineToggle   →  :Mark toggle
 ---   :MarkLinesYank    →  :Mark yank
 
-local notify = require("lib.nvim.notify").create("[buffer_ctx.mark]")
+local notify = require("buffer_ctx.util.notify")
 
 local M = {}
 
@@ -20,9 +20,12 @@ local SIGN_NAME    = "BufferCtxMarkSign"
 local VIRT_NS      = vim.api.nvim_create_namespace("BufferCtxMarkVirt")
 local sign_defined = false
 
+---@type { text: string, hl: string }
+local sign_opts = { text = "●", hl = "ErrorMsg" }
+
 local function ensure_sign()
   if sign_defined then return end
-  vim.fn.sign_define(SIGN_NAME, { text = "●", texthl = "ErrorMsg" })
+  vim.fn.sign_define(SIGN_NAME, { text = sign_opts.text, texthl = sign_opts.hl })
   sign_defined = true
 end
 
@@ -53,7 +56,7 @@ function M.toggle(lnum, bufnr)
       vim.fn.sign_place(lnum, SIGN_NAME, SIGN_NAME, bufnr, { lnum = lnum })
     else
       vim.api.nvim_buf_set_extmark(bufnr, VIRT_NS, lnum - 1, 0, {
-        virt_text     = { { "●", "ErrorMsg" } },
+        virt_text     = { { sign_opts.text, sign_opts.hl } },
         virt_text_pos = "overlay",
       })
     end
@@ -114,10 +117,15 @@ end
 
 -- ── Setup ─────────────────────────────────────────────────────────────────────
 
----@param opts { enable?: boolean, command?: string, keymaps?: { toggle?: string, yank?: string }|false }
+---@param opts BufferCtx.MarkConfig
 function M.setup(opts)
   local cmd_name = (type(opts) == "table" and type(opts.command) == "string")
     and opts.command or "Mark"
+
+  if type(opts) == "table" and type(opts.sign) == "table" then
+    sign_opts.text = opts.sign.text or sign_opts.text
+    sign_opts.hl   = opts.sign.hl or sign_opts.hl
+  end
 
   vim.api.nvim_create_user_command(cmd_name, function(info)
     dispatch(info.fargs[1] or "")

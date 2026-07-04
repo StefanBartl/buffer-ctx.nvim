@@ -16,7 +16,11 @@
 - 3 configurable keymaps: `<leader>cnl/m/f`
 - Lua API: `setup()`, `insert()`, `copy()`
 - `:checkhealth buffer_ctx`
-- No lib.nvim dependencies
+- Optional lib.nvim: uses `lib.nvim.notify` when installed, falls back to plain `vim.notify`
+- Optional which-key: `<leader>cn` group label when installed (`which_key = false` to disable)
+- `config/` (DEFAULTS + merge) and `bindings/` (keymaps, usrcmds, autocmds, which_key) module split
+- `docs/BINDINGS.lua` — machine-readable keymap/command cheatsheet
+- `docs/TESTS/` — headless spec suite for `ops/*` and `util/path.lua`
 
 ---
 
@@ -63,9 +67,6 @@
 
 - **Telescope-Picker für Boilerplate** — `:Telescope buffer_ctx boilerplate` mit Live-Preview
   der generierten Lines; erfordert optionale Telescope-Dependency
-
-- **Which-Key-Beschriftungen** — automatisches `require("which-key").register` für alle
-  registrierten Keymaps wenn which-key erkannt wird
 
 ### DX / UX
 

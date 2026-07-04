@@ -11,7 +11,7 @@
 
 local M = {}
 
-local notify = require("lib.nvim.notify").create("[buffer_ctx.format]")
+local notify = require("buffer_ctx.util.notify")
 
 ---@type table<string, table>
 local subcommands = {}

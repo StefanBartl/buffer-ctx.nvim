@@ -13,32 +13,19 @@ function M.setup(user_opts)
   config.setup(user_opts)
   local cfg = config.get()
 
-  if cfg.commands ~= false then
-    require("buffer_ctx.commands").register()
-  end
-
-  local km = cfg.keymaps
-  if km ~= false then
-    if km == true or km == nil then
-      -- use defaults from config
-      km = {
-        location_copy = "<leader>cnl",
-        module_copy   = "<leader>cnm",
-        filepath_copy = "<leader>cnf",
-      }
-    end
-    require("buffer_ctx.keymaps").attach(km)
-  end
+  require("buffer_ctx.bindings").setup(cfg)
 
   local fmt = cfg.format
   if fmt ~= false then
     local fmt_opts = (fmt == true or fmt == nil) and { enable = true } or fmt
+    ---@cast fmt_opts { enable?: boolean, command?: string }
     require("buffer_ctx.format").setup(fmt_opts)
   end
 
   local mark = cfg.mark
   if mark ~= false then
     local mark_opts = (mark == true or mark == nil) and { enable = true } or mark
+    ---@cast mark_opts BufferCtx.MarkConfig
     require("buffer_ctx.mark").setup(mark_opts)
   end
 
