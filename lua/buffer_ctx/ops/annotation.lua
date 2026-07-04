@@ -1,9 +1,8 @@
 ---@module 'buffer_ctx.ops.annotation'
 local M = {}
-local api    = vim.api
-local fn     = vim.fn
-local pu     = require("buffer_ctx.util.path")
-local notify = require("buffer_ctx.util.notify")
+local api = vim.api
+local fn  = vim.fn
+local pu  = require("buffer_ctx.util.path")
 
 ---Get a single-line annotation string
 ---Returns nil for "function" (interactive, returns lines[])
