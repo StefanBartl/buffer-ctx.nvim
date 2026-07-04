@@ -7,7 +7,7 @@
 
 Legende: ✅ erfüllt · ⚠️ bewusste Abweichung / offener Punkt · ❌ Lücke · n/a nicht zutreffend
 
-## §1 Sicherheitsprinzipien & Fehlerbehandlung — ✅ (mit 2 Lücken)
+## §1 Sicherheitsprinzipien & Fehlerbehandlung — ✅
 
 | Regel | Status | Beleg / Anmerkung |
 | --- | --- | --- |
@@ -20,7 +20,7 @@ Legende: ✅ erfüllt · ⚠️ bewusste Abweichung / offener Punkt · ❌ Lück
 | `@error`/`@raises` Tags | n/a | Keine werfenden APIs; alle Fehler laufen über Rückgabewerte, nicht `error()`. |
 | Private Funktionen lokal | ✅ | Interne Helfer sind `local function` (z. B. `sink_text`/`sink_lines` in `commands.lua`, `ensure_sign`/`use_signcolumn` in `mark/init.lua`). |
 | Argumente typisiert übergeben | ✅ | Durchgängige `@param`-Annotationen in allen `ops/*`-Modulen. |
-| Buffer-Handle-Validierung vor API-Zugriff | ❌ | **Lücke:** [`mark/init.lua`](../../lua/buffer_ctx/mark/init.lua) `M.toggle`/`M.yank` prüfen `bufnr` nicht mit `nvim_buf_is_valid()`, bevor `nvim_buf_set_extmark`/`nvim_buf_get_lines` aufgerufen werden. `util/cursor.lua` macht es dagegen korrekt (`nvim_win_is_valid`/`nvim_buf_is_valid` vor jeder Mutation). → siehe Plan. |
+| Buffer-Handle-Validierung vor API-Zugriff | ✅ | [`mark/init.lua`](../../lua/buffer_ctx/mark/init.lua) `M.toggle`/`M.yank` prüfen seit 2026-07-04 `nvim_buf_is_valid()`, bevor `nvim_buf_set_extmark`/`nvim_buf_get_lines` aufgerufen werden — analog zu `util/cursor.lua`. |
 
 ## §2 Modularisierung & Strukturprinzipien — ✅
 
@@ -34,11 +34,11 @@ Legende: ✅ erfüllt · ⚠️ bewusste Abweichung / offener Punkt · ❌ Lück
 | Keine globalen States | ✅ | Einziger Modul-State ist `config._active` (in `config/init.lua`), Zugriff nur über `get()`; `mark/init.lua`s `marked`-Tabelle ist modul-lokal, kein `_G.*`. |
 | Pure Functions wo möglich | ✅ | Siehe oben. |
 
-## §3 Buffer- & Window-Management — ⚠️ (ein offener Punkt)
+## §3 Buffer- & Window-Management — ✅
 
 - buffer-ctx öffnet **keine** eigenen Fenster/Floats → `open_window`/`close_window`/`cleanup_all`/UI-State sind n/a.
 - `util/cursor.lua`: ✅ vorbildlich — `nvim_win_is_valid`/`nvim_buf_is_valid` vor jeder Mutation, Cursor-Spalte wird geclamped (`math.min(col, #line)`).
-- `mark/init.lua`: ❌ siehe §1 — kein `nvim_buf_is_valid(bufnr)`-Guard in `M.toggle`/`M.yank` vor Sign-/Extmark-/Line-Zugriffen. In der Praxis unkritisch, da beide fast immer mit dem aktuellen Buffer aufgerufen werden, aber die Lua-API von `M.toggle(lnum, bufnr)` erlaubt explizit einen fremden `bufnr` — dort fehlt der Guard.
+- `mark/init.lua`: ✅ seit 2026-07-04 — `nvim_buf_is_valid(bufnr)`-Guard in `M.toggle`/`M.yank` vor Sign-/Extmark-/Line-Zugriffen, analog zu `util/cursor.lua`.
 - Race Conditions / Defer-Revalidierung: n/a — buffer-ctx nutzt **kein** `vim.defer_fn`/async; alle Operationen laufen synchron im Command-/Keymap-Handler.
 
 ## §4 Methoden, Metatables & Datenmodelle — n/a (bewusst funktional)
@@ -67,11 +67,11 @@ buffer-ctx ist **funktional**, nicht OO: keine Metatables, kein `__index`, keine
 | Separater Test-Entry | ✅ | [`docs/TESTS/run.lua`](../TESTS/run.lua) + `harness.lua` + 2 Specs (`path_spec.lua`, `ops_spec.lua`). |
 | Snapshot/Restore | n/a | Kein langlebiger State zum Snapshotten (`mark`s `marked`-Tabelle ist der einzige State, siehe Zentral-Prinzipien-Audit). |
 
-## §7 Fehlerbehandlung & Validierung — ⚠️ (wie §1)
+## §7 Fehlerbehandlung & Validierung — ⚠️ (bewusst, siehe §1)
 
-`safe_call`/strukturierte Fehlertypen bewusst nicht verwendet — direktes `result,err`-Tupel deckt den synchronen, kleinen Scope ab. Einziger echter offener Punkt bleibt die fehlende Buffer-Validierung in `mark/init.lua` (siehe §1/§3).
+`safe_call`/strukturierte Fehlertypen bewusst nicht verwendet — direktes `result,err`-Tupel deckt den synchronen, kleinen Scope ab. Kein offener Punkt mehr (Buffer-Validierung in `mark/init.lua` ist behoben, siehe §1/§3).
 
-## §8 Performance & Speicher — ✅ (ein Beobachtungspunkt)
+## §8 Performance & Speicher — ✅
 
 | Regel | Status | Beleg |
 | --- | --- | --- |
@@ -79,7 +79,7 @@ buffer-ctx ist **funktional**, nicht OO: keine Metatables, kein `__index`, keine
 | String-Concat in Loops vermeiden | ✅ | `commands.lua`s `sink_lines` nutzt `table.concat(lines, "\n")`; `mark.yank` sammelt Zeilen in einer Tabelle vor `table.concat`. |
 | Memoization | n/a | Keine teuren wiederholten Berechnungen (kein Pattern-Compile o. Ä. wie bei `cascade.nvim`). |
 | Debounced Writes | n/a | Keine kontinuierlichen Schreibvorgänge (alles ist Ad-hoc-Insert/Copy auf expliziten Command). |
-| Weak-Tables / GC-Steuerung | ⚠️ | `mark/init.lua`s `marked`-Tabelle (`table<bufnr, table<lnum, boolean>>`) wird nie bereinigt, wenn ein Buffer gelöscht wird (`BufDelete`/`BufWipeout`) — theoretisches, kleines Memory-Leak bei sehr vielen Buffer-Öffnungen/-Schließungen über eine lange Session. Kein Weak-Table nötig, aber ein `BufDelete`-Autocmd zum Aufräumen wäre die saubere Lösung. → siehe Plan. |
+| Weak-Tables / GC-Steuerung | ✅ | `mark/init.lua`s `marked`-Tabelle wird seit 2026-07-04 per `BufDelete`/`BufWipeout`-Autocmd (`BufferCtxMarkCleanup`-Augroup) bereinigt, sobald ein Buffer verschwindet — kein unbegrenztes Wachstum mehr über eine lange Session. |
 
 ## §9–§11 Cache / Weak Tables / Spezialfälle — n/a
 
@@ -100,12 +100,15 @@ buffer-ctx.nvim folgt den Regeln weitgehend. **Bewusste, unkritische Abweichunge
 2. **Funktionaler Stil statt Metatables** (§4) — passender für ein zustandsarmes Utility-Plugin.
 3. **README englisch** (§5) — Plugin ist veröffentlicht, nicht Config-Modul.
 
-**Konkrete offene Punkte** (niedrige bis mittlere Priorität, siehe Gesamt-Implementierungsplan):
+**Behoben (2026-07-04, nach diesem Audit):**
 
-1. **`mark/init.lua`: fehlende `nvim_buf_is_valid()`-Guards** in `M.toggle`/`M.yank` (§1/§3) — kleiner, risikoarmer Fix.
-2. **`mark/init.lua`: kein Cleanup der `marked`-Tabelle bei Buffer-Löschung** (§8) — `BufDelete`-Autocmd ergänzen.
-3. **Fehlende `/types`-Anker-Ordner pro Submodul** (§5) — optional, da zentrales `@types.lua` aktuell ausreicht; nur relevant, falls das Repo deutlich wächst.
-4. **Kein CI/Linter** (§7 der Master-Checkliste) — siehe `Checklist.md`-Audit.
+1. ~~`mark/init.lua`: fehlende `nvim_buf_is_valid()`-Guards~~ — behoben in `M.toggle`/`M.yank`.
+2. ~~`mark/init.lua`: kein Cleanup der `marked`-Tabelle bei Buffer-Löschung~~ — `BufDelete`/`BufWipeout`-Autocmd ergänzt.
+
+**Verbleibende offene Punkte** (niedrige Priorität, optional):
+
+1. **Fehlende `/types`-Anker-Ordner pro Submodul** (§5) — optional, da zentrales `@types.lua` aktuell ausreicht; nur relevant, falls das Repo deutlich wächst.
+2. **Kein CI/Linter** (§7 der Master-Checkliste) — siehe `Checklist.md`-Audit.
 
 ## Literatur und Referenzen
 

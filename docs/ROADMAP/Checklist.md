@@ -14,7 +14,7 @@ Legende: ✅ · ⚠️ bewusste Abweichung / offener Punkt · ❌ Lücke · n/a
 | --- | --- | --- | --- |
 | Fehlerbehandlung (pcall, keine stillen Fehler) | 🔴 | ✅ | `pcall` in `format/init.lua`-Handlern und `boilerplate/init.lua`-Template-Load; `ops/*` geben `result, err` statt zu crashen. |
 | Type Guards (type/nil vor API) | 🔴 | ✅ | `if not name or name == ""`-Guards vor jedem `nvim_buf_get_name`-Folgezugriff. |
-| Buffer/Window validieren | 🔴 | ⚠️ | `util/cursor.lua` ✅ vorbildlich; `mark/init.lua` ❌ fehlt (`nvim_buf_is_valid` vor Sign-/Extmark-Zugriff) — siehe [Arch&Coding.md](./Arch&Coding.md) §1/§3. |
+| Buffer/Window validieren | 🔴 | ✅ | `util/cursor.lua` vorbildlich; `mark/init.lua` prüft seit 2026-07-04 ebenfalls `nvim_buf_is_valid` vor Sign-/Extmark-Zugriff — siehe [Arch&Coding.md](./Arch&Coding.md) §1/§3. |
 | Keine globalen States | 🔴 | ✅ | Nur `config._active` (modul-intern, `get()`-Zugriff) und `mark`s buffer-lokale `marked`-Tabelle; kein `_G.*`. |
 | Single Responsibility | 🔴 | ✅ | Ein Modul = ein Zweck (`ops/uuid.lua`, `ops/timestamp.lua`, `format/table_fmt.lua`, …). |
 | UI-Cleanup | 🟡 | n/a | Keine Fenster/Floats zu bereinigen. |
@@ -33,18 +33,18 @@ einfachere Lösung (siehe [Zentral-Prinzipien.md](./Zentral-Prinzipien.md)).
 
 ## PR-Review-Checkliste
 
-### 1. Sicherheit & Fehlerbehandlung — ✅ / ⚠️
+### 1. Sicherheit & Fehlerbehandlung — ✅
 - pcall/Guards/explizite Rückgaben/kein Low-Level-notify: ✅
 - `safe_call`-Envelope + strukturierte Fehlertypen: ⚠️ bewusst nicht — direktes `result,err`-Tupel, keine Error-Objekte.
-- Guards vor API: ⚠️ siehe `mark/init.lua`-Lücke oben.
+- Guards vor API: ✅ (siehe `mark/init.lua`-Fix oben).
 
 ### 2. Modularität & Struktur — ✅
 - SRP ✅, keine Globals ✅, reine Funktionen wo möglich ✅, interne Helfer lokal ✅.
 - Registry: `commands.lua`s `DISPATCH`, `format/init.lua`s `register_subcommand`, `boilerplate/init.lua`s `REGISTRY` ✅ — drei konsistente Registry-Patterns statt if/elseif-Ketten.
 - `/config`-Ordner mit `DEFAULTS.lua`: ✅ (`config/{init,DEFAULTS}.lua`, seit 2026-07-04 Refactor).
 
-### 3. Buffer-/Window-Management — ⚠️ (Fenster n/a)
-- Handle-zuerst-binden + Gültigkeit prüfen: ✅ in `util/cursor.lua`, ❌ in `mark/init.lua` (siehe oben).
+### 3. Buffer-/Window-Management — ✅ (Fenster n/a)
+- Handle-zuerst-binden + Gültigkeit prüfen: ✅ in `util/cursor.lua` und `mark/init.lua`.
 - Race Conditions / Defer-Revalidierung: n/a — kein `vim.defer_fn`/async, alles synchron im Handler.
 
 ### 4. UI-State-Management — n/a
@@ -66,13 +66,13 @@ Pure Functions ✅, Test-Entry `docs/TESTS/run.lua` ✅. DI: Config wird als `op
 
 - **A. Strings & Tabellen** — ✅ kein Concat im Loop (`table.concat` in `commands.lua`/`mark.yank`). Inline-Reserve/`t[i]` nicht nötig (kleine, kurze Arrays wie Boilerplate-Zeilen).
 - **B. Performance-Quickwins** — ✅ lokale `api`/`fn`-Aliase in Hot-Path-nahen Modulen; async/uv n/a (keine Hintergrund-Tasks); Debounce n/a (synchron); Memoization n/a (keine teuren wiederholten Berechnungen).
-- **C. Neovim-API sicher** — ⚠️ Guards vorhanden, aber `mark/init.lua`-Lücke (s. o.); Deferred Calls n/a.
+- **C. Neovim-API sicher** — ✅ Guards durchgängig, auch in `mark/init.lua`; Deferred Calls n/a.
 - **D. State-/Datenmodelle** — Getter via `config.get()` ✅; Metatables/FIFO n/a (bewusst funktional).
-- **E. GC bewusst steuern** — n/a (keine großen Objekte/Coroutinen; `mark`s `marked`-Tabelle ist klein, aber siehe Cleanup-Punkt in Arch&Coding.md §8).
+- **E. GC bewusst steuern** — ✅ `mark`s `marked`-Tabelle wird per `BufDelete`/`BufWipeout`-Autocmd bereinigt (siehe Arch&Coding.md §8).
 - **F. Lazy-Loading** — ✅ empfohlene Installation `event="VeryLazy"`; Boilerplate-Templates laden lazy pro Key; `setup()` bindet nur, arbeitet nicht.
 
-## Anti-Pattern-Check — ✅ (mit einer Notiz)
-Kein globaler State ✅, API-Guards größtenteils vorhanden (⚠️ `mark/init.lua`-Ausnahme), kein String-Concat im Loop ✅, keine Closures im Hot-Loop (kein Hot-Loop vorhanden) ✅, keine Flut kleiner Temp-Tabellen ✅.
+## Anti-Pattern-Check — ✅
+Kein globaler State ✅, API-Guards durchgängig vorhanden ✅, kein String-Concat im Loop ✅, keine Closures im Hot-Loop (kein Hot-Loop vorhanden) ✅, keine Flut kleiner Temp-Tabellen ✅.
 
 ## Import- & Dateistruktur-Check — ⚠️
 Import-Reihenfolge ✅, Datei-Header ✅, projektweiter `@types`-Ordner: ⚠️ vorhanden aber **zentral statt pro Subverzeichnis** (siehe Arch&Coding.md §5).
@@ -95,10 +95,10 @@ dieses Repo.
 
 | Bereich | Beobachtung | Empfehlung |
 | --- | --- | --- |
-| Sicherheit | pcall + Guards fast durchgängig | `mark/init.lua`: `nvim_buf_is_valid()`-Guards ergänzen |
+| Sicherheit | pcall + Guards durchgängig (inkl. `mark/init.lua`) | keine |
 | Modularität | SRP, keine Globals, drei saubere Registries | keine |
-| Neovim-API | synchron, meist geprüfte Handles | `mark/init.lua` nachziehen (s. o.) |
-| Performance | keine Hot-Loops, gebündelte Writes | `mark`-State: `BufDelete`-Cleanup ergänzen |
+| Neovim-API | synchron, durchgängig geprüfte Handles | keine |
+| Performance | keine Hot-Loops, gebündelte Writes, `mark`-State per `BufDelete` bereinigt | keine |
 | Doku/Annotation | vollständig, zentrales `@types.lua` | optional: `/types`-Anker pro Subdir, falls Repo wächst |
 | Tests | `docs/TESTS/` Suite grün (2 Specs) | optional: `format/*`- und `mark/*`-Subcommands abdecken |
 | checkhealth-Modul? | ✅ `:checkhealth buffer_ctx` (lib.nvim/which-key/bindings/format/mark-Status) | keine |
@@ -112,14 +112,15 @@ Buffer-Context-Utility-Plugin relevanten Punkten. **Bewusste Abweichungen**
 (kein Handlungsbedarf): kein `safe_call`-Envelope, funktionaler Stil,
 README englisch (Plugin-Konvention).
 
-**Offene Handlungspunkte** (siehe [Arch&Coding.md](./Arch&Coding.md) für Details,
-zusammengeführt im Gesamt-Implementierungsplan):
+**Behoben (2026-07-04):** `mark/init.lua`s fehlende `nvim_buf_is_valid()`-Guards
+und das fehlende `BufDelete`-Cleanup der `marked`-Tabelle — siehe
+[Arch&Coding.md](./Arch&Coding.md) für Details.
 
-1. `mark/init.lua`: `nvim_buf_is_valid()`-Guards in `toggle`/`yank`.
-2. `mark/init.lua`: `BufDelete`-Cleanup für die `marked`-Tabelle.
-3. CI-Workflow (stylua + luacheck + `docs/TESTS/run.lua` headless) — niedrige Priorität.
-4. Optional: `/types`-Anker-Ordner pro Subverzeichnis, falls das Repo wächst.
-5. Optional: `docs/TESTS/`-Abdeckung auf `format/*` und `mark/*` erweitern.
+**Verbleibende, optionale Punkte:**
+
+1. CI-Workflow (stylua + luacheck + `docs/TESTS/run.lua` headless) — niedrige Priorität.
+2. `/types`-Anker-Ordner pro Subverzeichnis, falls das Repo wächst.
+3. `docs/TESTS/`-Abdeckung auf `format/*` und `mark/*` erweitern.
 
 ## Literatur und Referenzen
 
