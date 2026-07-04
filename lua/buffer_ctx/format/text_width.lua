@@ -62,7 +62,7 @@ local function reflow_lines_region(lines, width)
     local fp, cp = detect_prefixes(para_first)
     local stripped = {}
     for _, l in ipairs(paragraph) do
-      table.insert(stripped, l:gsub("^%s*", "", 1))
+      table.insert(stripped, (l:gsub("^%s*", "", 1)))
     end
     local words = paragraph_to_words(stripped)
     if #words == 0 then
