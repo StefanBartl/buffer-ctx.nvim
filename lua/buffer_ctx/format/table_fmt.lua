@@ -300,7 +300,8 @@ function M.format_table_at_cursor(bufnr, opts)
   local override_map = resolve_overrides(opts.col_overrides, parsed.rows[1], parsed.col_count)
   local rendered     = render_table(parsed, header_align, entry_align, override_map)
   local ok_s = safe_call(vim.api.nvim_buf_set_lines, bufnr, parsed.start_line - 1, parsed.end_line, false, rendered)
-  return ok_s and true or false, ok_s and nil or "Failed to update buffer"
+  if not ok_s then return false, "Failed to update buffer" end
+  return true, nil
 end
 
 function M.format_tables_in_buffer(bufnr, opts)
