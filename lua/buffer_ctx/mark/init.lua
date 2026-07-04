@@ -40,6 +40,7 @@ end
 ---@param bufnr number|nil
 function M.toggle(lnum, bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(bufnr) then return end
   marked[bufnr] = marked[bufnr] or {}
   ensure_sign()
 
@@ -67,6 +68,10 @@ end
 ---@param bufnr number|nil
 function M.yank(bufnr)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    notify.warn("Invalid buffer")
+    return
+  end
   local lines = marked[bufnr]
   if not lines then
     notify.warn("No marked lines in this buffer")
@@ -143,6 +148,14 @@ function M.setup(opts)
   vim.api.nvim_create_user_command("MarkLinesYank", function()
     M.yank()
   end, { desc = "[buffer-ctx compat] Yank all marked lines" })
+
+  -- Clear mark state for buffers that get deleted/wiped out, so `marked`
+  -- doesn't grow unbounded over a long session.
+  vim.api.nvim_create_autocmd({ "BufDelete", "BufWipeout" }, {
+    group = vim.api.nvim_create_augroup("BufferCtxMarkCleanup", { clear = true }),
+    callback = function(args) marked[args.buf] = nil end,
+    desc = "[buffer-ctx] clear mark state for deleted buffer",
+  })
 
   -- Optional keymaps
   local km = type(opts) == "table" and opts.keymaps or nil
