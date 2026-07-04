@@ -34,21 +34,20 @@ auditiert (2026-07-04). Ergebnisse und bewusste Abweichungen:
 - [Checklist.md](ROADMAP/Checklist.md) — Master-Checklist (Schnell-Check/PR/Coding)
 
 **Bilanz:** überwiegend erfüllt; Sortier-/Datenstruktur-/Bit-Operationen-Kapitel
-sind n/a (kein eigener Algorithmus-Code). Verbleibende, niedrig-priore
-Handlungspunkte — priorisiert:
+sind n/a (kein eigener Algorithmus-Code). Die beiden 🔴-relevanten Funde sind
+bereits behoben (2026-07-04):
 
-1. **`mark/init.lua`: `nvim_buf_is_valid()`-Guards** in `toggle`/`yank` vor
-   Sign-/Extmark-/Line-Zugriffen ergänzen (einziger 🔴-relevante Punkt aus den
-   Audits — kleiner, risikoarmer Fix).
-2. **`mark/init.lua`: `BufDelete`-Cleanup** für die `marked`-Tabelle, damit sie
-   nicht über eine lange Session unbegrenzt für gelöschte Buffer wächst.
-3. **CI-Workflow** (stylua + luacheck + `docs/TESTS/run.lua` headless) —
-   niedrige Priorität, aber der einzige offene „empfohlen"-Punkt aus
-   Checklist §7.
-4. *Optional:* `/types`-Anker-Ordner pro Subverzeichnis (`format/types/`,
+- ~~`mark/init.lua`: `nvim_buf_is_valid()`-Guards~~ in `toggle`/`yank` ergänzt.
+- ~~`mark/init.lua`: `BufDelete`-Cleanup~~ für die `marked`-Tabelle ergänzt.
+
+Verbleibende, optionale Punkte:
+
+1. **CI-Workflow** (stylua + luacheck + `docs/TESTS/run.lua` headless) —
+   niedrige Priorität, einziger offener „empfohlen"-Punkt aus Checklist §7.
+2. *Optional:* `/types`-Anker-Ordner pro Subverzeichnis (`format/types/`,
    `mark/types/`, …), falls das Repo deutlich wächst — aktuell reicht das
    zentrale `@types.lua`.
-5. *Optional:* `docs/TESTS/`-Abdeckung auf `format/*`- und `mark/*`-Subcommands
+3. *Optional:* `docs/TESTS/`-Abdeckung auf `format/*`- und `mark/*`-Subcommands
    erweitern (bisher nur `ops/*` + `util/path.lua` getestet).
 
 ---
