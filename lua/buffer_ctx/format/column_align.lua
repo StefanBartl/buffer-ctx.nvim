@@ -1,7 +1,7 @@
 ---@module 'buffer_ctx.format.column_align'
 ---@brief Align visually selected character(s) to a target column.
 
-local notify = require("lib.nvim.notify").create("[buffer_ctx.format.column_align]")
+local notify = require("buffer_ctx.util.notify")
 
 local M = {}
 

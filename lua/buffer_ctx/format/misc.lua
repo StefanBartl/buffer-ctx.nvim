@@ -3,7 +3,7 @@
 ---
 --- Registers: trim, sort, unique, case, indent, clear.
 
-local notify = require("lib.nvim.notify").create("[buffer_ctx.format.misc]")
+local notify = require("buffer_ctx.util.notify")
 
 local M   = {}
 local api = vim.api

@@ -7,7 +7,7 @@
 ---   M.format_tables_in_scope(opts)          – scope: "cursor"|"buffer"|"cwd"|<path>
 ---   M.setup(register_fn, notify_mod)        – register the "table" :Format subcommand
 
-local notify = require("lib.nvim.notify").create("[buffer_ctx.format.table_fmt]")
+local notify = require("buffer_ctx.util.notify")
 
 local M = {}
 
