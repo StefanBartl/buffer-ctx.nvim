@@ -24,6 +24,35 @@
 
 ---
 
+## Qualität & Checklist-Audits
+
+buffer-ctx.nvim wurde gegen die drei persönlichen Lua/Neovim-Checklisten
+auditiert (2026-07-04). Ergebnisse und bewusste Abweichungen:
+
+- [Arch&Coding.md](ROADMAP/Arch&Coding.md) — Architektur- & Coding-Regeln
+- [Zentral-Prinzipien.md](ROADMAP/Zentral-Prinzipien.md) — zentrale Modul-Prinzipien
+- [Checklist.md](ROADMAP/Checklist.md) — Master-Checklist (Schnell-Check/PR/Coding)
+
+**Bilanz:** überwiegend erfüllt; Sortier-/Datenstruktur-/Bit-Operationen-Kapitel
+sind n/a (kein eigener Algorithmus-Code). Verbleibende, niedrig-priore
+Handlungspunkte — priorisiert:
+
+1. **`mark/init.lua`: `nvim_buf_is_valid()`-Guards** in `toggle`/`yank` vor
+   Sign-/Extmark-/Line-Zugriffen ergänzen (einziger 🔴-relevante Punkt aus den
+   Audits — kleiner, risikoarmer Fix).
+2. **`mark/init.lua`: `BufDelete`-Cleanup** für die `marked`-Tabelle, damit sie
+   nicht über eine lange Session unbegrenzt für gelöschte Buffer wächst.
+3. **CI-Workflow** (stylua + luacheck + `docs/TESTS/run.lua` headless) —
+   niedrige Priorität, aber der einzige offene „empfohlen"-Punkt aus
+   Checklist §7.
+4. *Optional:* `/types`-Anker-Ordner pro Subverzeichnis (`format/types/`,
+   `mark/types/`, …), falls das Repo deutlich wächst — aktuell reicht das
+   zentrale `@types.lua`.
+5. *Optional:* `docs/TESTS/`-Abdeckung auf `format/*`- und `mark/*`-Subcommands
+   erweitern (bisher nur `ops/*` + `util/path.lua` getestet).
+
+---
+
 ## Geplante Features
 
 ### High Priority
