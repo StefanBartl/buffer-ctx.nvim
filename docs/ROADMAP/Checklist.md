@@ -50,13 +50,16 @@ einfachere Lösung (siehe [Zentral-Prinzipien.md](./Zentral-Prinzipien.md)).
 ### 4. UI-State-Management — n/a
 Kein UI-State (keine Fenster/Floats).
 
-### 5. Dokumentation & Annotationen — ✅ (kleine Lücken)
+### 5. Dokumentation & Annotationen — ✅ (kleine Lücke)
 Kopf-Tags ✅, Funktions-Tags ✅ (bis auf die o. g. `redundant-return-value`-Fälle),
-Aliase/Felder zentral in `@types.lua` ✅, aber **kein** `/types`-Ordner pro
-Subverzeichnis (siehe [Arch&Coding.md](./Arch&Coding.md) §5).
+Aliase/Felder zentral in `@types.lua` ✅, **`/types`-Anker-Ordner** pro
+Subverzeichnis seit 2026-07-04 in `format/`, `mark/`, `ops/` vorhanden (siehe
+[Arch&Coding.md](./Arch&Coding.md) §5).
 
 ### 6. Testbarkeit & Lesbarkeit — ✅
-Pure Functions ✅, Test-Entry `docs/TESTS/run.lua` ✅. DI: Config wird als `opts` durchgereicht (kein Hard-Wiring) ✅.
+Pure Functions ✅, Test-Entry `docs/TESTS/run.lua` ✅ (jetzt inkl.
+`format_spec.lua`/`mark_spec.lua`). DI: Config wird als `opts` durchgereicht
+(kein Hard-Wiring) ✅.
 
 ### 7. Tooling — ⚠️
 - Lua LS: `.luarc.json` vorhanden (`diagnostics.globals=vim`, `workspace.library`) ✅ (seit 2026-07-04).
@@ -74,8 +77,9 @@ Pure Functions ✅, Test-Entry `docs/TESTS/run.lua` ✅. DI: Config wird als `op
 ## Anti-Pattern-Check — ✅
 Kein globaler State ✅, API-Guards durchgängig vorhanden ✅, kein String-Concat im Loop ✅, keine Closures im Hot-Loop (kein Hot-Loop vorhanden) ✅, keine Flut kleiner Temp-Tabellen ✅.
 
-## Import- & Dateistruktur-Check — ⚠️
-Import-Reihenfolge ✅, Datei-Header ✅, projektweiter `@types`-Ordner: ⚠️ vorhanden aber **zentral statt pro Subverzeichnis** (siehe Arch&Coding.md §5).
+## Import- & Dateistruktur-Check — ✅
+Import-Reihenfolge ✅, Datei-Header ✅, projektweiter `@types`-Ordner **und**
+Subverzeichnis-Anker (`format/`, `mark/`, `ops/`) vorhanden (siehe Arch&Coding.md §5).
 
 ## Performance-Spickzettel — ✅ / n/a
 `table.concat`/gebündelte Writes ✅; Weak-Caches, Async/uv, Debounce: n/a für den synchronen, kleinen Scope ohne Hot-Path.
@@ -99,8 +103,8 @@ dieses Repo.
 | Modularität | SRP, keine Globals, drei saubere Registries | keine |
 | Neovim-API | synchron, durchgängig geprüfte Handles | keine |
 | Performance | keine Hot-Loops, gebündelte Writes, `mark`-State per `BufDelete` bereinigt | keine |
-| Doku/Annotation | vollständig, zentrales `@types.lua` | optional: `/types`-Anker pro Subdir, falls Repo wächst |
-| Tests | `docs/TESTS/` Suite grün (2 Specs) | optional: `format/*`- und `mark/*`-Subcommands abdecken |
+| Doku/Annotation | zentrales `@types.lua` + Subdir-Anker (`format/`, `mark/`, `ops/`) | keine |
+| Tests | `docs/TESTS/` Suite grün (4 Specs, inkl. `format/*`/`mark/*`) | keine |
 | checkhealth-Modul? | ✅ `:checkhealth buffer_ctx` (lib.nvim/which-key/bindings/format/mark-Status) | keine |
 
 ---
@@ -112,15 +116,15 @@ Buffer-Context-Utility-Plugin relevanten Punkten. **Bewusste Abweichungen**
 (kein Handlungsbedarf): kein `safe_call`-Envelope, funktionaler Stil,
 README englisch (Plugin-Konvention).
 
-**Behoben (2026-07-04):** `mark/init.lua`s fehlende `nvim_buf_is_valid()`-Guards
-und das fehlende `BufDelete`-Cleanup der `marked`-Tabelle — siehe
-[Arch&Coding.md](./Arch&Coding.md) für Details.
+**Behoben (2026-07-04):** `mark/init.lua`s fehlende `nvim_buf_is_valid()`-Guards,
+das fehlende `BufDelete`-Cleanup, die `/types`-Anker-Ordner sowie die
+`docs/TESTS/`-Abdeckung für `format/*`/`mark/*` — siehe [Arch&Coding.md](./Arch&Coding.md)
+für Details, einschließlich zweier dabei gefundener Bugs (`table_fmt`
+false-error-Rückgabe, `text_width` Crash).
 
-**Verbleibende, optionale Punkte:**
+**Verbleibender, optionaler Punkt:**
 
 1. CI-Workflow (stylua + luacheck + `docs/TESTS/run.lua` headless) — niedrige Priorität.
-2. `/types`-Anker-Ordner pro Subverzeichnis, falls das Repo wächst.
-3. `docs/TESTS/`-Abdeckung auf `format/*` und `mark/*` erweitern.
 
 ## Literatur und Referenzen
 

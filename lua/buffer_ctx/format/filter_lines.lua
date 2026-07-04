@@ -28,7 +28,7 @@ end
 
 ---Filter buffer lines based on conditions.
 ---@param bufnr       integer
----@param conditions  table[]
+---@param conditions  (string|string[])[]  each entry is a substring, or a list of substrings (OR-matched)
 ---@param remove_flag boolean  true → remove matching, false → keep matching
 ---@return boolean, string|nil
 function M.filter_lines(bufnr, conditions, remove_flag)
@@ -68,7 +68,7 @@ end
 
 ---Parse raw command-line args into (remove_flag, conditions).
 ---@param args string[]
----@return boolean remove_flag, table[] conditions
+---@return boolean remove_flag, (string|string[])[] conditions
 function M.parse_filter_args(args)
   local remove_flag = false
   local conditions  = {}

@@ -20,7 +20,7 @@
 - Optional which-key: `<leader>cn` group label when installed (`which_key = false` to disable)
 - `config/` (DEFAULTS + merge) and `bindings/` (keymaps, usrcmds, autocmds, which_key) module split
 - `docs/BINDINGS.lua` — machine-readable keymap/command cheatsheet
-- `docs/TESTS/` — headless spec suite for `ops/*` and `util/path.lua`
+- `docs/TESTS/` — headless spec suite for `ops/*`, `util/path.lua`, `format/*`, and `mark/*`
 
 ---
 
@@ -34,21 +34,28 @@ auditiert (2026-07-04). Ergebnisse und bewusste Abweichungen:
 - [Checklist.md](ROADMAP/Checklist.md) — Master-Checklist (Schnell-Check/PR/Coding)
 
 **Bilanz:** überwiegend erfüllt; Sortier-/Datenstruktur-/Bit-Operationen-Kapitel
-sind n/a (kein eigener Algorithmus-Code). Die beiden 🔴-relevanten Funde sind
-bereits behoben (2026-07-04):
+sind n/a (kein eigener Algorithmus-Code). Alle konkreten Funde sind
+behoben (2026-07-04):
 
 - ~~`mark/init.lua`: `nvim_buf_is_valid()`-Guards~~ in `toggle`/`yank` ergänzt.
 - ~~`mark/init.lua`: `BufDelete`-Cleanup~~ für die `marked`-Tabelle ergänzt.
+- ~~`/types`-Anker-Ordner pro Subverzeichnis~~ — `format/types/`, `mark/types/`,
+  `ops/types/` ergänzt (analog zu `cascade.nvim`).
+- ~~`docs/TESTS/`-Abdeckung für `format/*`/`mark/*`~~ — `format_spec.lua` +
+  `mark_spec.lua` ergänzt. Dabei zwei echte Bugs gefunden und behoben:
+  `table_fmt.format_table_at_cursor` meldete bei **Erfolg** fälschlicherweise
+  einen Fehler (`ok and nil or "err"`-Antipattern), und
+  `text_width.reflow_buffer` **crashte** bei jeder mehrzeiligen Eingabe
+  (falsche `gsub`-Mehrfachrückgabe an `table.insert` durchgereicht).
+- ~~`format/{column_align,enum_lines,misc,table_fmt}.lua` hart auf
+  `lib.nvim.notify` requiret~~ — dieselbe stillschweigende Silent-Failure wie
+  der ursprüngliche `format/init.lua`/`mark/init.lua`-Fund: ohne `lib.nvim`
+  wurden die zugehörigen `:Format`-Subcommands gar nicht erst registriert.
 
-Verbleibende, optionale Punkte:
+Verbleibender, optionaler Punkt:
 
 1. **CI-Workflow** (stylua + luacheck + `docs/TESTS/run.lua` headless) —
    niedrige Priorität, einziger offener „empfohlen"-Punkt aus Checklist §7.
-2. *Optional:* `/types`-Anker-Ordner pro Subverzeichnis (`format/types/`,
-   `mark/types/`, …), falls das Repo deutlich wächst — aktuell reicht das
-   zentrale `@types.lua`.
-3. *Optional:* `docs/TESTS/`-Abdeckung auf `format/*`- und `mark/*`-Subcommands
-   erweitern (bisher nur `ops/*` + `util/path.lua` getestet).
 
 ---
 
