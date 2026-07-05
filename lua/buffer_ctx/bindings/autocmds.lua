@@ -2,7 +2,7 @@
 ---@brief buffer-ctx.nvim defines no autocommands at present.
 ---@description
 --- Kept as a stable extension point and documentation anchor for
---- `docs/BINDINGS.lua`, mirroring the `bindings/` layout used across the
+--- `docs/BINDINGS.md`, mirroring the `bindings/` layout used across the
 --- other stefanbartl/*.nvim plugins. `setup()` is a no-op today.
 
 local M = {}

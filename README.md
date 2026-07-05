@@ -36,7 +36,6 @@ Four command trees:
 - [Subcommand reference](#subcommand-reference)
 - [Keymaps](#keymaps)
 - [Lua API](#lua-api)
-- [Architecture](#architecture)
 - [Health check](#health-check)
 - [Tests](#tests)
 
@@ -354,64 +353,6 @@ local ctx = require("buffer_ctx")
 ctx.setup(opts)           -- configure + activate (idempotent)
 ctx.insert(subcmd, args)  -- same as :Insert {subcmd} [args…]
 ctx.copy(subcmd, args)    -- same as :Copy {subcmd} [args…]
-```
-
----
-
-## Architecture
-
-```
-lua/buffer_ctx/
-  init.lua             setup() + public API
-  config/
-    init.lua           setup()/get() — deep-merges user opts over DEFAULTS
-    DEFAULTS.lua        pluginside default configuration
-  @types.lua           LuaLS annotations
-  commands.lua         :Insert / :Copy dispatch + tab completion
-  health.lua           :checkhealth buffer_ctx
-  bindings/
-    init.lua            orchestrates usrcmds + keymaps + which_key + autocmds
-    usrcmds.lua          registers :Insert / :Copy
-    keymaps.lua          the 3 core copy keymaps
-    which_key.lua        optional <leader>cn group label
-    autocmds.lua         extension point (no autocmds registered today)
-  format/
-    init.lua           :Format command + subcommand registry
-    column_align.lua   Column-alignment logic
-    table_fmt.lua       Markdown table formatter
-    text_width.lua      Text reflow (word-wrap)
-    filter_lines.lua    Line filter (keep/remove)
-    enum_lines.lua       Token enumeration for visual selection
-    misc.lua             trim, sort, unique, case, indent, clear
-  mark/
-    init.lua             :Mark command + toggle/yank logic + its own keymaps
-  util/
-    notify.lua           "[buffer-ctx] " prefixed notify; upgrades to lib.nvim if present
-    cursor.lua           insert_text / insert_lines at cursor
-    clip.lua             setreg("+", …) + notify
-    path.lua             get_module_path, relative_to_cwd, normalize_sep
-  ops/
-    filepath.lua        path formatting
-    module.lua           Lua module path → statement
-    timestamp.lua        timestamp generation
-    uuid.lua              UUID v4
-    annotation.lua        LuaLS annotation lines
-    location.lua          path:line
-    env.lua               env var lookup
-    boilerplate/
-      init.lua            template registry + dispatch
-      templates/
-        lua.lua           Lua code templates
-        nvim.lua          Neovim-specific templates
-        html.lua          HTML snippet templates
-        guard.lua         Guard clause templates
-        utils.lua         Shared prompt helpers
-plugin/
-  buffer_ctx.lua       load guard
-docs/
-  BINDINGS.lua         machine-readable keymap/command cheatsheet
-  ROADMAP.md           planned features
-  TESTS/               headless spec suite (see docs/TESTS/README.md)
 ```
 
 ---

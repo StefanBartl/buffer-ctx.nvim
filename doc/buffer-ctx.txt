@@ -624,7 +624,7 @@ Checks:
           guard.lua            Guard clause pattern
           utils.lua            Shared prompt helpers
   docs/
-    BINDINGS.lua                Machine-readable keymap/command cheatsheet
+    BINDINGS.md                 Machine-readable keymap/command cheatsheet
     ROADMAP.md                   Planned features
 
 Module load order: util → ops → commands/format/mark → bindings → init
