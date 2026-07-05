@@ -19,7 +19,7 @@
 - Optional lib.nvim: uses `lib.nvim.notify` when installed, falls back to plain `vim.notify`
 - Optional which-key: `<leader>cn` group label when installed (`which_key = false` to disable)
 - `config/` (DEFAULTS + merge) and `bindings/` (keymaps, usrcmds, autocmds, which_key) module split
-- `docs/BINDINGS.lua` — machine-readable keymap/command cheatsheet
+- `docs/BINDINGS.md` — machine-readable keymap/command cheatsheet
 - `docs/TESTS/` — headless spec suite for `ops/*`, `util/path.lua`, `format/*`, and `mark/*`
 
 ---
