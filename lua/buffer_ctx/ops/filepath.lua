@@ -93,6 +93,8 @@ function M.parse_args(args)
     local lo = arg:lower()
     if lo == "abs" or lo == "absolute" then
       opts.mode = "abs"
+    elseif lo == "cwd" or lo == "rel" or lo == "relative" then
+      opts.mode = "cwd"
     elseif lo == "nvim" then
       opts.mode = "nvim"
     elseif lo == "lua" then

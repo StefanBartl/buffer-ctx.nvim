@@ -67,6 +67,10 @@ return function(H)
   H.eq(opts2.format, "win", "filepath parse_args format")
   H.eq(opts2.depth, 2, "filepath parse_args depth")
 
+  H.eq(filepath_op.parse_args({ "absolute" }).mode, "abs", "filepath parse_args absolute alias")
+  H.eq(filepath_op.parse_args({ "relative" }).mode, "cwd", "filepath parse_args relative alias")
+  H.eq(filepath_op.parse_args({ "rel" }).mode, "cwd", "filepath parse_args rel alias")
+
   H.scratch(cwd .. "/lua/foo/qux.lua")
   H.eq(filepath_op.get_path({ mode = "cwd", format = "unix" }), "lua/foo/qux.lua", "filepath get_path unix")
   H.eq(filepath_op.get_path({ mode = "cwd", format = "lua" }), "foo.qux", "filepath get_path lua style")
