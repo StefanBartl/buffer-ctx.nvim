@@ -197,7 +197,7 @@ Copy or insert the current buffer's path.
 
 | Arg | Values | Default |
 |---|---|---|
-| mode | `cwd`, `abs`, `nvim` | `cwd` |
+| mode | `cwd`/`relative`/`rel`, `abs`/`absolute`, `nvim` | `cwd` |
 | format | `unix`, `lua`, `win`, `system` | `unix` |
 | depth | `0`–`3` (last N+1 segments) | full path |
 

@@ -104,7 +104,7 @@ local SUBCMDS = {
 }
 
 local SUBCMD_ARGS = {
-  filepath   = { "cwd", "abs", "nvim", "lua", "unix", "win", "system", "0", "1", "2", "3" },
+  filepath   = { "relative", "absolute", "cwd", "abs", "nvim", "lua", "unix", "win", "system", "0", "1", "2", "3" },
   filename   = { "noext" },
   module     = { "require", "lua_ls", "js", "c", "generic" },
   timestamp  = { "iso", "iso-date", "iso-time", "unix", "human", "short", "log", "filename", "--utc" },
