@@ -1,7 +1,14 @@
 ---@module 'buffer_ctx.ops.uuid'
+---@brief UUIDv4 generate/format. Soft dependency, matching util/notify.lua's
+--- convention: prefer lib.nvim's lib.lua.uuid when installed, fall back to
+--- an equivalent standalone implementation otherwise.
+
 local M = {}
 
--- Seed once per session for better entropy
+local ok_lib_uuid, lib_uuid = pcall(require, "lib.lua.uuid")
+
+-- Seed once per session for better entropy (fallback path only; lib.lua.uuid
+-- seeds itself at load time).
 math.randomseed(vim.uv.hrtime())
 
 local function rand_hex(n)
@@ -16,6 +23,9 @@ end
 ---Generate a UUID v4 string
 ---@return string  e.g. "550e8400-e29b-41d4-a716-446655440000"
 function M.generate()
+  if ok_lib_uuid then
+    return lib_uuid.generate()
+  end
   local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
   return template:gsub("[xy]", function(c)
     local v = (c == "x") and math.random(0, 15) or math.random(8, 11)
@@ -29,6 +39,9 @@ end
 ---@return string
 function M.format(uuid, fmt)
   fmt = (fmt or "standard"):lower()
+  if ok_lib_uuid then
+    return lib_uuid.format(uuid, fmt)
+  end
   if fmt == "compact" then
     return uuid:gsub("-", "")
   elseif fmt == "upper" then
