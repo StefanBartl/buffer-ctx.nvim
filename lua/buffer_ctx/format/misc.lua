@@ -8,6 +8,15 @@ local notify = require("buffer_ctx.util.notify")
 local M   = {}
 local api = vim.api
 
+-- Soft dependency, matching util/notify.lua's convention: prefer lib.nvim's
+-- upper/lower/title case transform when installed, fall back to a local
+-- equivalent otherwise. "sentence" mode stays local unconditionally: it
+-- handles multiple sentence boundaries ([.!?]\s+), which
+-- lib.lua.strings.case.change_case's "sentence" mode does not (it only
+-- capitalizes the very first letter) — a real capability this module would
+-- lose for any multi-sentence buffer content.
+local ok_lib_case, lib_change_case = pcall(require, "lib.lua.strings.case")
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Implementations
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -54,15 +63,19 @@ local function unique_lines(lines, ignore_case)
 end
 
 local function change_case(text, mode)
-  if     mode == "upper"    then return text:upper()
-  elseif mode == "lower"    then return text:lower()
-  elseif mode == "title"    then
-    return text:gsub("(%a)([%w_']*)", function(f, r) return f:upper() .. r:lower() end)
-  elseif mode == "sentence" then
+  if mode == "sentence" then
     local r = text:lower()
     r = r:gsub("^%l", string.upper)
     r = r:gsub("([.!?]%s+)(%l)", function(p, l) return p .. l:upper() end)
     return r
+  end
+  if ok_lib_case then
+    return lib_change_case.change_case(text, mode)
+  end
+  if     mode == "upper" then return text:upper()
+  elseif mode == "lower" then return text:lower()
+  elseif mode == "title" then
+    return text:gsub("(%a)([%w_']*)", function(f, r) return f:upper() .. r:lower() end)
   end
   return text
 end
