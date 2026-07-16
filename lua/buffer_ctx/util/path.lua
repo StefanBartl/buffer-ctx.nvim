@@ -2,11 +2,19 @@
 local M = {}
 local fn = vim.fn
 
+-- Soft dependency, matching util/notify.lua's convention: prefer lib.nvim's
+-- version when installed, fall back to the original local implementation.
+local ok_lib_mod, lib_get_module_path = pcall(require, "lib.nvim.lua_ls.get_module_path")
+local ok_lib_sep, lib_unify_slashes = pcall(require, "lib.nvim.cross.fs.separators.unify_slashes")
+
 ---Derive the Lua module path from an absolute file path
 --- "/…/lua/foo/bar/init.lua" → "foo.bar"
 ---@param filepath string
 ---@return string|nil
 function M.get_module_path(filepath)
+  if ok_lib_mod then
+    return lib_get_module_path(filepath)
+  end
   local norm = filepath:gsub("\\", "/")
   local lua_idx = norm:find("/lua/")
   if not lua_idx then return nil end
@@ -29,6 +37,9 @@ end
 ---@param sep? string  default "/"
 ---@return string
 function M.normalize_sep(path, sep)
+  if (not sep or sep == "/") and ok_lib_sep then
+    return lib_unify_slashes(path)
+  end
   sep = sep or "/"
   return (path:gsub("[/\\]", sep))
 end

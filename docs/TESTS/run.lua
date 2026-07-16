@@ -12,6 +12,39 @@
 local dir = debug.getinfo(1, "S").source:sub(2):match("(.*[/\\])") or "./"
 local H = dofile(dir .. "harness.lua")
 
+-- buffer-ctx.nvim depends on lib.nvim at runtime (util/path.lua,
+-- util/clip.lua, util/notify.lua), so the suite needs it on the
+-- runtimepath. A sibling checkout wins over the plugin-manager copy: the
+-- bootstrap clone under stdpath("data")/lazy is frequently stale.
+local function add_lib_nvim()
+  local candidates = {}
+  if vim.env.LIB_NVIM_PATH then
+    candidates[#candidates + 1] = vim.env.LIB_NVIM_PATH
+  end
+  candidates[#candidates + 1] = vim.fn.getcwd() .. "/../lib.nvim"
+  candidates[#candidates + 1] = vim.fn.stdpath("data") .. "/lazy/lib.nvim"
+
+  for _, path in ipairs(candidates) do
+    local norm = vim.fs.normalize(path)
+    if vim.fn.isdirectory(norm .. "/lua/lib") == 1 then
+      vim.opt.rtp:append(norm)
+      package.path = table.concat({
+        norm .. "/lua/?.lua",
+        norm .. "/lua/?/init.lua",
+        package.path,
+      }, ";")
+      return norm
+    end
+  end
+  return nil
+end
+
+if not add_lib_nvim() then
+  print("FAIL  cannot locate lib.nvim (a runtime dependency of buffer-ctx.nvim).")
+  print("      Set $LIB_NVIM_PATH, or check it out next to this repo.")
+  os.exit(1)
+end
+
 -- Ordered so failures point at the smallest layer first.
 local specs = {
   "path_spec.lua",
