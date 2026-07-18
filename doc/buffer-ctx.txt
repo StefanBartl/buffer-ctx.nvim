@@ -604,6 +604,7 @@ Checks:
       init.lua                 :Mark command + toggle/yank logic + compat cmds
     util/
       notify.lua               "[buffer-ctx] " notify wrapper; upgrades to lib.nvim if present
+      map.lua                  keymap wrapper; upgrades to lib.nvim.map if present
       cursor.lua               insert_text / insert_lines at cursor position
       clip.lua                 setreg("+", …) + notify
       path.lua                 get_module_path, relative_to_cwd, pick_depth
@@ -625,7 +626,12 @@ Checks:
           utils.lua            Shared prompt helpers
   docs/
     BINDINGS.md                 Machine-readable keymap/command cheatsheet
-    ROADMAP.md                   Planned features
+    ROADMAP/
+      ROADMAP.md                Planned features + audit status
+      Arch&Coding.md            Architecture/coding-rules audit
+      Checklist.md              Master-checklist audit
+      Zentral-Prinzipien.md     Core-principles audit
+    TESTS/                      Headless spec suite (run.lua)
 
 Module load order: util → ops → commands/format/mark → bindings → init
 

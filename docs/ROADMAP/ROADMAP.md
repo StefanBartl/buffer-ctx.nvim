@@ -16,46 +16,44 @@
 - 3 configurable keymaps: `<leader>cnl/m/f`
 - Lua API: `setup()`, `insert()`, `copy()`
 - `:checkhealth buffer_ctx`
-- Optional lib.nvim: uses `lib.nvim.notify` when installed, falls back to plain `vim.notify`
+- Optional lib.nvim (soft dependency, native fallback throughout): `lib.nvim.notify`
+  for notifications, `lib.nvim.map` for keymaps, plus path/clipboard helpers
 - Optional which-key: `<leader>cn` group label when installed (`which_key = false` to disable)
 - `config/` (DEFAULTS + merge) and `bindings/` (keymaps, usrcmds, autocmds, which_key) module split
 - `docs/BINDINGS.md` — machine-readable keymap/command cheatsheet
 - `docs/TESTS/` — headless spec suite for `ops/*`, `util/path.lua`, `format/*`, and `mark/*`
+- CI (`.github/workflows/ci.yml`) — specs on stable + nightly, checkhealth smoke test
 
 ---
 
 ## Qualität & Checklist-Audits
 
 buffer-ctx.nvim wurde gegen die drei persönlichen Lua/Neovim-Checklisten
-auditiert (2026-07-04). Ergebnisse und bewusste Abweichungen:
+auditiert (2026-07-04, Nacharbeit abgeschlossen 2026-07-18):
 
-- [Arch&Coding.md](ROADMAP/Arch&Coding.md) — Architektur- & Coding-Regeln
-- [Zentral-Prinzipien.md](ROADMAP/Zentral-Prinzipien.md) — zentrale Modul-Prinzipien
-- [Checklist.md](ROADMAP/Checklist.md) — Master-Checklist (Schnell-Check/PR/Coding)
+- [Arch&Coding.md](Arch&Coding.md) — Architektur- & Coding-Regeln
+- [Zentral-Prinzipien.md](Zentral-Prinzipien.md) — zentrale Modul-Prinzipien
+- [Checklist.md](Checklist.md) — Master-Checklist (Schnell-Check/PR/Coding)
 
-**Bilanz:** überwiegend erfüllt; Sortier-/Datenstruktur-/Bit-Operationen-Kapitel
-sind n/a (kein eigener Algorithmus-Code). Alle konkreten Funde sind
-behoben (2026-07-04):
+**Bilanz:** alle drei Audits sind abgearbeitet, es bleiben nur die bewussten
+Design-Entscheidungen (kein `safe_call`-Envelope, funktionaler Stil statt
+Metatables, README englisch). Sortier-/Datenstruktur-/Bit-Operationen-Kapitel
+sind n/a (kein eigener Algorithmus-Code).
 
-- ~~`mark/init.lua`: `nvim_buf_is_valid()`-Guards~~ in `toggle`/`yank` ergänzt.
-- ~~`mark/init.lua`: `BufDelete`-Cleanup~~ für die `marked`-Tabelle ergänzt.
-- ~~`/types`-Anker-Ordner pro Subverzeichnis~~ — `format/types/`, `mark/types/`,
-  `ops/types/` ergänzt (analog zu `cascade.nvim`).
-- ~~`docs/TESTS/`-Abdeckung für `format/*`/`mark/*`~~ — `format_spec.lua` +
-  `mark_spec.lua` ergänzt. Dabei zwei echte Bugs gefunden und behoben:
-  `table_fmt.format_table_at_cursor` meldete bei **Erfolg** fälschlicherweise
-  einen Fehler (`ok and nil or "err"`-Antipattern), und
-  `text_width.reflow_buffer` **crashte** bei jeder mehrzeiligen Eingabe
-  (falsche `gsub`-Mehrfachrückgabe an `table.insert` durchgereicht).
-- ~~`format/{column_align,enum_lines,misc,table_fmt}.lua` hart auf
-  `lib.nvim.notify` requiret~~ — dieselbe stillschweigende Silent-Failure wie
-  der ursprüngliche `format/init.lua`/`mark/init.lua`-Fund: ohne `lib.nvim`
-  wurden die zugehörigen `:Format`-Subcommands gar nicht erst registriert.
+Zuletzt geschlossen (2026-07-18):
 
-Verbleibender, optionaler Punkt:
+- `gsub`-Mehrfachrückgabe in `uuid.generate`/`uuid.format`/`path.get_module_path`
+  (gaben `(string, count)` statt eines Strings zurück) — Ursache der
+  `redundant-return-value`-Diagnostics, mit Regressionstests abgesichert.
+- `lib.map`-Soft-Bridge für Keymaps (`util/map.lua`).
+- `@see`-Modulquerverweise.
+- CI-Workflow (`.github/workflows/ci.yml`): Specs auf stable + nightly,
+  `:checkhealth`-Smoke-Test, stylua/luacheck (noch advisory).
 
-1. **CI-Workflow** (stylua + luacheck + `docs/TESTS/run.lua` headless) —
-   niedrige Priorität, einziger offener „empfohlen"-Punkt aus Checklist §7.
+Verbleibender, optionaler Folgeschritt:
+
+1. `stylua lua/ docs/TESTS/` einmal anwenden, Diff reviewen, danach das
+   CI-Lint-Gate scharf schalten (`continue-on-error` entfernen).
 
 ---
 
@@ -64,7 +62,7 @@ Verbleibender, optionaler Punkt:
 ### High Priority
 
 - **`:Insert snippet {name}`** — VSCode-kompatible Snippets aus einer YAML/JSON-Datei laden
-  und als Boilerplate einfügen; Alternative zu einem vollständigen Snippet-Plugin
+  und als Boilerplate einfügen; Alternative zu einem vollständigen Snippet-Plugin (lua/buffer_ctx/ops/boilerplate)existiert bereits
 
 - **`filepath nvim_module` als alias für `module`** — Konsistenz: `:Copy filepath nvim_module`
   → gleicher Output wie `:Copy module`; nur ein Eintrag in der Completion aber beide Pfade
@@ -115,9 +113,3 @@ Verbleibender, optionaler Punkt:
   Timestamps standardmäßig UTC sind ohne manuellen `--utc` Flag
 
 ---
-
-## Nicht geplant
-
-- **Clipboard-Zwischenspeicher / History** — Scope von `nvim-cmp` oder neoclip.nvim
-- **Datetime-Arithmetik** — (addiere N Tage) gehört in ein eigenes Plugin
-- **Remote-Pfade (SSH/SFTP)** — außerhalb des "Buffer-Kontext"-Scopes

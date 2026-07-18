@@ -19,17 +19,26 @@ Legende: ✅ · ⚠️ bewusste Abweichung / offener Punkt · ❌ Lücke · n/a
 | Single Responsibility | 🔴 | ✅ | Ein Modul = ein Zweck (`ops/uuid.lua`, `ops/timestamp.lua`, `format/table_fmt.lua`, …). |
 | UI-Cleanup | 🟡 | n/a | Keine Fenster/Floats zu bereinigen. |
 | Performance-Hotspots | 🟡 | ✅ | `table.concat` statt Concat-in-Loop (`commands.lua sink_lines`, `mark.yank`). |
-| Annotationen vollständig | 🟡 | ⚠️ | Meist vollständig; drei Funktionen (`uuid.generate`/`format`, `util/path.get_module_path`) haben `@return string` annotiert, geben aber teils `nil` zurück — LuaLS meldet `redundant-return-value`-Diagnostics (kosmetisch, keine Laufzeit-Auswirkung). |
+| Annotationen vollständig | 🟡 | ✅ | Seit 2026-07-18 vollständig. Die `redundant-return-value`-Diagnostics an `uuid.generate`/`format` und `util/path.get_module_path` waren **kein** reines Annotations-Problem: die Funktionen gaben `str:gsub(...)` direkt zurück und lieferten damit `(string, count)` statt eines Strings. Behoben durch Klammerung, mit `select("#", …)`-Regressionstests. |
 | Testbarkeit (pure functions) | 🟡 | ✅ | `docs/TESTS/{path_spec,ops_spec}.lua` deckt `util/path.lua` + 6 `ops/*`-Module ab. |
 | Import-Reihenfolge | 🟢 | ✅ | System (`vim.api`/`vim.fn`) → Utils (`buffer_ctx.util.*`) → Feature-Module. |
 
-### Bonuspunkt: `lib`-Modul — ✅ (soft, nur notify)
+### Bonuspunkt: `lib`-Modul — ✅ (soft: notify, map, path, clip)
 
-`lib.nvim.notify` via geguardete Bridge [`util/notify.lua`](../../lua/buffer_ctx/util/notify.lua)
-(Fallback nativ `vim.notify`). `lib.map`/`lib.augroup`: nicht genutzt (❌, aber
-unkritisch — keine Autocmds, Keymaps sind simpel genug für direktes
-`vim.keymap.set`). `lib.cross`/`memo`/`lazy`/`hover_select`: n/a bzw. eigene,
-einfachere Lösung (siehe [Zentral-Prinzipien.md](./Zentral-Prinzipien.md)).
+Alle über geguardete Bridges mit nativem Fallback, damit das publizierte Plugin
+standalone bleibt:
+
+| Bereich | Bridge | Fallback |
+| --- | --- | --- |
+| Notify | [`util/notify.lua`](../../lua/buffer_ctx/util/notify.lua) → `lib.nvim.notify` | `vim.notify` |
+| Keymaps | [`util/map.lua`](../../lua/buffer_ctx/util/map.lua) → `lib.nvim.map` (seit 2026-07-18) | `vim.keymap.set` |
+| Pfade | [`util/path.lua`](../../lua/buffer_ctx/util/path.lua) → `lib.nvim.lua_ls`/`cross.fs` | lokale Implementierung |
+| Clipboard | [`util/clip.lua`](../../lua/buffer_ctx/util/clip.lua) → `lib.nvim.cross.copy_to_clipboard` | `setreg` |
+
+Beide `util/*`-Bridges melden ihren aktiven Pfad an `:checkhealth buffer_ctx`.
+`lib.augroup`: nicht genutzt — der einzige Autocmd (`BufferCtxMarkCleanup`) ist
+zu simpel für einen Wrapper. `lib.cross`/`memo`/`lazy`/`hover_select`: n/a bzw.
+eigene, einfachere Lösung (siehe [Zentral-Prinzipien.md](./Zentral-Prinzipien.md)).
 
 ## PR-Review-Checkliste
 
@@ -50,8 +59,8 @@ einfachere Lösung (siehe [Zentral-Prinzipien.md](./Zentral-Prinzipien.md)).
 ### 4. UI-State-Management — n/a
 Kein UI-State (keine Fenster/Floats).
 
-### 5. Dokumentation & Annotationen — ✅ (kleine Lücke)
-Kopf-Tags ✅, Funktions-Tags ✅ (bis auf die o. g. `redundant-return-value`-Fälle),
+### 5. Dokumentation & Annotationen — ✅
+Kopf-Tags ✅, Funktions-Tags ✅, `@see`-Querverweise seit 2026-07-18 ✅,
 Aliase/Felder zentral in `@types.lua` ✅, **`/types`-Anker-Ordner** pro
 Subverzeichnis seit 2026-07-04 in `format/`, `mark/`, `ops/` vorhanden (siehe
 [Arch&Coding.md](./Arch&Coding.md) §5).
@@ -61,9 +70,19 @@ Pure Functions ✅, Test-Entry `docs/TESTS/run.lua` ✅ (jetzt inkl.
 `format_spec.lua`/`mark_spec.lua`). DI: Config wird als `opts` durchgereicht
 (kein Hard-Wiring) ✅.
 
-### 7. Tooling — ⚠️
+### 7. Tooling — ✅
 - Lua LS: `.luarc.json` vorhanden (`diagnostics.globals=vim`, `workspace.library`) ✅ (seit 2026-07-04).
-- Formatter/Linter im CI (stylua/luacheck): ❌ **kein CI** eingerichtet (kein `.github/workflows`). Einziger offener „empfohlen"-Punkt aus diesem Abschnitt.
+- CI: `.github/workflows/ci.yml` seit 2026-07-18 ✅ — drei Jobs:
+  - **test**: `docs/TESTS/run.lua` headless auf Neovim `stable` **und** `nightly`.
+  - **health**: `setup()` + `:checkhealth buffer_ctx` müssen sauber laden.
+  - **lint**: `stylua --check` + `luacheck` (Konfig: `.stylua.toml`, `.luacheckrc`).
+    Bewusst `continue-on-error: true` — die Quellen liefen nie durch stylua, ein
+    harter Gate würde an Formatierungs-Drift statt an echten Defekten scheitern.
+    Umzustellen, sobald `stylua lua/ docs/TESTS/` einmal angewendet und der Diff
+    reviewt ist. **Das ist der einzige verbleibende, optionale Folgeschritt.**
+- CI läuft bewusst **ohne** `lib.nvim`: die Library ist Soft-Dependency, damit
+  deckt CI den Standalone-Fallback-Pfad ab (`docs/TESTS/run.lua` bricht seither
+  nicht mehr ab, wenn `lib.nvim` fehlt).
 
 ## Coding-Checkliste
 
@@ -103,28 +122,24 @@ dieses Repo.
 | Modularität | SRP, keine Globals, drei saubere Registries | keine |
 | Neovim-API | synchron, durchgängig geprüfte Handles | keine |
 | Performance | keine Hot-Loops, gebündelte Writes, `mark`-State per `BufDelete` bereinigt | keine |
-| Doku/Annotation | zentrales `@types.lua` + Subdir-Anker (`format/`, `mark/`, `ops/`) | keine |
-| Tests | `docs/TESTS/` Suite grün (4 Specs, inkl. `format/*`/`mark/*`) | keine |
+| Doku/Annotation | zentrales `@types.lua` + Subdir-Anker + `@see`-Links | keine |
+| Tests | `docs/TESTS/` Suite grün (4 Specs), in CI auf stable + nightly | keine |
+| Tooling | CI vorhanden; stylua-Gate noch advisory | einmalig `stylua` anwenden, dann Gate scharf schalten |
 | checkhealth-Modul? | ✅ `:checkhealth buffer_ctx` (lib.nvim/which-key/bindings/format/mark-Status) | keine |
 
 ---
 
 ## Fazit & Plan
 
-buffer-ctx.nvim erfüllt die Master-Checklist in praktisch allen für ein
+buffer-ctx.nvim erfüllt die Master-Checklist in allen für ein
 Buffer-Context-Utility-Plugin relevanten Punkten. **Bewusste Abweichungen**
 (kein Handlungsbedarf): kein `safe_call`-Envelope, funktionaler Stil,
 README englisch (Plugin-Konvention).
 
-**Behoben (2026-07-04):** `mark/init.lua`s fehlende `nvim_buf_is_valid()`-Guards,
-das fehlende `BufDelete`-Cleanup, die `/types`-Anker-Ordner sowie die
-`docs/TESTS/`-Abdeckung für `format/*`/`mark/*` — siehe [Arch&Coding.md](./Arch&Coding.md)
-für Details, einschließlich zweier dabei gefundener Bugs (`table_fmt`
-false-error-Rückgabe, `text_width` Crash).
+**Verbleibender, optionaler Folgeschritt:**
 
-**Verbleibender, optionaler Punkt:**
-
-1. CI-Workflow (stylua + luacheck + `docs/TESTS/run.lua` headless) — niedrige Priorität.
+1. `stylua lua/ docs/TESTS/` einmal anwenden, Diff reviewen, danach im
+   CI-Lint-Job `continue-on-error` entfernen (§7).
 
 ## Literatur und Referenzen
 
