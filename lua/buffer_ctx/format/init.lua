@@ -8,6 +8,8 @@
 ---   :Format filter [--remove] <pattern> ...
 ---   :Format enum [STYLE] [sep=SEP] [start=N] [inline=true|false]
 ---   :Format trim | sort [-r|-i|-n] | unique [-i] | case <mode> | indent | clear
+---@see buffer_ctx.commands for the sibling :Insert / :Copy dispatch
+---@see buffer_ctx.format.types for the subcommand type anchors
 
 local M = {}
 

@@ -4,6 +4,8 @@
 --- Deep-merges user options over `buffer_ctx.config.DEFAULTS` and exposes a
 --- single `get()` accessor so other modules never read a raw options table
 --- directly.
+---@see buffer_ctx.config.DEFAULTS for the shape and default values
+---@see BufferCtx.Config in buffer_ctx.@types for the type definitions
 
 local M = {}
 

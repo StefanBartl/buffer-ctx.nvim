@@ -1,4 +1,6 @@
 ---@module 'buffer_ctx.ops.location'
+---@see buffer_ctx.ops.filepath for the same path modes without the :line suffix
+
 local M = {}
 local api = vim.api
 local fn  = vim.fn

@@ -1,4 +1,7 @@
 ---@module 'buffer_ctx.util.clip'
+---@see buffer_ctx.util.notify for the same soft-dependency pattern
+---@see buffer_ctx.util.cursor for the insert-at-cursor sink counterpart
+
 local notify = require("buffer_ctx.util.notify")
 local M = {}
 
