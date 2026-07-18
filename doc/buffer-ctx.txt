@@ -20,6 +20,10 @@ CONTENTS                                               *buffer-ctx-contents*
      5.7  annotation ............ |:Insert-annotation|
      5.8  boilerplate ........... |:Insert-boilerplate|
      5.9  env ................... |:Insert-env|
+     5.10 date .................. |:Insert-date|
+     5.11 snippet ............... |:Insert-snippet|
+     5.12 git ................... |:Insert-git|
+     5.13 linecount / bufnr ..... |:Insert-linecount|
   6. Format command ............ |buffer-ctx-format|
      6.1  column ................ |:Format-column|
      6.2  table ................. |:Format-table|
@@ -33,8 +37,9 @@ CONTENTS                                               *buffer-ctx-contents*
   8. Keymaps ................... |buffer-ctx-keymaps|
   9. Lua API ................... |buffer-ctx-api|
  10. Tab completion ............ |buffer-ctx-completion|
- 11. Health check .............. |buffer-ctx-health|
- 12. Architecture .............. |buffer-ctx-architecture|
+ 11. Telescope integration ..... |buffer-ctx-telescope|
+ 12. Health check .............. |buffer-ctx-health|
+ 13. Architecture .............. |buffer-ctx-architecture|
 
 ==============================================================================
 1. INTRODUCTION                                           *buffer-ctx-intro*
@@ -47,7 +52,8 @@ buffer-ctx.nvim provides two commands with an identical subcommand catalog:
 All subcommands derive their output from the current buffer: its path, cursor
 position, Lua module hierarchy, or structured content patterns.
 
-No hard dependency. No shell calls. Pure Lua.
+No hard dependency. Pure Lua, with one exception: the `git` subcommand shells
+out to the `git` executable. Every other subcommand is shell-free.
 
 ==============================================================================
 2. REQUIREMENTS                                    *buffer-ctx-requirements*
@@ -57,6 +63,10 @@ No hard dependency. No shell calls. Pure Lua.
     Used for `notify` when installed; falls back to plain `vim.notify`.
   - (optional) which-key.nvim (https://github.com/folke/which-key.nvim)
     Labels the `<leader>cn` keymap group when installed.
+  - (optional) telescope.nvim
+    (https://github.com/nvim-telescope/telescope.nvim)
+    Enables the boilerplate picker, see |buffer-ctx-telescope|.
+  - (optional) `git` in $PATH — only for the |:Insert-git| subcommand.
 
 ==============================================================================
 3. INSTALLATION                                    *buffer-ctx-installation*
@@ -108,6 +118,25 @@ keymaps ~
 which_key ~
   boolean  Label the `<leader>cn` group with which-key when installed.
   Default: `true`. No-op if which-key.nvim is not installed.
+
+timestamp ~
+  Table controlling |:Insert-timestamp|. Default: >lua
+    timestamp = { utc = false }
+<
+  `utc`  boolean  Emit every timestamp in UTC without passing `--utc`
+                  each time. Default: `false`. An explicit `--utc` still
+                  works; it can only turn UTC on, never off.
+
+snippets ~
+  Table controlling |:Insert-snippet|. Default: >lua
+    snippets = { paths = {} }
+<
+  `paths`  string[]  VSCode-format snippet files to load. Paths are
+                     expanded, so `~` and `$VAR` work. Example: >lua
+    snippets = {
+      paths = { vim.fn.stdpath("config") .. "/snippets/lua.json" },
+    }
+<
 
 format ~
   Table controlling the `:Format` command tree. Default: >lua
@@ -209,7 +238,7 @@ Examples: >
 ------------------------------------------------------------------------------
 5.4  location                                          *:Insert-location*
 
-  :Insert location [mode]
+  :Insert location [mode] [range]
 
 Current cursor position as `path:line`.
 
@@ -218,10 +247,21 @@ mode ~
   `abs`  absolute
   `lua`  Lua module path
 
+range ~
+  Emit `path:L1-L2` for a line span instead of a single line — useful for
+  code-review comments and GitHub-style links.
+
+  The span comes from the command's range. In visual mode, pressing `:`
+  inserts `'<,'>` for you. Without an explicit range, the last visual
+  selection's marks are used as a fallback. A single-line range has no span
+  to express and collapses back to `path:42`.
+
 Examples: >
   :Copy location             → lua/buffer_ctx/ops/filepath.lua:42
   :Copy location abs         → C:/…/filepath.lua:42
   :Copy location lua         → buffer_ctx.ops.filepath:42
+  :'<,'>Copy location range  → lua/buffer_ctx/ops/filepath.lua:L10-L20
+  :10,20Copy location range  → lua/buffer_ctx/ops/filepath.lua:L10-L20
 <
 
 ------------------------------------------------------------------------------
@@ -271,24 +311,43 @@ type ~
   `param`  [n] [t]   ---@param name type
   `return` [type]    ---@return type
   `alias`  [n] [t]   ---@alias Name string
+  `overload`  [sig]  ---@overload fun(a: string): boolean
+  `diagnostic` [c]   ---@diagnostic disable-next-line: code
+  `deprecated` [r]   ---@deprecated Reason
   `function`         guided dialog → multi-line annotation block
 
 Arguments not provided on the command line are prompted via `vim.fn.input`.
+
+`overload` and `deprecated` take free text that may contain spaces; the whole
+remainder of the command line is used, not just the first word. `overload`
+wraps the signature in `fun(…)` if you leave that off.
+
+`:Copy annotation function` joins the generated block into one `\n`-separated
+clipboard string.
 
 Examples: >
   :Insert annotation module              → ---@module 'buffer_ctx.ops.module'
   :Insert annotation class MyService     → ---@class MyService
   :Insert annotation param name string   → ---@param name string
+  :Insert annotation overload fun(): nil → ---@overload fun(): nil
+  :Insert annotation diagnostic unused
+      → ---@diagnostic disable-next-line: unused
+  :Insert annotation deprecated use new  → ---@deprecated use new
   :Insert annotation function            → (interactive dialog)
 <
 
 ------------------------------------------------------------------------------
 5.8  boilerplate                                    *:Insert-boilerplate*
 
-  :Insert boilerplate {template} [name]
+  :Insert boilerplate [template] [name]
 
 Insert (or copy) a multi-line code template. `:Copy boilerplate` joins lines
 with newline before copying.
+
+Called without a template name, a |vim.ui.select| picker of the available
+keys is shown, so the feature does not depend on tab completion. With
+telescope.nvim installed, see |buffer-ctx-telescope| for a picker that also
+previews the generated lines.
 
 Templates: >
   lua-module           Lua module skeleton with setup()
@@ -304,9 +363,15 @@ Templates: >
   html-aside           <aside> block
   html-pagination      Pagination <nav>
   html-accordion       <details> accordion
+  html-table           <table> with thead + 3x3 body
+  html-section         <section> with h2 + p
+  lua-test             busted stub (describe/it/assert.are.equal)
+  lua-enum             Enum table + ---@alias block
+  md-frontmatter       YAML frontmatter block
 <
 
 Examples: >
+  :Insert boilerplate                     (interactive picker)
   :Insert boilerplate lua-module
   :Insert boilerplate lua-class MyService
   :Insert boilerplate nvim-autocmd MyAuGroup
@@ -319,12 +384,89 @@ Examples: >
   :Insert env {VAR}
 
 Insert or copy the value of an environment variable. A leading `$` is
-stripped automatically.
+stripped automatically. Tab completion lists the variables currently set.
 
 Examples: >
   :Copy env GOPATH
   :Insert env HOME
   :Copy env $PATH
+<
+
+------------------------------------------------------------------------------
+5.10  date                                                *:Insert-date*
+
+  :Insert date
+
+Shorthand for `:Insert timestamp iso-date`. Honours the `timestamp.utc`
+config option, see |buffer-ctx-config|.
+
+Example: >
+  :Insert date               → 2026-06-22
+<
+
+------------------------------------------------------------------------------
+5.11  snippet                                          *:Insert-snippet*
+
+  :Insert snippet [name]
+
+Insert a snippet from the VSCode-format files listed in `snippets.paths`,
+see |buffer-ctx-config|. Without a name, a |vim.ui.select| picker is shown.
+
+A snippet resolves by its key or by its `prefix`, so both of these work for
+the file below: >
+  :Insert snippet "For Loop"
+  :Insert snippet forl
+<
+File format: >
+  {
+    "For Loop": {
+      "prefix": "forl",
+      "body": ["for ${1:i} = 1, ${2:10} do", "\t$0", "end"],
+      "description": "numeric for loop"
+    }
+  }
+<
+Placeholders are flattened rather than expanded: `${1:i}` becomes `i`,
+`${1|a,b|}` becomes `a`, and bare tabstops (`$0`, `$1`) are removed.
+buffer-ctx inserts plain text — for real tabstop navigation use a dedicated
+snippet engine.
+
+------------------------------------------------------------------------------
+5.12  git                                                  *:Insert-git*
+
+  :Insert git [mode]
+
+Git revision info for the repository the current buffer belongs to. The query
+runs in the buffer's own directory, so the result stays correct after |:cd|.
+
+mode ~
+  `short`   abbreviated commit hash (default)
+  `hash`    full commit hash
+  `branch`  current branch name
+  `tag`     nearest tag, else abbreviated hash (git describe --tags --always)
+
+Requires the `git` executable in $PATH. On a detached HEAD, `branch` reports
+an error instead of returning the literal string "HEAD".
+
+Examples: >
+  :Insert git                → a577942
+  :Copy   git hash           → a577942dedbcb4e8a4e9ffb3529be12b27b58736
+  :Copy   git branch         → main
+<
+
+------------------------------------------------------------------------------
+5.13  linecount / bufnr                              *:Insert-linecount*
+                                                        *:Insert-bufnr*
+
+  :Insert linecount
+  :Insert bufnr
+
+Line count of the current buffer, and the current buffer handle. Useful for
+documentation references and for Lua scripting/debugging respectively.
+
+Examples: >
+  :Insert linecount          → 348
+  :Insert bufnr              → 3
 <
 
 ==============================================================================
@@ -554,10 +696,28 @@ Both `:Insert` and `:Copy` provide context-aware tab completion:
   `:Insert uuid <Tab>`            → standard, compact, upper, braced
   `:Insert annotation <Tab>`      → module, class, field, param, return, …
   `:Insert boilerplate <Tab>`     → lua-module, lua-class, nvim-autocmd, …
-  `:Insert location <Tab>`        → cwd, abs, lua
+  `:Insert location <Tab>`        → cwd, abs, lua, range
+  `:Insert git <Tab>`             → hash, short, branch, tag
+  `:Insert snippet <Tab>`         → snippet keys and prefixes from your files
+  `:Insert env <Tab>`             → environment variables currently set
 
 ==============================================================================
-11. HEALTH CHECK                                     *buffer-ctx-health*
+11. TELESCOPE INTEGRATION                          *buffer-ctx-telescope*
+
+With telescope.nvim installed, register the extension: >lua
+  require("telescope").load_extension("buffer_ctx")
+<
+Then: >
+  :Telescope buffer_ctx boilerplate
+<
+The picker lists every boilerplate template with its description and previews
+the exact lines it would generate. Selecting one inserts it at the cursor.
+
+Telescope is an optional dependency — the extension file is only ever loaded
+by Telescope itself, so the plugin works standalone without it.
+
+==============================================================================
+12. HEALTH CHECK                                     *buffer-ctx-health*
 
 >
   :checkhealth buffer_ctx
@@ -575,7 +735,7 @@ Checks:
   - Mark subsystem: enabled flag, `:Mark` and `:MarkLineToggle` registered
 
 ==============================================================================
-12. ARCHITECTURE                                *buffer-ctx-architecture*
+13. ARCHITECTURE                                *buffer-ctx-architecture*
 
   plugin/buffer_ctx.lua        Load guard
   lua/buffer_ctx/
@@ -614,16 +774,22 @@ Checks:
       timestamp.lua            Timestamp generation (8 formats)
       uuid.lua                 UUID v4 generation
       annotation.lua           LuaLS annotation lines (with interactive dialog)
-      location.lua             path:line from cursor position
-      env.lua                  Environment variable lookup
+      location.lua             path:line (and path:L1-L2) from cursor/range
+      env.lua                  Environment variable lookup + completion list
+      git.lua                  Git revision info (hash/short/branch/tag)
+      bufinfo.lua              Buffer line count and handle
+      snippet.lua              VSCode-format snippet loading
       boilerplate/
         init.lua               Template registry + dispatch
         templates/
           lua.lua              Lua code templates
           nvim.lua             Neovim-specific templates
           html.lua             HTML snippet templates
+          markdown.lua         Markdown templates (frontmatter)
           guard.lua            Guard clause pattern
           utils.lua            Shared prompt helpers
+  lua/telescope/_extensions/
+    buffer_ctx.lua              Optional Telescope boilerplate picker
   docs/
     BINDINGS.md                 Machine-readable keymap/command cheatsheet
     ROADMAP/
