@@ -48,7 +48,14 @@ Zuletzt geschlossen (2026-07-18):
 - `lib.map`-Soft-Bridge für Keymaps (`util/map.lua`).
 - `@see`-Modulquerverweise.
 - CI-Workflow (`.github/workflows/ci.yml`): Specs auf stable + nightly,
-  `:checkhealth`-Smoke-Test, stylua/luacheck (noch advisory).
+  `:checkhealth`-Smoke-Test, `luacheck` als harter Gate (0 Warnungen),
+  `stylua --check` advisory.
+- Zwei tote Code-Reste aus dem `lib.lua.uuid`-Refactor entfernt (`rand_hex`,
+  ungenutztes `notify`-require) — von luacheck gefunden.
+- `mark.yank` schrieb `"+"` direkt statt über `util/clip` — umgeleitet; damit
+  erhält es die lib.nvim-Fallback-Kette und den Unnamed-Register-Write.
+  `clip.copy` überlebt jetzt einen fehlenden Clipboard-Provider (pcall-Guard
+  + Warnung) statt den Copy komplett fallen zu lassen.
 
 Verbleibender, optionaler Folgeschritt:
 
