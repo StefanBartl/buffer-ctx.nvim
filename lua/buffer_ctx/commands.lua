@@ -1,4 +1,11 @@
 ---@module 'buffer_ctx.commands'
+---@brief :Insert / :Copy dispatch — resolves a subcommand to an ops/* handler
+--- and routes the result into a sink (cursor insert or clipboard copy).
+---@see buffer_ctx.format for the sibling :Format command tree
+---@see buffer_ctx.mark for the sibling :Mark command tree
+---@see buffer_ctx.util.cursor insert sink
+---@see buffer_ctx.util.clip copy sink
+
 local M = {}
 
 local notify    = require("buffer_ctx.util.notify")

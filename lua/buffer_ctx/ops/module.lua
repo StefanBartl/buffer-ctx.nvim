@@ -1,4 +1,7 @@
 ---@module 'buffer_ctx.ops.module'
+---@see buffer_ctx.util.path.get_module_path for the path→module derivation
+---@see buffer_ctx.ops.filepath for the raw-path counterpart
+
 local M = {}
 local api = vim.api
 local fn  = vim.fn

@@ -1,4 +1,8 @@
 ---@module 'buffer_ctx.ops.filepath'
+---@see buffer_ctx.util.path for the pure path helpers this builds on
+---@see buffer_ctx.ops.location for the "path:line" variant
+---@see buffer_ctx.ops.module for the Lua-module-name variant
+
 local M = {}
 local api = vim.api
 local fn  = vim.fn
