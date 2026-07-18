@@ -1,47 +1,5 @@
 # buffer-ctx.nvim — Roadmap
 
-## Implemented (v0.1)
-
-- `:Insert` / `:Copy` with shared subcommand catalog
-- `filepath` — buffer path (cwd/abs/nvim, lua/unix/win, depth)
-- `filename` — basename with/without extension
-- `module` — Lua module path as require() / @module / js / c / generic
-- `location` — path:line of current cursor
-- `timestamp` — 8 formats, UTC flag
-- `uuid` — v4, 4 formats
-- `annotation` — module/class/field/param/return/alias/function (interactive)
-- `boilerplate` — 13 templates across Lua, Neovim, HTML, guard
-- `env` — environment variable lookup
-- Smart tab completion per subcommand
-- 3 configurable keymaps: `<leader>cnl/m/f`
-- Lua API: `setup()`, `insert()`, `copy()`
-- `:checkhealth buffer_ctx`
-- Optional lib.nvim (soft dependency, native fallback throughout): `lib.nvim.notify`
-  for notifications, `lib.nvim.map` for keymaps, plus path/clipboard helpers
-- Optional which-key: `<leader>cn` group label when installed (`which_key = false` to disable)
-- `config/` (DEFAULTS + merge) and `bindings/` (keymaps, usrcmds, autocmds, which_key) module split
-- `docs/BINDINGS.md` — machine-readable keymap/command cheatsheet
-- `docs/TESTS/` — headless spec suite for `ops/*`, `util/path.lua`, `format/*`, and `mark/*`
-- CI (`.github/workflows/ci.yml`) — specs on stable + nightly, checkhealth smoke test
-
----
-
-## Qualität & Checklist-Audits
-
-buffer-ctx.nvim wurde gegen die drei persönlichen Lua/Neovim-Checklisten
-auditiert (2026-07-04, Nacharbeit abgeschlossen 2026-07-18):
-
-- [Arch&Coding.md](Arch&Coding.md) — Architektur- & Coding-Regeln
-- [Zentral-Prinzipien.md](Zentral-Prinzipien.md) — zentrale Modul-Prinzipien
-- [Checklist.md](Checklist.md) — Master-Checklist (Schnell-Check/PR/Coding)
-
-**Bilanz:** alle drei Audits sind abgearbeitet, es bleiben nur die bewussten
-Design-Entscheidungen (kein `safe_call`-Envelope, funktionaler Stil statt
-Metatables, README englisch). Sortier-/Datenstruktur-/Bit-Operationen-Kapitel
-sind n/a (kein eigener Algorithmus-Code). **Keine offenen Punkte.**
-
----
-
 ## Geplante Features
 
 ### High Priority
@@ -98,3 +56,8 @@ sind n/a (kein eigener Algorithmus-Code). **Keine offenen Punkte.**
   Timestamps standardmäßig UTC sind ohne manuellen `--utc` Flag
 
 ---
+
+Checklist-Audits (Architektur/Coding-Regeln, Master-Checklist, Zentrale
+Prinzipien): [Arch&Coding.md](Arch&Coding.md), [Checklist.md](Checklist.md),
+[Zentral-Prinzipien.md](Zentral-Prinzipien.md) — alle drei vollständig
+erfüllt, keine offenen Punkte.
