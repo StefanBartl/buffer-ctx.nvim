@@ -35,6 +35,13 @@ function M.check()
     vim.health.info("lib.nvim not found — using plain vim.notify (optional dependency)")
   end
 
+  local map_ok, map_mod = pcall(require, "buffer_ctx.util.map")
+  if map_ok and map_mod.using_lib() then
+    vim.health.ok("lib.nvim detected — using lib.nvim.map for keymaps (optional dependency)")
+  else
+    vim.health.info("lib.nvim not found — using plain vim.keymap.set (optional dependency)")
+  end
+
   local wk_ok, wk_mod = pcall(require, "buffer_ctx.bindings.which_key")
   if wk_ok and wk_mod.available() then
     vim.health.ok("which-key detected — <leader>cn group label registered (optional dependency)")
