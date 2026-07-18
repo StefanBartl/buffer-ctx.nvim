@@ -8,7 +8,10 @@
 ---   :MarkLineToggle   →  :Mark toggle
 ---   :MarkLinesYank    →  :Mark yank
 
+---@see buffer_ctx.util.map for the lib.nvim keymap soft bridge
+
 local notify = require("buffer_ctx.util.notify")
+local map    = require("buffer_ctx.util.map")
 
 local M = {}
 
@@ -161,14 +164,14 @@ function M.setup(opts)
   local km = type(opts) == "table" and opts.keymaps or nil
   if km and km ~= false then
     if type(km.toggle) == "string" then
-      vim.keymap.set("n", km.toggle, function()
+      map.set("n", km.toggle, function()
         M.toggle(vim.api.nvim_win_get_cursor(0)[1])
-      end, { desc = "[buffer-ctx] Mark: toggle line", silent = true })
+      end, "[buffer-ctx] Mark: toggle line")
     end
     if type(km.yank) == "string" then
-      vim.keymap.set("n", km.yank, function()
+      map.set("n", km.yank, function()
         M.yank()
-      end, { desc = "[buffer-ctx] Mark: yank marked lines", silent = true })
+      end, "[buffer-ctx] Mark: yank marked lines")
     end
   end
 end
