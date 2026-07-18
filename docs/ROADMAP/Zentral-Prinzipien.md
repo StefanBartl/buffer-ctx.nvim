@@ -17,14 +17,15 @@ keine harte Abhängigkeit auf die persönliche Library.
 | Bereich | lib-Wrapper | Status |
 | --- | --- | --- |
 | Notify | `lib.nvim.notify` (Fallback `vim.notify`) | ✅ (siehe `util/notify.lua`, `M.using_lib()` für `:checkhealth`) |
-| Keymaps | `lib.map` | ❌ nicht genutzt — `bindings/keymaps.lua` und `mark/init.lua` rufen `vim.keymap.set` direkt. Kein Soft-Bridge wie bei `cascade.nvim`s `util/lib.lua`. Kleiner, unkritischer Nice-to-have. |
-| Autocmd-Gruppe | `lib.augroup` | n/a — buffer-ctx registriert **keine** Autocmds (`bindings/autocmds.lua` ist reiner No-Op-Stub). |
+| Keymaps | `lib.nvim.map` (Fallback `vim.keymap.set`) | ✅ seit 2026-07-18 — Bridge [`util/map.lua`](../../lua/buffer_ctx/util/map.lua), genutzt von `bindings/keymaps.lua` und `mark/init.lua`; `M.using_lib()` für `:checkhealth`. |
+| Autocmd-Gruppe | `lib.augroup` | ⚠️ nicht genutzt — buffer-ctx registriert genau **einen** Autocmd (`BufferCtxMarkCleanup`, `BufDelete`/`BufWipeout` in `mark/init.lua`), zu simpel für einen Wrapper. `bindings/autocmds.lua` bleibt No-Op-Stub. |
 | `lib.cross` / memo / lazy / hover_select | — | n/a bzw. eigene Lösung: Cross-Plattform durch reinen String-/Pfad-Handling-Code in `util/path.lua` (siehe Cross-Platform-Fix vom 2026-07-04: `relative_to_cwd` normalisiert jetzt immer auf `/`). |
 
-## 1. Events bündeln, Logik entkoppeln — n/a (keine Autocmds)
+## 1. Events bündeln, Logik entkoppeln — ✅ (praktisch keine Events)
 
-- buffer-ctx registriert **keine** eigenen `nvim_create_autocmd`-Aufrufe. `bindings/autocmds.lua` existiert nur als dokumentierter Erweiterungspunkt (aktuell No-Op).
-- Damit entfällt das ganze Prinzip strukturell — es gibt nichts zu entkoppeln.
+- Einziger registrierter Autocmd ist `BufferCtxMarkCleanup` (`BufDelete`/`BufWipeout` in `mark/init.lua`), der ausschließlich Mark-State für verschwundene Buffer freigibt — eigene Augroup, ein Callback, nichts zu bündeln.
+- `bindings/autocmds.lua` existiert weiterhin nur als dokumentierter Erweiterungspunkt (No-Op).
+- Damit entfällt das Prinzip strukturell — es gibt keine Event-Logik zu entkoppeln.
 
 ## 2. Eigene Logik lazy laden — ✅
 
@@ -37,9 +38,11 @@ keine harte Abhängigkeit auf die persönliche Library.
 - Jeder Dispatch (`commands.lua`s `DISPATCH`-Tabelle) ruft **genau einen** `ops/*`-Handler auf, der intern **einmal** `api.nvim_buf_get_name(0)` (bzw. Cursor-Position) abfragt — kein Redundanz-Problem, da nie mehrere `ops`-Funktionen pro Aufruf kombiniert werden.
 - Anders als `cascade.nvim` (das ein zentrales `core/context.lua` hat, weil dort mehrere Feature-Module denselben Cursor-Kontext pro Tastendruck brauchen) gibt es bei buffer-ctx keinen Bedarf für ein geteiltes Context-Objekt — jede Subcommand-Funktion ist bereits minimal in ihren API-Zugriffen.
 
-## 4. Autocommand-Gruppen sauber nutzen — n/a
+## 4. Autocommand-Gruppen sauber nutzen — ✅
 
-Keine Autocmds registriert (siehe Punkt 1).
+Der einzige Autocmd hängt in einer eigenen, mit `clear = true` angelegten
+Augroup (`BufferCtxMarkCleanup`) — kein Anhängen an fremde oder die Default-Gruppe,
+kein Doppel-Registrieren bei wiederholtem `setup()`.
 
 ## 5. Event oder Command? — ✅
 
@@ -82,11 +85,12 @@ Keine Autocmds registriert (siehe Punkt 1).
 
 ## Fazit
 
-buffer-ctx.nvim ist strukturell sehr nah an den Zentralen Prinzipien — das
-Fehlen von Autocmds und Hot-Paths macht die meisten Punkte trivial erfüllt
-statt aktiv erarbeitet. Einziger nennenswerter Lücke ist der fehlende
-`lib.map`-Soft-Bridge für Keymaps (unkritisch, siehe [Arch&Coding.md](./Arch&Coding.md)
-für die sicherheitsrelevanteren offenen Punkte in `mark/init.lua`).
+buffer-ctx.nvim erfüllt die Zentralen Prinzipien — das weitgehende Fehlen von
+Autocmds und Hot-Paths macht die meisten Punkte trivial erfüllt statt aktiv
+erarbeitet. Die letzte offene Lücke, der fehlende `lib.map`-Soft-Bridge für
+Keymaps, ist seit 2026-07-18 mit [`util/map.lua`](../../lua/buffer_ctx/util/map.lua)
+geschlossen. **Keine offenen Punkte** — siehe [Checklist.md](./Checklist.md)
+für den einzigen verbleibenden optionalen Folgeschritt (stylua-Gate).
 
 ## Literatur und Referenzen
 

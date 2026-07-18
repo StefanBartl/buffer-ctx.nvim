@@ -45,7 +45,7 @@ Legende: ✅ erfüllt · ⚠️ bewusste Abweichung / offener Punkt · ❌ Lück
 
 buffer-ctx ist **funktional**, nicht OO: keine Metatables, kein `__index`, keine Getter/Setter-Objekte außer dem simplen `config.get()`. Für ein zustandsarmes Text-Utility-Plugin die einfachere, testbarere Wahl — kein Handlungsbedarf.
 
-## §5 Dokumentation & Annotationen — ✅ (2 Abweichungen)
+## §5 Dokumentation & Annotationen — ✅ (1 Abweichung)
 
 | Regel | Status | Beleg / Anmerkung |
 | --- | --- | --- |
@@ -53,7 +53,7 @@ buffer-ctx ist **funktional**, nicht OO: keine Metatables, kein `__index`, keine
 | Kommentare pro Funktion `@param/@return` | ✅ | Durchgängig in `ops/*`, inkl. `@return nil`-Fällen. |
 | Konsistentes englisches Naming | ✅ | snake_case durchgehend, englisch. |
 | Explizite Typisierungen `@alias/@field` | ✅ | Zentral in [`@types.lua`](../../lua/buffer_ctx/@types.lua) (`BufferCtx.Config`, `BufferCtx.FilepathOpts`, `BufferCtx.MarkConfig`, …). |
-| Modulverlinkung `@see` | ⚠️ | Kaum genutzt — kein `@see`-Tag im Code gefunden. Kleiner, unkritischer Nice-to-have. |
+| Modulverlinkung `@see` | ✅ | Seit 2026-07-18: `@see`-Querverweise in `commands.lua`, `format/init.lua`, `config/init.lua`, `ops/{filepath,location,module,boilerplate}.lua` und `util/{clip,map}.lua` — verlinkt die nicht-offensichtlichen Beziehungen (die drei pfadförmigen `ops`-Varianten untereinander, Command-Trees zu ihren Sinks, Soft-Dependency-Bridges). |
 | **`/types`-Ordner pro Subverzeichnis** | ✅ | Seit 2026-07-04: `format/types/init.lua`, `mark/types/init.lua`, `ops/types/init.lua` (deckt auch `ops/boilerplate/` mit ab) als Anker-Stubs (`return {}`), analog zu `cascade.nvim`s `lists/types/init.lua`/`cycle/types/init.lua`. `bindings/`, `config/`, `util/` bleiben ohne eigenen Anker — Infrastruktur/Utility statt eigene Feature-Domain, gleiche Abgrenzung wie bei `cascade.nvim`. |
 | README deutsch + `doc/*.txt` englisch | ⚠️ | Diese Regel gilt für **`nvim/config`-Module**. buffer-ctx ist ein **publiziertes Standalone-Plugin** → README bewusst **englisch** (gleiche Konvention wie bei `cascade.nvim`, `sessions.nvim`). |
 
@@ -94,22 +94,18 @@ Kein persistenter Cache, keine Dual-Representation, keine FIFO/History-Strukture
 
 ## Fazit & Plan
 
-buffer-ctx.nvim folgt den Regeln weitgehend. **Bewusste, unkritische Abweichungen:**
+buffer-ctx.nvim folgt den Regeln vollständig. Alle konkreten Funde aus diesem
+Audit sind abgearbeitet (Stand 2026-07-18); es bleiben nur die drei bewussten
+Design-Entscheidungen.
+
+**Bewusste, unkritische Abweichungen** (kein Handlungsbedarf):
 
 1. **Kein `safe_call`/Error-Envelope** (§1/§7) — direktes `result,err`-Tupel genügt dem Scope.
 2. **Funktionaler Stil statt Metatables** (§4) — passender für ein zustandsarmes Utility-Plugin.
 3. **README englisch** (§5) — Plugin ist veröffentlicht, nicht Config-Modul.
 
-**Behoben (2026-07-04, nach diesem Audit):**
-
-1. ~~`mark/init.lua`: fehlende `nvim_buf_is_valid()`-Guards~~ — behoben in `M.toggle`/`M.yank`.
-2. ~~`mark/init.lua`: kein Cleanup der `marked`-Tabelle bei Buffer-Löschung~~ — `BufDelete`/`BufWipeout`-Autocmd ergänzt.
-3. ~~Fehlende `/types`-Anker-Ordner pro Submodul~~ — `format/`, `mark/`, `ops/` haben jetzt Anker-Stubs.
-4. ~~`docs/TESTS/`-Abdeckung fehlte für `format/*` und `mark/*`~~ — `format_spec.lua`/`mark_spec.lua` ergänzt; dabei zwei echte Bugs gefunden und behoben (`table_fmt.format_table_at_cursor` meldete auf Erfolg fälschlich einen Fehler; `text_width.reflow_buffer` crashte auf jeder mehrzeiligen Eingabe).
-
-**Verbleibender offener Punkt** (niedrige Priorität, optional):
-
-1. **Kein CI/Linter** (§7 der Master-Checkliste) — siehe `Checklist.md`-Audit.
+**Keine offenen Punkte.** Der zuletzt verbliebene Punkt (kein CI/Linter) ist mit
+`.github/workflows/ci.yml` erledigt — siehe [Checklist.md](./Checklist.md) §7.
 
 ## Literatur und Referenzen
 
