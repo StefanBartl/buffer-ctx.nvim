@@ -11,15 +11,6 @@ local ok_lib_uuid, lib_uuid = pcall(require, "lib.lua.uuid")
 -- seeds itself at load time).
 math.randomseed(vim.uv.hrtime())
 
-local function rand_hex(n)
-  local h = "0123456789abcdef"
-  local s = {}
-  for _ = 1, n do
-    s[#s + 1] = h:sub(math.random(1, 16), math.random(1, 16))
-  end
-  return table.concat(s)
-end
-
 ---Generate a UUID v4 string
 ---@return string  e.g. "550e8400-e29b-41d4-a716-446655440000"
 function M.generate()

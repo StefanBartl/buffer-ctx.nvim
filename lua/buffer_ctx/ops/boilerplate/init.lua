@@ -4,7 +4,6 @@
 ---@see buffer_ctx.ops.boilerplate.templates.lua and its siblings for the
 --- template implementations REGISTRY dispatches to
 
-local notify = require("buffer_ctx.util.notify")
 local M = {}
 
 ---@class BufferCtx.Boilerplate.Entry
