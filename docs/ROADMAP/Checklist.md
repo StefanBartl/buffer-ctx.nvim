@@ -75,15 +75,9 @@ Pure Functions ✅, Test-Entry `docs/TESTS/run.lua` ✅ (jetzt inkl.
 - CI: `.github/workflows/ci.yml` seit 2026-07-18 ✅ — drei Jobs, alle grün:
   - **test**: `docs/TESTS/run.lua` headless auf Neovim `stable` **und** `nightly`.
   - **health**: `setup()` + `:checkhealth buffer_ctx` müssen sauber laden.
-  - **lint**: `luacheck` als **harter Gate** (0 Warnungen / 0 Fehler über 47
-    Dateien), `stylua --check` bewusst advisory (`continue-on-error` auf
-    **Step**-Ebene — ein fehlgeschlagener Step überspringt sonst die
-    Folge-Steps, wodurch luacheck zunächst gar nicht lief). Konfig:
-    `.stylua.toml`, `.luacheckrc`.
-    **Einziger verbleibender, optionaler Folgeschritt:** `stylua lua/ docs/TESTS/`
-    einmal anwenden, Diff reviewen, dann auch dieses Gate scharf schalten.
-  - luacheck fand dabei zwei echte Leichen aus dem `lib.lua.uuid`-Refactor
-    (`rand_hex` unerreichbar, ungenutztes `notify`-require in `boilerplate/`).
+  - **lint**: `stylua --check` (gepinnt auf 2.5.2) **und** `luacheck`
+    (0 Warnungen / 0 Fehler über 47 Dateien) — beide als harter Gate.
+    Konfig: `.stylua.toml`, `.luacheckrc`.
 - CI läuft bewusst **ohne** `lib.nvim`: die Library ist Soft-Dependency, damit
   deckt CI den Standalone-Fallback-Pfad ab (`docs/TESTS/run.lua` bricht seither
   nicht mehr ab, wenn `lib.nvim` fehlt).
@@ -128,7 +122,7 @@ dieses Repo.
 | Performance | keine Hot-Loops, gebündelte Writes, `mark`-State per `BufDelete` bereinigt | keine |
 | Doku/Annotation | zentrales `@types.lua` + Subdir-Anker + `@see`-Links | keine |
 | Tests | `docs/TESTS/` Suite grün (4 Specs), in CI auf stable + nightly | keine |
-| Tooling | CI vorhanden; stylua-Gate noch advisory | einmalig `stylua` anwenden, dann Gate scharf schalten |
+| Tooling | CI vorhanden; stylua + luacheck beide harte Gates | keine |
 | checkhealth-Modul? | ✅ `:checkhealth buffer_ctx` (lib.nvim/which-key/bindings/format/mark-Status) | keine |
 
 ---
@@ -138,12 +132,7 @@ dieses Repo.
 buffer-ctx.nvim erfüllt die Master-Checklist in allen für ein
 Buffer-Context-Utility-Plugin relevanten Punkten. **Bewusste Abweichungen**
 (kein Handlungsbedarf): kein `safe_call`-Envelope, funktionaler Stil,
-README englisch (Plugin-Konvention).
-
-**Verbleibender, optionaler Folgeschritt:**
-
-1. `stylua lua/ docs/TESTS/` einmal anwenden, Diff reviewen, danach im
-   CI-Lint-Job `continue-on-error` entfernen (§7).
+README englisch (Plugin-Konvention). **Keine offenen Punkte.**
 
 ## Literatur und Referenzen
 
