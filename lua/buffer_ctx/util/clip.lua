@@ -12,21 +12,39 @@ local ok_lib_clipboard, lib_copy_to_clipboard = pcall(require, "lib.nvim.cross.c
 
 ---Copy text to the system clipboard (+ register) and notify
 ---@param text string
-function M.copy(text)
+---@param opts? { silent?: boolean }  silent suppresses only the success
+--- message, so callers that report their own ("Copied N lines") do not notify
+--- twice; warnings are always shown.
+---@return boolean ok  false when no clipboard provider accepted the text
+--- (the unnamed register is still set)
+function M.copy(text, opts)
   if type(text) ~= "string" or text == "" then
     notify.warn("nothing to copy")
-    return
+    return false
   end
+  -- Guarded: without a clipboard provider (headless CI, minimal containers,
+  -- no xclip/wl-copy) a "+" write is at best a silent no-op and at worst
+  -- raises. Neither should cost the user the copy — the unnamed register
+  -- below still carries the text.
+  local clipboard_ok
   if ok_lib_clipboard then
-    lib_copy_to_clipboard(text)
+    clipboard_ok = pcall(lib_copy_to_clipboard, text)
   else
-    vim.fn.setreg("+", text)
+    clipboard_ok = pcall(vim.fn.setreg, "+", text)
   end
+
   -- The unnamed register is always set directly: it's Vim's own register
   -- state, not something a clipboard helper (lib.nvim's or otherwise) owns.
   vim.fn.setreg('"', text)
+
   local preview = #text > 60 and (text:sub(1, 57) .. "...") or text
-  notify.info("copied: " .. preview)
+  if not clipboard_ok then
+    notify.warn("no clipboard provider — copied to the unnamed register only: " .. preview)
+  elseif not (opts and opts.silent) then
+    notify.info("copied: " .. preview)
+  end
+
+  return clipboard_ok
 end
 
 return M
