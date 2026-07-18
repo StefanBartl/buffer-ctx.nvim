@@ -2,13 +2,10 @@
 std = "luajit"
 cache = true
 
--- Neovim injects `vim` globally; it is read-only from the plugin's side.
-read_globals = { "vim" }
-
--- The spec files receive the harness as a parameter, nothing global.
-files["docs/TESTS/"] = {
-  read_globals = { "vim" },
-}
+-- Neovim injects `vim` globally. It must be a writable global, not a
+-- read_global: plugins legitimately assign to vim.g.*, vim.bo.* and vim.opt.*,
+-- and read_globals would flag every one of those as "setting read-only field".
+globals = { "vim" }
 
 ignore = {
   "212/self", -- unused self in method-style definitions
