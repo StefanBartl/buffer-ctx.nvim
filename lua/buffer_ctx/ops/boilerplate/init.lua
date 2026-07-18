@@ -105,7 +105,52 @@ local REGISTRY = {
     desc = "HTML <details> accordion",
     has_id = true,
   },
+  {
+    key = "html-table",
+    module = "html",
+    fn = "table",
+    desc = "HTML <table> with thead + 3x3 body",
+    has_id = true,
+  },
+  {
+    key = "html-section",
+    module = "html",
+    fn = "section",
+    desc = "HTML <section> with h2 + p",
+    has_id = true,
+  },
+  {
+    key = "lua-test",
+    module = "lua",
+    fn = "test",
+    desc = "busted test stub (describe/it/assert)",
+    has_id = true,
+  },
+  {
+    key = "lua-enum",
+    module = "lua",
+    fn = "enum",
+    desc = "Enum table + ---@alias block",
+    has_id = true,
+  },
+  {
+    key = "md-frontmatter",
+    module = "markdown",
+    fn = "frontmatter",
+    desc = "YAML frontmatter block",
+    has_id = true,
+  },
 }
+
+---Descriptions keyed by template name, for pickers and vim.ui.select
+---@return table<string, string>
+function M.describe()
+  local out = {}
+  for _, e in ipairs(REGISTRY) do
+    out[e.key] = e.desc
+  end
+  return out
+end
 
 ---List all registered template keys
 ---@return string[]

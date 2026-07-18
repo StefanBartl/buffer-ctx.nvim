@@ -9,6 +9,16 @@ return {
     filepath_copy = "<leader>cnf",
   },
   commands = true,
+  timestamp = {
+    -- Sticky UTC: when true, every :Insert/:Copy timestamp is UTC without
+    -- passing --utc each time. An explicit --utc still works (and wins).
+    utc = false,
+  },
+  snippets = {
+    -- VSCode-format snippet files loaded by :Insert snippet {name}.
+    -- e.g. { vim.fn.stdpath("config") .. "/snippets/lua.json" }
+    paths = {},
+  },
   format = {
     enable = true,
     command = "Format",

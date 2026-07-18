@@ -53,6 +53,7 @@ local specs = {
   "ops_spec.lua",
   "format_spec.lua",
   "mark_spec.lua",
+  "features_spec.lua",
 }
 
 local failed = 0

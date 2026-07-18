@@ -99,4 +99,46 @@ function M.accordion(id)
   }
 end
 
+function M.table(id)
+  id = id or "TODO"
+  return {
+    string.format('<table id="#tbl-%s">', id),
+    "  <thead>",
+    "    <tr>",
+    "      <th></th>",
+    "      <th></th>",
+    "      <th></th>",
+    "    </tr>",
+    "  </thead>",
+    "  <tbody>",
+    "    <tr>",
+    "      <td></td>",
+    "      <td></td>",
+    "      <td></td>",
+    "    </tr>",
+    "    <tr>",
+    "      <td></td>",
+    "      <td></td>",
+    "      <td></td>",
+    "    </tr>",
+    "    <tr>",
+    "      <td></td>",
+    "      <td></td>",
+    "      <td></td>",
+    "    </tr>",
+    "  </tbody>",
+    "</table>",
+  }
+end
+
+function M.section(id)
+  id = id or "TODO"
+  return {
+    string.format('<section id="#sec-%s">', id),
+    "  <h2></h2>",
+    "  <p></p>",
+    "</section>",
+  }
+end
+
 return M

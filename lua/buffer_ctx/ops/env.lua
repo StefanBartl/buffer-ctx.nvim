@@ -1,4 +1,5 @@
 ---@module 'buffer_ctx.ops.env'
+---@see buffer_ctx.commands for the completion wiring that uses M.list_names
 local M = {}
 
 ---Get the value of an environment variable
@@ -15,6 +16,20 @@ function M.get(var)
     return nil, "$" .. var .. " is not set"
   end
   return val
+end
+
+---List the names of all set environment variables, for tab completion
+---
+--- Uses vim.fn.environ() rather than iterating vim.env: the latter is a
+--- metatable proxy over getenv/setenv and yields nothing under pairs().
+---@return string[]
+function M.list_names()
+  local names = {}
+  for name in pairs(vim.fn.environ()) do
+    names[#names + 1] = name
+  end
+  table.sort(names)
+  return names
 end
 
 return M
