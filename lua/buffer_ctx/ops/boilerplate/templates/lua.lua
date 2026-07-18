@@ -52,4 +52,38 @@ function M.func()
   }
 end
 
+function M.test(subject)
+  subject = subject or utils.get_module_path()
+  return {
+    string.format('describe("%s", function()', subject),
+    "  local subject",
+    "",
+    "  before_each(function()",
+    string.format('    subject = require("%s")', subject),
+    "  end)",
+    "",
+    '  it("TODO: describes the expected behaviour", function()',
+    "    assert.are.equal(nil, subject)",
+    "  end)",
+    "end)",
+  }
+end
+
+function M.enum(enum_name)
+  enum_name = enum_name or "MyEnum"
+  return {
+    string.format("---@alias %s", enum_name),
+    '---| "first"   # TODO: describe',
+    '---| "second"  # TODO: describe',
+    "",
+    string.format("---@type table<string, %s>", enum_name),
+    string.format("local %s = {", enum_name),
+    '  FIRST = "first",',
+    '  SECOND = "second",',
+    "}",
+    "",
+    string.format("return %s", enum_name),
+  }
+end
+
 return M

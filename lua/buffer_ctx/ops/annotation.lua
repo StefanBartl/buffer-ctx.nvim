@@ -56,6 +56,29 @@ function M.get(ann_type, args)
     end
     atype = (atype ~= "") and atype or "string"
     return string.format("---@alias %s %s", aname, atype)
+  elseif t == "overload" then
+    -- Args arrive pre-split on whitespace, so rejoin them: a signature like
+    -- "fun(a: string, b: number): boolean" is several fargs, not one.
+    local sig = (#args > 0) and table.concat(args, " ") or fn.input("Overload signature: ")
+    if not sig or sig == "" then
+      return nil, "overload signature required"
+    end
+    if not sig:match("^fun%s*%(") then
+      sig = "fun(" .. sig .. ")"
+    end
+    return string.format("---@overload %s", sig)
+  elseif t == "diagnostic" then
+    local code = args[1] or fn.input("Diagnostic code: ")
+    if not code or code == "" then
+      return nil, "diagnostic code required"
+    end
+    return string.format("---@diagnostic disable-next-line: %s", code)
+  elseif t == "deprecated" then
+    local reason = (#args > 0) and table.concat(args, " ") or fn.input("Deprecation reason: ")
+    if not reason or reason == "" then
+      return nil, "deprecation reason required"
+    end
+    return string.format("---@deprecated %s", reason)
   elseif t == "function" then
     return M._interactive_function()
   end

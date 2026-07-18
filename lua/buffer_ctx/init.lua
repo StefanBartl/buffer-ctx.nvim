@@ -17,6 +17,11 @@ function M.setup(user_opts)
 
   require("buffer_ctx.bindings").setup(cfg)
 
+  local snippets = cfg.snippets
+  if type(snippets) == "table" and type(snippets.paths) == "table" then
+    require("buffer_ctx.ops.snippet").set_sources(snippets.paths)
+  end
+
   local fmt = cfg.format
   if fmt ~= false then
     local fmt_opts = (fmt == true or fmt == nil) and { enable = true } or fmt
