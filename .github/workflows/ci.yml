@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lint:
+    name: stylua + luacheck (advisory)
+    runs-on: ubuntu-latest
+    # Advisory for now: the existing sources have never been run through stylua,
+    # so a hard gate would fail on formatting drift rather than on real defects.
+    # Flip continue-on-error off once `stylua lua/ docs/TESTS/` has been applied
+    # once and its diff reviewed.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: stylua (check only)
+        uses: JohnnyMorganz/stylua-action@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: latest
+          args: --check lua/ docs/TESTS/
+
+      - name: Install luacheck
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lua5.1 luarocks
+          sudo luarocks install luacheck
+
+      - name: luacheck
+        run: luacheck lua/ docs/TESTS/ plugin/
+
+  test:
+    name: headless specs (Neovim ${{ matrix.nvim }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        nvim: [stable, nightly]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: ${{ matrix.nvim }}
+
+      # lib.nvim is a soft dependency; CI deliberately runs without it so the
+      # standalone fallback path (util/{notify,map,path,clip}.lua) stays green.
+      - name: Run docs/TESTS/run.lua
+        run: nvim --headless -u NONE -c "set rtp+=." -l docs/TESTS/run.lua
+
+  health:
+    name: checkhealth loads
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: rhysd/action-setup-vim@v1
+        with:
+          neovim: true
+          version: stable
+
+      - name: setup() + :checkhealth buffer_ctx
+        run: |
+          nvim --headless -u NONE \
+            -c "set rtp+=." \
+            -c "lua require('buffer_ctx').setup({})" \
+            -c "checkhealth buffer_ctx" \
+            -c "qa!"
