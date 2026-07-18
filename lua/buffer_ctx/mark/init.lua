@@ -9,9 +9,11 @@
 ---   :MarkLinesYank    →  :Mark yank
 
 ---@see buffer_ctx.util.map for the lib.nvim keymap soft bridge
+---@see buffer_ctx.util.clip for the clipboard sink M.yank writes through
 
 local notify = require("buffer_ctx.util.notify")
 local map    = require("buffer_ctx.util.map")
+local clip   = require("buffer_ctx.util.clip")
 
 local M = {}
 
@@ -92,7 +94,10 @@ function M.yank(bufnr)
   end
 
   if #text > 0 then
-    vim.fn.setreg("+", table.concat(text, "\n"))
+    -- Route through the shared clip sink rather than writing "+" directly:
+    -- that is what gives mark.yank the lib.nvim fallback chain, the unnamed
+    -- register write, and the missing-provider guard.
+    clip.copy(table.concat(text, "\n"), { silent = true })
     notify.info("Copied " .. #text .. " marked line(s) to clipboard")
   else
     notify.warn("No marked lines to copy")
