@@ -27,10 +27,12 @@ function M.generate()
     return lib_uuid.generate()
   end
   local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-  return template:gsub("[xy]", function(c)
+  -- Parenthesized: gsub returns (string, count) and the count must not leak
+  -- into the caller's result list.
+  return (template:gsub("[xy]", function(c)
     local v = (c == "x") and math.random(0, 15) or math.random(8, 11)
     return string.format("%x", v)
-  end)
+  end))
 end
 
 ---Format a UUID string
@@ -43,7 +45,7 @@ function M.format(uuid, fmt)
     return lib_uuid.format(uuid, fmt)
   end
   if fmt == "compact" then
-    return uuid:gsub("-", "")
+    return (uuid:gsub("-", ""))
   elseif fmt == "upper" then
     return uuid:upper()
   elseif fmt == "braced" then

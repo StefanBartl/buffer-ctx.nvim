@@ -30,6 +30,9 @@ return function(H)
   H.eq(uuid_op.format(id, "upper"), id:upper(), "uuid upper")
   H.eq(uuid_op.format(id, "braced"), "{" .. id .. "}", "uuid braced")
   H.eq(uuid_op.parse_args({}), "standard", "uuid parse_args default")
+  -- Regression: gsub returns (string, count); the count must not leak out.
+  H.eq(select("#", uuid_op.generate()), 1, "uuid generate returns exactly one value")
+  H.eq(select("#", uuid_op.format(id, "compact")), 1, "uuid format returns exactly one value")
 
   -- timestamp
   H.match(timestamp_op.format_timestamp("unix"), "^%d+$", "timestamp unix is numeric")

@@ -15,12 +15,13 @@ function M.get_module_path(filepath)
   if ok_lib_mod then
     return lib_get_module_path(filepath)
   end
-  local norm = filepath:gsub("\\", "/")
+  local norm = (filepath:gsub("\\", "/"))
   local lua_idx = norm:find("/lua/")
   if not lua_idx then return nil end
   local after = norm:sub(lua_idx + 5)
-  local trimmed = after:gsub("%.lua$", ""):gsub("/init$", "")
-  return trimmed:gsub("/", ".")
+  local trimmed = (after:gsub("%.lua$", ""):gsub("/init$", ""))
+  -- Parenthesized: gsub returns (string, count); only the string is the result.
+  return (trimmed:gsub("/", "."))
 end
 
 ---Return a path relative to cwd (strips leading "./"), forward-slashed
