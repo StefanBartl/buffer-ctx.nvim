@@ -6,11 +6,16 @@
 :Format-textwidth	buffer-ctx.txt	/*:Format-textwidth*
 :Insert-annotation	buffer-ctx.txt	/*:Insert-annotation*
 :Insert-boilerplate	buffer-ctx.txt	/*:Insert-boilerplate*
+:Insert-bufnr	buffer-ctx.txt	/*:Insert-bufnr*
+:Insert-date	buffer-ctx.txt	/*:Insert-date*
 :Insert-env	buffer-ctx.txt	/*:Insert-env*
 :Insert-filename	buffer-ctx.txt	/*:Insert-filename*
 :Insert-filepath	buffer-ctx.txt	/*:Insert-filepath*
+:Insert-git	buffer-ctx.txt	/*:Insert-git*
+:Insert-linecount	buffer-ctx.txt	/*:Insert-linecount*
 :Insert-location	buffer-ctx.txt	/*:Insert-location*
 :Insert-module	buffer-ctx.txt	/*:Insert-module*
+:Insert-snippet	buffer-ctx.txt	/*:Insert-snippet*
 :Insert-timestamp	buffer-ctx.txt	/*:Insert-timestamp*
 :Insert-uuid	buffer-ctx.txt	/*:Insert-uuid*
 :Mark-toggle	buffer-ctx.txt	/*:Mark-toggle*
@@ -28,6 +33,7 @@ buffer-ctx-intro	buffer-ctx.txt	/*buffer-ctx-intro*
 buffer-ctx-keymaps	buffer-ctx.txt	/*buffer-ctx-keymaps*
 buffer-ctx-mark	buffer-ctx.txt	/*buffer-ctx-mark*
 buffer-ctx-requirements	buffer-ctx.txt	/*buffer-ctx-requirements*
+buffer-ctx-telescope	buffer-ctx.txt	/*buffer-ctx-telescope*
 buffer-ctx.nvim	buffer-ctx.txt	/*buffer-ctx.nvim*
 buffer-ctx.txt	buffer-ctx.txt	/*buffer-ctx.txt*
 buffer_ctx.copy()	buffer-ctx.txt	/*buffer_ctx.copy()*

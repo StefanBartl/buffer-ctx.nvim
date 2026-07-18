@@ -45,15 +45,20 @@ Four command trees:
 
 | Subcommand | Args | Result |
 |---|---|---|
-| `filepath` | `[cwd\|abs\|nvim] [lua\|unix\|win\|system] [0-3]` | Path of current buffer |
+| `filepath` | `[cwd\|abs\|nvim\|nvim_module] [lua\|unix\|win\|system] [0-3]` | Path of current buffer |
 | `filename` | `[noext]` | Filename (with/without extension) |
 | `module` | `[require\|lua_ls\|js\|c\|generic]` | Lua `require(…)` or `---@module` |
-| `location` | `[cwd\|abs\|lua]` | `path:line` of current cursor |
+| `location` | `[cwd\|abs\|lua] [range]` | `path:line`, or `path:L1-L2` with `range` |
 | `timestamp` | `[format] [--utc]` | Current timestamp |
+| `date` | — | Shorthand for `timestamp iso-date` |
 | `uuid` | `[standard\|compact\|upper\|braced]` | UUID v4 |
-| `annotation` | `module\|class\|field\|param\|return\|function\|alias` | LuaLS annotation line(s) |
-| `boilerplate` | `{template} [name]` | Multi-line code template |
+| `annotation` | `module\|class\|field\|param\|return\|function\|alias\|overload\|diagnostic\|deprecated` | LuaLS annotation line(s) |
+| `boilerplate` | `[template] [name]` | Multi-line code template (no arg → picker) |
+| `snippet` | `[name]` | VSCode-format snippet (no arg → picker) |
 | `env` | `{VAR}` | Value of environment variable |
+| `git` | `[hash\|short\|branch\|tag]` | Git revision info for the buffer's repo |
+| `linecount` | — | Line count of the current buffer |
+| `bufnr` | — | Handle of the current buffer |
 
 ### Mark subcommands
 
@@ -87,6 +92,8 @@ Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Ma
 - Neovim **0.9+**
 - *(optional)* [lib.nvim](https://github.com/StefanBartl/lib.nvim) — used for `notify` when installed, falls back to plain `vim.notify` otherwise
 - *(optional)* [which-key.nvim](https://github.com/folke/which-key.nvim) — labels the `<leader>cn` keymap group when installed
+- *(optional)* [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) — enables `:Telescope buffer_ctx boilerplate` with a live preview
+- *(optional)* `git` in `PATH` — only for the `git` subcommand
 
 ---
 
@@ -166,6 +173,13 @@ require("buffer_ctx").setup({
   },
   -- keymaps = false  to disable all keymaps
   which_key = true,          -- label <leader>cn group when which-key is installed
+  timestamp = {
+    utc = false,             -- true → every timestamp is UTC without --utc
+  },
+  snippets = {
+    paths = {},              -- VSCode-format snippet files for :Insert snippet
+    -- e.g. { vim.fn.stdpath("config") .. "/snippets/lua.json" }
+  },
   format = {
     enable  = true,          -- register :Format (default true)
     command = "Format",      -- command name
@@ -233,7 +247,7 @@ Derive the Lua module path from the `/lua/` segment in the buffer's path.
 :Copy module lua_ls        → ---@module 'buffer_ctx.ops.filepath'
 ```
 
-### `location [mode]`
+### `location [mode] [range]`
 
 Current buffer path + cursor line number.
 
@@ -242,6 +256,18 @@ Current buffer path + cursor line number.
 :Copy location abs         → "/home/user/…/filepath.lua:42"
 :Copy location lua         → "buffer_ctx.ops.filepath:42"
 ```
+
+With `range`, the line span is emitted instead — handy for code-review
+comments and GitHub links. Select the lines in visual mode and press `:`
+(Neovim inserts `'<,'>` for you), or pass a range yourself:
+
+```
+:'<,'>Copy location range  → "lua/buffer_ctx/ops/filepath.lua:L10-L20"
+:10,20Copy location range  → "lua/buffer_ctx/ops/filepath.lua:L10-L20"
+:Copy location range       → falls back to the last visual selection
+```
+
+A single-line range has no span to express, so it collapses to `path:42`.
 
 ### `timestamp [format] [--utc]`
 
@@ -259,6 +285,17 @@ Current buffer path + cursor line number.
 ```
 :Insert timestamp               → 2026-06-22T14:35:00
 :Insert timestamp short --utc   → 22.06.2026 (UTC)
+```
+
+Set `timestamp = { utc = true }` in the config to make every timestamp UTC
+without passing `--utc` each time.
+
+### `date`
+
+Shorthand for `timestamp iso-date`.
+
+```
+:Insert date               → 2026-06-22
 ```
 
 ### `uuid [format]`
@@ -280,17 +317,33 @@ Current buffer path + cursor line number.
 | `param` | `[name] [type]` | `---@param name type` |
 | `return` | `[type]` | `---@return type` |
 | `alias` | `[name] [type]` | `---@alias Name string` |
+| `overload` | `[signature]` | `---@overload fun(a: string): boolean` |
+| `diagnostic` | `[code]` | `---@diagnostic disable-next-line: code` |
+| `deprecated` | `[reason]` | `---@deprecated Reason` |
 | `function` | — | interactive dialog → multi-line block |
 
 Args not supplied via command are prompted interactively with `vim.fn.input`.
 
 ```
-:Insert annotation module          → ---@module 'buffer_ctx.ops.module'
-:Insert annotation class MyClass   → ---@class MyClass
-:Insert annotation function        → (guided dialog)
+:Insert annotation module                        → ---@module 'buffer_ctx.ops.module'
+:Insert annotation class MyClass                 → ---@class MyClass
+:Insert annotation overload fun(a: string): bool → ---@overload fun(a: string): bool
+:Insert annotation diagnostic undefined-field    → ---@diagnostic disable-next-line: undefined-field
+:Insert annotation deprecated use M.new instead  → ---@deprecated use M.new instead
+:Insert annotation function                      → (guided dialog)
 ```
 
-### `boilerplate {template} [name]`
+`overload` takes the signature as free text (it may contain spaces) and wraps
+it in `fun(…)` if you leave that off. `deprecated` likewise keeps the whole
+reason, not just the first word.
+
+To get a multi-line annotation onto the clipboard as one `\n`-joined string,
+use `:Copy annotation function` — the copy sink joins the generated lines.
+
+### `boilerplate [template] [name]`
+
+Called without a template name, this opens a `vim.ui.select` picker of the
+available keys — no need to rely on tab completion.
 
 Templates:
 
@@ -309,19 +362,88 @@ Templates:
 | `html-aside` | `<aside>` block |
 | `html-pagination` | Pagination `<nav>` |
 | `html-accordion` | `<details>` accordion |
+| `html-table` | `<table>` with thead + 3×3 body |
+| `html-section` | `<section>` with h2 + p |
+| `lua-test` | busted test stub (`describe`/`it`/`assert.are.equal`) |
+| `lua-enum` | Enum table + `---@alias` block |
+| `md-frontmatter` | YAML frontmatter for Markdown |
 
 ```
+:Insert boilerplate                       → interactive template picker
 :Insert boilerplate lua-module            → module skeleton (name from buffer path)
 :Insert boilerplate lua-class MyService   → class skeleton named MyService
 :Insert boilerplate nvim-autocmd MyGroup  → autocmd with group name
 :Copy   boilerplate html-figure intro     → copies <figure id="…"> to clipboard
 ```
 
+With telescope.nvim installed, `:Telescope buffer_ctx boilerplate` offers the
+same list with a live preview of the lines each template would generate:
+
+```lua
+require("telescope").load_extension("buffer_ctx")
+```
+
+### `snippet [name]`
+
+Loads snippets in the VSCode format from the files listed in
+`snippets = { paths = {…} }`:
+
+```json
+{
+  "For Loop": {
+    "prefix": "forl",
+    "body": ["for ${1:i} = 1, ${2:10} do", "\t$0", "end"],
+    "description": "numeric for loop"
+  }
+}
+```
+
+A snippet resolves by its key (`For Loop`) or its prefix (`forl`). Called
+without a name, it opens a picker.
+
+```
+:Insert snippet            → interactive snippet picker
+:Insert snippet forl       → for i = 1, 10 do … end
+```
+
+Placeholders are flattened, not expanded: `${1:i}` becomes `i`, `${1|a,b|}`
+becomes `a`, and bare tabstops (`$0`, `$1`) are dropped. buffer-ctx inserts
+plain text — if you need real tabstop navigation, use a snippet engine.
+
 ### `env {VAR}`
+
+Tab completion lists the environment variables currently set.
 
 ```
 :Copy env GOPATH          → copies value of $GOPATH
 :Insert env HOME          → inserts value of $HOME at cursor
+```
+
+### `git [mode]`
+
+Git revision info for the repository the current buffer lives in (queried in
+the buffer's own directory, so it stays correct after `:cd`).
+
+| Mode | Output |
+|---|---|
+| `short` (default) | `a577942` |
+| `hash` | `a577942dedbcb4e8a4e9ffb3529be12b27b58736` |
+| `branch` | `main` |
+| `tag` | nearest tag, else abbreviated hash (`git describe --tags --always`) |
+
+```
+:Insert git               → a577942
+:Copy   git branch        → main
+```
+
+Requires `git` in `PATH`. On a detached HEAD, `branch` reports an error
+rather than returning the literal string `HEAD`.
+
+### `linecount` / `bufnr`
+
+```
+:Insert linecount         → 348   (lines in the current buffer)
+:Insert bufnr             → 3     (current buffer handle)
 ```
 
 ---
