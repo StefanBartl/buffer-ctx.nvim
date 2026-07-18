@@ -7,10 +7,10 @@ return function(H)
   require("buffer_ctx").setup()
 
   local filter_lines = require("buffer_ctx.format.filter_lines")
-  local enum_lines    = require("buffer_ctx.format.enum_lines")
-  local table_fmt     = require("buffer_ctx.format.table_fmt")
-  local column_align  = require("buffer_ctx.format.column_align")
-  local text_width    = require("buffer_ctx.format.text_width")
+  local enum_lines = require("buffer_ctx.format.enum_lines")
+  local table_fmt = require("buffer_ctx.format.table_fmt")
+  local column_align = require("buffer_ctx.format.column_align")
+  local text_width = require("buffer_ctx.format.text_width")
 
   -- filter_lines: arg parsing
   local remove1, cond1 = filter_lines.parse_filter_args({ "TODO" })
@@ -27,14 +27,22 @@ return function(H)
   local ok_keep, err_keep = filter_lines.filter_lines(buf_keep, { "TODO" }, false)
   H.ok(ok_keep, "filter keep mode succeeds")
   H.eq(err_keep, nil, "filter keep mode has no error")
-  H.eq(table.concat(vim.api.nvim_buf_get_lines(buf_keep, 0, -1, false), "|"), "TODO: x|TODO: y", "filter keep mode result")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_keep, 0, -1, false), "|"),
+    "TODO: x|TODO: y",
+    "filter keep mode result"
+  )
 
   -- filter_lines: remove mode
   local buf_remove = H.scratch(vim.fn.getcwd() .. "/filter_remove.lua")
   vim.api.nvim_buf_set_lines(buf_remove, 0, -1, false, { "TODO: x", "normal", "TODO: y" })
   local ok_remove = filter_lines.filter_lines(buf_remove, { "TODO" }, true)
   H.ok(ok_remove, "filter remove mode succeeds")
-  H.eq(table.concat(vim.api.nvim_buf_get_lines(buf_remove, 0, -1, false), "|"), "normal", "filter remove mode result")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_remove, 0, -1, false), "|"),
+    "normal",
+    "filter remove mode result"
+  )
 
   -- filter_lines: guards
   local ok_invalid, err_invalid = filter_lines.filter_lines(999999, { "x" }, false)
@@ -66,11 +74,15 @@ return function(H)
   vim.api.nvim_win_set_cursor(0, { 1, 0 })
   local tok, terr = table_fmt.format_table_at_cursor(buf_table, {})
   H.ok(tok, "table_fmt succeeds")
-  H.eq(terr, nil, "table_fmt reports no error on success (regression: used to always report 'Failed to update buffer')")
+  H.eq(
+    terr,
+    nil,
+    "table_fmt reports no error on success (regression: used to always report 'Failed to update buffer')"
+  )
   local table_result = vim.api.nvim_buf_get_lines(buf_table, 0, -1, false)
-  H.eq(table_result[1], "|  a  | b |",    "table_fmt aligns header row")
-  H.eq(table_result[2], "|-----|---|",    "table_fmt aligns separator row")
-  H.eq(table_result[3], "| ccc | d |",    "table_fmt aligns data row")
+  H.eq(table_result[1], "|  a  | b |", "table_fmt aligns header row")
+  H.eq(table_result[2], "|-----|---|", "table_fmt aligns separator row")
+  H.eq(table_result[3], "| ccc | d |", "table_fmt aligns data row")
 
   -- column_align: pads selected char to target column
   local buf_col = H.scratch(vim.fn.getcwd() .. "/column_align_test.lua")
@@ -78,7 +90,11 @@ return function(H)
   vim.api.nvim_buf_set_mark(buf_col, "<", 1, 2, {})
   vim.api.nvim_buf_set_mark(buf_col, ">", 1, 2, {})
   column_align.align_to_column(10, "-")
-  H.eq(vim.api.nvim_buf_get_lines(buf_col, 0, -1, false)[1], "x=-------5", "column_align pads to target column")
+  H.eq(
+    vim.api.nvim_buf_get_lines(buf_col, 0, -1, false)[1],
+    "x=-------5",
+    "column_align pads to target column"
+  )
 
   -- text_width: reflows long line into width-bounded chunks (regression: used to crash)
   local buf_tw = vim.api.nvim_create_buf(false, true)
@@ -95,13 +111,25 @@ return function(H)
   local buf_misc = H.scratch(vim.fn.getcwd() .. "/misc_test.lua")
   vim.api.nvim_buf_set_lines(buf_misc, 0, -1, false, { "b  ", "a  ", "c  " })
   vim.cmd("Format trim")
-  H.eq(table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"), "b|a|c", "misc: trim removes trailing whitespace")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "b|a|c",
+    "misc: trim removes trailing whitespace"
+  )
   vim.cmd("Format sort")
-  H.eq(table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"), "a|b|c", "misc: sort orders lines")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "a|b|c",
+    "misc: sort orders lines"
+  )
 
   vim.api.nvim_buf_set_lines(buf_misc, 0, -1, false, { "b", "a", "b", "A" })
   vim.cmd("Format unique -i")
-  H.eq(table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"), "b|a", "misc: unique -i drops case-insensitive dupes")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "b|a",
+    "misc: unique -i drops case-insensitive dupes"
+  )
 
   vim.api.nvim_buf_set_lines(buf_misc, 0, -1, false, { "hello world" })
   vim.cmd("Format case upper")

@@ -7,12 +7,17 @@ local map = require("buffer_ctx.util.map")
 
 ---@param cfg BufferCtx.KeymapConfig
 function M.attach(cfg)
-  if not cfg or type(cfg) ~= "table" then return end
+  if not cfg or type(cfg) ~= "table" then
+    return
+  end
 
   if cfg.location_copy then
     map.set("n", cfg.location_copy, function()
       local result, err = require("buffer_ctx.ops.location").get("cwd")
-      if not result then require("buffer_ctx.util.notify").error(err or "location failed"); return end
+      if not result then
+        require("buffer_ctx.util.notify").error(err or "location failed")
+        return
+      end
       require("buffer_ctx.util.clip").copy(result)
     end, "[buffer-ctx] copy location (path:line)")
   end
@@ -20,7 +25,10 @@ function M.attach(cfg)
   if cfg.module_copy then
     map.set("n", cfg.module_copy, function()
       local mod, err = require("buffer_ctx.ops.module").get_module_path()
-      if not mod then require("buffer_ctx.util.notify").error(err or "module failed"); return end
+      if not mod then
+        require("buffer_ctx.util.notify").error(err or "module failed")
+        return
+      end
       require("buffer_ctx.util.clip").copy(mod)
     end, "[buffer-ctx] copy module path")
   end
@@ -29,7 +37,10 @@ function M.attach(cfg)
     map.set("n", cfg.filepath_copy, function()
       local opts = { mode = "cwd", format = "unix", depth = nil }
       local result, err = require("buffer_ctx.ops.filepath").get_path(opts)
-      if not result then require("buffer_ctx.util.notify").error(err or "filepath failed"); return end
+      if not result then
+        require("buffer_ctx.util.notify").error(err or "filepath failed")
+        return
+      end
       require("buffer_ctx.util.clip").copy(result)
     end, "[buffer-ctx] copy filepath (cwd-relative)")
   end

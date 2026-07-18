@@ -14,26 +14,106 @@ local M = {}
 ---@field has_id boolean  true if the generator accepts an id/name argument
 
 local REGISTRY = {
-  { key = "lua-module",       module = "lua",   fn = "module",          desc = "Lua module skeleton",       has_id = false },
-  { key = "lua-class",        module = "lua",   fn = "class",           desc = "Lua OOP class skeleton",    has_id = true  },
-  { key = "lua-function",     module = "lua",   fn = "func",            desc = "Annotated function stub",   has_id = false },
-  { key = "nvim-autocmd",     module = "nvim",  fn = "autocmd",         desc = "nvim_create_autocmd block", has_id = true  },
-  { key = "nvim-keymap",      module = "nvim",  fn = "keymap",          desc = "vim.keymap.set stub",       has_id = false },
-  { key = "guard-clause",     module = "guard", fn = "guard_interactive", desc = "Guard clause pattern",    has_id = false },
-  { key = "html-figure",      module = "html",  fn = "figure",          desc = "HTML <figure> block",       has_id = true  },
-  { key = "html-code",        module = "html",  fn = "code",            desc = "HTML code listing",         has_id = true  },
-  { key = "html-quote",       module = "html",  fn = "quote",           desc = "HTML blockquote",           has_id = true  },
-  { key = "html-formula-table",module="html",   fn = "formula_table",   desc = "HTML formula table",        has_id = true  },
-  { key = "html-aside",       module = "html",  fn = "aside",           desc = "HTML <aside> block",        has_id = true  },
-  { key = "html-pagination",  module = "html",  fn = "pagination",      desc = "HTML pagination nav",       has_id = true  },
-  { key = "html-accordion",   module = "html",  fn = "accordion",       desc = "HTML <details> accordion",  has_id = true  },
+  {
+    key = "lua-module",
+    module = "lua",
+    fn = "module",
+    desc = "Lua module skeleton",
+    has_id = false,
+  },
+  {
+    key = "lua-class",
+    module = "lua",
+    fn = "class",
+    desc = "Lua OOP class skeleton",
+    has_id = true,
+  },
+  {
+    key = "lua-function",
+    module = "lua",
+    fn = "func",
+    desc = "Annotated function stub",
+    has_id = false,
+  },
+  {
+    key = "nvim-autocmd",
+    module = "nvim",
+    fn = "autocmd",
+    desc = "nvim_create_autocmd block",
+    has_id = true,
+  },
+  {
+    key = "nvim-keymap",
+    module = "nvim",
+    fn = "keymap",
+    desc = "vim.keymap.set stub",
+    has_id = false,
+  },
+  {
+    key = "guard-clause",
+    module = "guard",
+    fn = "guard_interactive",
+    desc = "Guard clause pattern",
+    has_id = false,
+  },
+  {
+    key = "html-figure",
+    module = "html",
+    fn = "figure",
+    desc = "HTML <figure> block",
+    has_id = true,
+  },
+  {
+    key = "html-code",
+    module = "html",
+    fn = "code",
+    desc = "HTML code listing",
+    has_id = true,
+  },
+  {
+    key = "html-quote",
+    module = "html",
+    fn = "quote",
+    desc = "HTML blockquote",
+    has_id = true,
+  },
+  {
+    key = "html-formula-table",
+    module = "html",
+    fn = "formula_table",
+    desc = "HTML formula table",
+    has_id = true,
+  },
+  {
+    key = "html-aside",
+    module = "html",
+    fn = "aside",
+    desc = "HTML <aside> block",
+    has_id = true,
+  },
+  {
+    key = "html-pagination",
+    module = "html",
+    fn = "pagination",
+    desc = "HTML pagination nav",
+    has_id = true,
+  },
+  {
+    key = "html-accordion",
+    module = "html",
+    fn = "accordion",
+    desc = "HTML <details> accordion",
+    has_id = true,
+  },
 }
 
 ---List all registered template keys
 ---@return string[]
 function M.list_keys()
   local keys = {}
-  for _, e in ipairs(REGISTRY) do keys[#keys + 1] = e.key end
+  for _, e in ipairs(REGISTRY) do
+    keys[#keys + 1] = e.key
+  end
   return keys
 end
 

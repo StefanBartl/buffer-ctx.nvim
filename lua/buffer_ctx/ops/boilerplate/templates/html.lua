@@ -63,7 +63,10 @@ end
 function M.aside(id)
   id = id or "TODO"
   return {
-    string.format('<aside id="#aside-%s" style="border-left: 3px solid #ddd; padding-left: 1em; margin: 1em 0;">', id),
+    string.format(
+      '<aside id="#aside-%s" style="border-left: 3px solid #ddd; padding-left: 1em; margin: 1em 0;">',
+      id
+    ),
     "  <strong>Note:</strong> ",
     "</aside>",
   }
@@ -82,7 +85,10 @@ end
 function M.accordion(id)
   id = id or "TODO"
   return {
-    string.format('<details id="#accordion-%s" style="border: 1px solid #ddd; border-radius: 4px; padding: 0.5em 1em; margin: 0.5em 0;">', id),
+    string.format(
+      '<details id="#accordion-%s" style="border: 1px solid #ddd; border-radius: 4px; padding: 0.5em 1em; margin: 0.5em 0;">',
+      id
+    ),
     '  <summary style="cursor: pointer; font-weight: bold; user-select: none;">',
     "    ",
     "  </summary>",

@@ -23,16 +23,22 @@ local VALID_ALIGN = { left = true, center = true, right = true }
 -- Utilities
 -- ─────────────────────────────────────────────────────────────────────────────
 
-local function safe_call(fn, ...) return pcall(fn, ...) end
+local function safe_call(fn, ...)
+  return pcall(fn, ...)
+end
 
 local function display_width(str)
-  if type(str) ~= "string" then return 0 end
+  if type(str) ~= "string" then
+    return 0
+  end
   local ok, w = safe_call(vim.fn.strdisplaywidth, str)
   return ok and w or #str
 end
 
 local function trim(str)
-  if type(str) ~= "string" then return "" end
+  if type(str) ~= "string" then
+    return ""
+  end
   return str:match("^%s*(.-)%s*$") or ""
 end
 
@@ -42,8 +48,10 @@ end
 
 local function pad_cell(str, width, align)
   local content = trim(str)
-  local cw      = display_width(content)
-  if cw >= width then return content end
+  local cw = display_width(content)
+  if cw >= width then
+    return content
+  end
   local pad = width - cw
   if align == "left" then
     return content .. string.rep(" ", pad)
@@ -61,16 +69,22 @@ end
 
 local function resolve_overrides(overrides, header_cells, col_count)
   local map = {}
-  if not overrides or #overrides == 0 then return map end
+  if not overrides or #overrides == 0 then
+    return map
+  end
   local name_to_idx = {}
   for i = 1, col_count do
     local key = trim(header_cells[i] or ""):lower()
-    if key ~= "" then name_to_idx[key] = i end
+    if key ~= "" then
+      name_to_idx[key] = i
+    end
   end
   for _, ov in ipairs(overrides) do
     local idx
-    if     type(ov.col) == "number" then idx = ov.col
-    elseif type(ov.col) == "string" then idx = name_to_idx[ov.col:lower()]
+    if type(ov.col) == "number" then
+      idx = ov.col
+    elseif type(ov.col) == "string" then
+      idx = name_to_idx[ov.col:lower()]
     end
     if idx and idx >= 1 and idx <= col_count then
       map[idx] = ov.align
@@ -86,32 +100,49 @@ end
 -- ─────────────────────────────────────────────────────────────────────────────
 
 local function is_table_line(line)
-  if type(line) ~= "string" then return false end
+  if type(line) ~= "string" then
+    return false
+  end
   return trim(line):match("^|.*|$") ~= nil
 end
 
 local function is_separator_line(line)
-  if type(line) ~= "string" then return false, nil end
+  if type(line) ~= "string" then
+    return false, nil
+  end
   local t = trim(line)
-  if not t:match("%-") then return false, nil end
-  if not t:match("^|.*|$") then return false, nil end
+  if not t:match("%-") then
+    return false, nil
+  end
+  if not t:match("^|.*|$") then
+    return false, nil
+  end
   local inner = t:match("^|(.+)|$")
-  if not inner then return false, nil end
-  if not inner:match("^[%-%s:|]+$") then return false, nil end
+  if not inner then
+    return false, nil
+  end
+  if not inner:match("^[%-%s:|]+$") then
+    return false, nil
+  end
   local spaced = inner:match("%s%-") or inner:match("%-%s")
   return true, spaced and "spaced" or "compact"
 end
 
 local function parse_row(line)
-  local cells   = {}
+  local cells = {}
   local trimmed = trim(line)
-  local inner   = trimmed:match("^|(.-)%s*|$") or trimmed:match("^|(.*)|$")
-  if not inner then return cells end
+  local inner = trimmed:match("^|(.-)%s*|$") or trimmed:match("^|(.*)|$")
+  if not inner then
+    return cells
+  end
   local cur = ""
   for i = 1, #inner do
     local ch = inner:sub(i, i)
-    if ch == "|" then cells[#cells + 1] = trim(cur); cur = ""
-    else              cur = cur .. ch
+    if ch == "|" then
+      cells[#cells + 1] = trim(cur)
+      cur = ""
+    else
+      cur = cur .. ch
     end
   end
   cells[#cells + 1] = trim(cur)
@@ -120,36 +151,47 @@ end
 
 local function parse_all_tables(lines)
   local tables = {}
-  local i      = 1
+  local i = 1
   while i <= #lines do
     if not is_table_line(lines[i]) then
       i = i + 1
     else
       local start = i
-      while i <= #lines and is_table_line(lines[i]) do i = i + 1 end
+      while i <= #lines and is_table_line(lines[i]) do
+        i = i + 1
+      end
       local stop = i - 1
-      if stop - start < 2 then goto continue end
+      if stop - start < 2 then
+        goto continue
+      end
       local rows, sep_style, sep_line_idx, col_count = {}, nil, nil, 0
       for ln = start, stop do
         local is_sep, style = is_separator_line(lines[ln])
         if is_sep then
-          if not sep_line_idx then sep_line_idx = ln; sep_style = style end
+          if not sep_line_idx then
+            sep_line_idx = ln
+            sep_style = style
+          end
         else
           local cells = parse_row(lines[ln])
           rows[#rows + 1] = cells
-          if #rows == 1 then col_count = #cells end
+          if #rows == 1 then
+            col_count = #cells
+          end
         end
       end
       if #rows >= 2 and sep_line_idx and sep_line_idx == start + 1 then
         for _, row in ipairs(rows) do
-          while #row < col_count do row[#row + 1] = "" end
+          while #row < col_count do
+            row[#row + 1] = ""
+          end
         end
         tables[#tables + 1] = {
-          start_line      = start,
-          end_line        = stop,
-          rows            = rows,
+          start_line = start,
+          end_line = stop,
+          rows = rows,
           separator_style = sep_style or "compact",
-          col_count       = col_count,
+          col_count = col_count,
         }
       end
       ::continue::
@@ -173,7 +215,9 @@ end
 
 local function calc_widths(rows, col_count)
   local widths = {}
-  for i = 1, col_count do widths[i] = 1 end
+  for i = 1, col_count do
+    widths[i] = 1
+  end
   for _, row in ipairs(rows) do
     for ci, cell in ipairs(row) do
       if ci <= col_count then
@@ -187,10 +231,14 @@ end
 local function gen_separator(widths, style)
   local parts = {}
   if style == "spaced" then
-    for _, w in ipairs(widths) do parts[#parts + 1] = " " .. string.rep("-", w) .. " " end
+    for _, w in ipairs(widths) do
+      parts[#parts + 1] = " " .. string.rep("-", w) .. " "
+    end
     return "|" .. table.concat(parts, "|") .. "|"
   else
-    for _, w in ipairs(widths) do parts[#parts + 1] = string.rep("-", w + 2) end
+    for _, w in ipairs(widths) do
+      parts[#parts + 1] = string.rep("-", w + 2)
+    end
     return "|" .. table.concat(parts, "|") .. "|"
   end
 end
@@ -206,7 +254,7 @@ end
 
 local function render_table(parsed, header_align, entry_align, override_map)
   local widths = calc_widths(parsed.rows, parsed.col_count)
-  local out    = {}
+  local out = {}
   out[1] = format_row(parsed.rows[1], widths, header_align, override_map)
   out[2] = gen_separator(widths, parsed.separator_style)
   for i = 2, #parsed.rows do
@@ -225,7 +273,9 @@ local function buf_get_lines(bufnr)
 end
 
 local function apply_tables_to_buf(bufnr, tables)
-  table.sort(tables, function(a, b) return a.parsed.start_line > b.parsed.start_line end)
+  table.sort(tables, function(a, b)
+    return a.parsed.start_line > b.parsed.start_line
+  end)
   for _, entry in ipairs(tables) do
     local ok = safe_call(
       vim.api.nvim_buf_set_lines,
@@ -244,17 +294,25 @@ end
 
 local function format_file(path, header_align, entry_align)
   local fh, err = io.open(path, "r")
-  if not fh then return false, string.format("Cannot open %q: %s", path, err or "?") end
+  if not fh then
+    return false, string.format("Cannot open %q: %s", path, err or "?")
+  end
   local lines = {}
-  for line in fh:lines() do lines[#lines + 1] = line end
+  for line in fh:lines() do
+    lines[#lines + 1] = line
+  end
   fh:close()
 
   local tables = parse_all_tables(lines)
-  if #tables == 0 then return true, nil end
+  if #tables == 0 then
+    return true, nil
+  end
 
-  table.sort(tables, function(a, b) return a.start_line > b.start_line end)
+  table.sort(tables, function(a, b)
+    return a.start_line > b.start_line
+  end)
   for _, parsed in ipairs(tables) do
-    local om       = resolve_overrides(nil, parsed.rows[1], parsed.col_count)
+    local om = resolve_overrides(nil, parsed.rows[1], parsed.col_count)
     local rendered = render_table(parsed, header_align, entry_align, om)
     for ri, rl in ipairs(rendered) do
       lines[parsed.start_line - 1 + ri] = rl
@@ -262,8 +320,12 @@ local function format_file(path, header_align, entry_align)
   end
 
   local wh, werr = io.open(path, "w")
-  if not wh then return false, string.format("Cannot write %q: %s", path, werr or "?") end
-  for _, line in ipairs(lines) do wh:write(line .. "\n") end
+  if not wh then
+    return false, string.format("Cannot write %q: %s", path, werr or "?")
+  end
+  for _, line in ipairs(lines) do
+    wh:write(line .. "\n")
+  end
   wh:close()
   return true, nil
 end
@@ -282,45 +344,68 @@ end
 
 function M.format_table_at_cursor(bufnr, opts)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  opts  = opts  or {}
-  if not vim.api.nvim_buf_is_valid(bufnr) then return false, "Invalid buffer" end
+  opts = opts or {}
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return false, "Invalid buffer"
+  end
 
   local header_align = opts.header_align or _cfg.header_align
-  local entry_align  = opts.entry_align  or _cfg.entry_align
+  local entry_align = opts.entry_align or _cfg.entry_align
   local ok_c, cursor = safe_call(vim.api.nvim_win_get_cursor, 0)
-  if not ok_c then return false, "Failed to get cursor position" end
+  if not ok_c then
+    return false, "Failed to get cursor position"
+  end
 
   local lines, re = buf_get_lines(bufnr)
-  if not lines then return false, re end
+  if not lines then
+    return false, re
+  end
 
   local tables = parse_all_tables(lines)
   local parsed, fe = find_table_at_cursor(tables, cursor[1])
-  if not parsed then return false, fe end
+  if not parsed then
+    return false, fe
+  end
 
   local override_map = resolve_overrides(opts.col_overrides, parsed.rows[1], parsed.col_count)
-  local rendered     = render_table(parsed, header_align, entry_align, override_map)
-  local ok_s = safe_call(vim.api.nvim_buf_set_lines, bufnr, parsed.start_line - 1, parsed.end_line, false, rendered)
-  if not ok_s then return false, "Failed to update buffer" end
+  local rendered = render_table(parsed, header_align, entry_align, override_map)
+  local ok_s = safe_call(
+    vim.api.nvim_buf_set_lines,
+    bufnr,
+    parsed.start_line - 1,
+    parsed.end_line,
+    false,
+    rendered
+  )
+  if not ok_s then
+    return false, "Failed to update buffer"
+  end
   return true, nil
 end
 
 function M.format_tables_in_buffer(bufnr, opts)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
-  opts  = opts  or {}
-  if not vim.api.nvim_buf_is_valid(bufnr) then return false, "Invalid buffer", 0 end
+  opts = opts or {}
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return false, "Invalid buffer", 0
+  end
 
   local header_align = opts.header_align or _cfg.header_align
-  local entry_align  = opts.entry_align  or _cfg.entry_align
+  local entry_align = opts.entry_align or _cfg.entry_align
   local lines, re = buf_get_lines(bufnr)
-  if not lines then return false, re, 0 end
+  if not lines then
+    return false, re, 0
+  end
 
   local tables = parse_all_tables(lines)
-  if #tables == 0 then return true, nil, 0 end
+  if #tables == 0 then
+    return true, nil, 0
+  end
 
   local pending = {}
   for _, parsed in ipairs(tables) do
     local override_map = resolve_overrides(opts.col_overrides, parsed.rows[1], parsed.col_count)
-    local rendered     = render_table(parsed, header_align, entry_align, override_map)
+    local rendered = render_table(parsed, header_align, entry_align, override_map)
     pending[#pending + 1] = { parsed = parsed, rendered = rendered }
   end
 
@@ -336,28 +421,57 @@ function M.format_tables_in_scope(opts)
     return M.format_table_at_cursor(nil, opts)
   elseif scope == "buffer" then
     local ok, err, count = M.format_tables_in_buffer(nil, opts)
-    if ok then notify.info(string.format("Formatted %d table(s) in buffer", count)) end
+    if ok then
+      notify.info(string.format("Formatted %d table(s) in buffer", count))
+    end
     return ok, err
   elseif scope == "cwd" then
-    local cwd   = vim.fn.getcwd()
+    local cwd = vim.fn.getcwd()
     local files = collect_md_files(cwd)
-    if #files == 0 then notify.info("No *.md files found under " .. cwd); return true, nil end
+    if #files == 0 then
+      notify.info("No *.md files found under " .. cwd)
+      return true, nil
+    end
     local errors, cnt = {}, 0
     for _, path in ipairs(files) do
-      local ok, err = format_file(path, opts.header_align or _cfg.header_align, opts.entry_align or _cfg.entry_align)
-      if ok then cnt = cnt + 1 else errors[#errors + 1] = err end
+      local ok, err = format_file(
+        path,
+        opts.header_align or _cfg.header_align,
+        opts.entry_align or _cfg.entry_align
+      )
+      if ok then
+        cnt = cnt + 1
+      else
+        errors[#errors + 1] = err
+      end
     end
     if #errors > 0 then
-      notify.warn(string.format("Formatted %d/%d files; %d error(s):\n  %s", cnt, #files, #errors, table.concat(errors, "\n  ")))
+      notify.warn(
+        string.format(
+          "Formatted %d/%d files; %d error(s):\n  %s",
+          cnt,
+          #files,
+          #errors,
+          table.concat(errors, "\n  ")
+        )
+      )
     else
       notify.info(string.format("Formatted tables in %d file(s)", cnt))
     end
     return #errors == 0, #errors > 0 and table.concat(errors, "; ") or nil
   else
     local path = vim.fn.expand(scope)
-    if vim.fn.filereadable(path) == 0 then return false, string.format("File not readable: %q", path) end
-    local ok, err = format_file(path, opts.header_align or _cfg.header_align, opts.entry_align or _cfg.entry_align)
-    if ok then notify.info(string.format("Formatted tables in %q", path)) end
+    if vim.fn.filereadable(path) == 0 then
+      return false, string.format("File not readable: %q", path)
+    end
+    local ok, err = format_file(
+      path,
+      opts.header_align or _cfg.header_align,
+      opts.entry_align or _cfg.entry_align
+    )
+    if ok then
+      notify.info(string.format("Formatted tables in %q", path))
+    end
     return ok, err
   end
 end
@@ -375,15 +489,25 @@ function M.setup(register_fn, notify_mod)
   ---@return string[]
   local function table_complete(arg_lead)
     local candidates = {
-      "left", "center", "right",
-      "header=left", "header=center", "header=right",
-      "cell=left",   "cell=center",   "cell=right",
+      "left",
+      "center",
+      "right",
+      "header=left",
+      "header=center",
+      "header=right",
+      "cell=left",
+      "cell=center",
+      "cell=right",
       "skip=",
-      "scope=cursor", "scope=buffer", "scope=cwd",
+      "scope=cursor",
+      "scope=buffer",
+      "scope=cwd",
     }
     local out = {}
     for _, c in ipairs(candidates) do
-      if vim.startswith(c, arg_lead) then out[#out + 1] = c end
+      if vim.startswith(c, arg_lead) then
+        out[#out + 1] = c
+      end
     end
     return out
   end
@@ -397,16 +521,21 @@ function M.setup(register_fn, notify_mod)
       if key and val then
         key = key:lower()
         if key == "header" then
-          if not VALID_ALIGN[val] then return opts, string.format("Invalid alignment for header=: %q", val) end
+          if not VALID_ALIGN[val] then
+            return opts, string.format("Invalid alignment for header=: %q", val)
+          end
           opts.header_align = val
         elseif key == "cell" or key == "entry" then
-          if not VALID_ALIGN[val] then return opts, string.format("Invalid alignment for cell=: %q", val) end
+          if not VALID_ALIGN[val] then
+            return opts, string.format("Invalid alignment for cell=: %q", val)
+          end
           opts.entry_align = val
         elseif key == "skip" then
           opts.col_overrides = opts.col_overrides or {}
           for part in val:gmatch("[^,]+") do
             part = part:match("^%s*(.-)%s*$")
-            opts.col_overrides[#opts.col_overrides + 1] = { col = tonumber(part) or part, align = "left" }
+            opts.col_overrides[#opts.col_overrides + 1] =
+              { col = tonumber(part) or part, align = "left" }
           end
         elseif key == "scope" then
           opts.scope = val
@@ -419,9 +548,13 @@ function M.setup(register_fn, notify_mod)
         return opts, string.format("Unknown argument: %q", raw)
       end
     end
-    if #positional >= 1 and not opts.header_align then opts.header_align = positional[1] end
-    if #positional >= 2 and not opts.entry_align  then opts.entry_align  = positional[2]
-    elseif #positional == 1 and not opts.entry_align then opts.entry_align = positional[1]
+    if #positional >= 1 and not opts.header_align then
+      opts.header_align = positional[1]
+    end
+    if #positional >= 2 and not opts.entry_align then
+      opts.entry_align = positional[2]
+    elseif #positional == 1 and not opts.entry_align then
+      opts.entry_align = positional[1]
     end
     return opts, nil
   end
@@ -429,7 +562,10 @@ function M.setup(register_fn, notify_mod)
   register_fn("table", {
     handler = function(args)
       local opts, parse_err = parse_args(args)
-      if parse_err then n.error(string.format("[table] %s", parse_err)); return end
+      if parse_err then
+        n.error(string.format("[table] %s", parse_err))
+        return
+      end
       local scope = opts.scope or "cursor"
       local success, err
       if scope == "cursor" then
@@ -437,12 +573,19 @@ function M.setup(register_fn, notify_mod)
       else
         success, err = M.format_tables_in_scope(opts)
       end
-      if not success then n.warn(string.format("[table] %s", err or "Unknown error")); return end
-      if scope == "cursor" then n.info("Table formatted") end
+      if not success then
+        n.warn(string.format("[table] %s", err or "Unknown error"))
+        return
+      end
+      if scope == "cursor" then
+        n.info("Table formatted")
+      end
     end,
-    complete = function(arg_lead) return table_complete(arg_lead) end,
+    complete = function(arg_lead)
+      return table_complete(arg_lead)
+    end,
     nargs = "*",
-    desc  = "Format Markdown table(s): table [ALIGN] [header=ALIGN] [cell=ALIGN] [skip=COL] [scope=cursor|buffer|cwd|PATH]",
+    desc = "Format Markdown table(s): table [ALIGN] [header=ALIGN] [cell=ALIGN] [skip=COL] [scope=cursor|buffer|cwd|PATH]",
   })
 end
 

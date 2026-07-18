@@ -23,7 +23,9 @@ function M.check()
   end
 
   if vim.g.loaded_buffer_ctx then
-    vim.health.ok("plugin loaded (vim.g.loaded_buffer_ctx = " .. tostring(vim.g.loaded_buffer_ctx) .. ")")
+    vim.health.ok(
+      "plugin loaded (vim.g.loaded_buffer_ctx = " .. tostring(vim.g.loaded_buffer_ctx) .. ")"
+    )
   else
     vim.health.warn("plugin guard not set — call require('buffer_ctx').setup()")
   end
@@ -46,7 +48,9 @@ function M.check()
   if wk_ok and wk_mod.available() then
     vim.health.ok("which-key detected — <leader>cn group label registered (optional dependency)")
   else
-    vim.health.info("which-key not found — keymaps still work, no group label (optional dependency)")
+    vim.health.info(
+      "which-key not found — keymaps still work, no group label (optional dependency)"
+    )
   end
 
   local bindings_ok = pcall(require, "buffer_ctx.bindings")
@@ -83,11 +87,11 @@ function M.check()
 
   local modules = {
     { name = "column_align", mod = "buffer_ctx.format.column_align" },
-    { name = "table_fmt",    mod = "buffer_ctx.format.table_fmt"    },
-    { name = "text_width",   mod = "buffer_ctx.format.text_width"   },
+    { name = "table_fmt", mod = "buffer_ctx.format.table_fmt" },
+    { name = "text_width", mod = "buffer_ctx.format.text_width" },
     { name = "filter_lines", mod = "buffer_ctx.format.filter_lines" },
-    { name = "enum_lines",   mod = "buffer_ctx.format.enum_lines"   },
-    { name = "misc",         mod = "buffer_ctx.format.misc"         },
+    { name = "enum_lines", mod = "buffer_ctx.format.enum_lines" },
+    { name = "misc", mod = "buffer_ctx.format.misc" },
   }
   for _, entry in ipairs(modules) do
     local ok = pcall(require, entry.mod)

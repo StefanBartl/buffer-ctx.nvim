@@ -8,22 +8,18 @@ on:
 
 jobs:
   lint:
-    name: luacheck (gate) + stylua (advisory)
+    name: stylua + luacheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      # stylua stays advisory: the sources have never been run through it, so a
-      # hard gate would fail on formatting drift rather than on real defects.
-      # Drop continue-on-error once `stylua lua/ docs/TESTS/` has been applied
-      # once and its diff reviewed. It must stay step-level — a failed step
-      # short-circuits the rest of the job, which would skip luacheck below.
+      # Pinned (not "latest"): stylua's own rule changes between releases
+      # would otherwise make this gate fail without any local diff to blame.
       - name: stylua (check only)
-        continue-on-error: true
         uses: JohnnyMorganz/stylua-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: latest
+          version: 2.5.2
           args: --check lua/ docs/TESTS/
 
       - name: Install luacheck

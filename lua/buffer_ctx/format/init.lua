@@ -39,12 +39,18 @@ end
 ---@return string|nil, string[]
 local function parse_command_line(cmdline)
   local args_str = cmdline:match("^%s*Format%s+(.*)$") or cmdline:match("^%s*(.*)$") or ""
-  local tokens   = {}
-  for token in args_str:gmatch("%S+") do tokens[#tokens + 1] = token end
-  if #tokens == 0 then return nil, {} end
-  local sub  = tokens[1]
+  local tokens = {}
+  for token in args_str:gmatch("%S+") do
+    tokens[#tokens + 1] = token
+  end
+  if #tokens == 0 then
+    return nil, {}
+  end
+  local sub = tokens[1]
   local args = {}
-  for i = 2, #tokens do args[#args + 1] = tokens[i] end
+  for i = 2, #tokens do
+    args[#args + 1] = tokens[i]
+  end
   return sub, args
 end
 
@@ -57,7 +63,9 @@ local function format_complete(arg_lead, cmdline, cursor_pos)
   if not sub or sub == arg_lead then
     local out = {}
     for name in pairs(subcommands) do
-      if vim.startswith(name, arg_lead) then out[#out + 1] = name end
+      if vim.startswith(name, arg_lead) then
+        out[#out + 1] = name
+      end
     end
     table.sort(out)
     return out
@@ -65,7 +73,9 @@ local function format_complete(arg_lead, cmdline, cursor_pos)
   local def = subcommands[sub]
   if def and type(def.complete) == "function" then
     local ok, result = pcall(def.complete, arg_lead, cmdline, cursor_pos)
-    if ok and result then return result end
+    if ok and result then
+      return result
+    end
   end
   return {}
 end
@@ -76,19 +86,25 @@ local function format_handler(opts)
   if #args == 0 then
     notify.info(
       "Usage: :Format <subcommand> [args...]\n"
-      .. "Available: " .. table.concat(vim.tbl_keys(subcommands), ", ")
+        .. "Available: "
+        .. table.concat(vim.tbl_keys(subcommands), ", ")
     )
     return
   end
-  local sub     = args[1]
+  local sub = args[1]
   local subargs = {}
-  for i = 2, #args do subargs[#subargs + 1] = args[i] end
+  for i = 2, #args do
+    subargs[#subargs + 1] = args[i]
+  end
   local def = subcommands[sub]
   if not def then
-    notify.error(string.format(
-      "Unknown subcommand: '%s'  Available: %s",
-      sub, table.concat(vim.tbl_keys(subcommands), ", ")
-    ))
+    notify.error(
+      string.format(
+        "Unknown subcommand: '%s'  Available: %s",
+        sub,
+        table.concat(vim.tbl_keys(subcommands), ", ")
+      )
+    )
     return
   end
   local ok, err = pcall(def.handler, subargs)
@@ -103,10 +119,15 @@ end
 
 local function setup_column_align()
   local ok, ca = pcall(require, "buffer_ctx.format.column_align")
-  if not ok then return end
+  if not ok then
+    return
+  end
   register_subcommand("column", {
     handler = function(args)
-      if #args == 0 then ca.align_interactive(); return end
+      if #args == 0 then
+        ca.align_interactive()
+        return
+      end
       local target_col = tonumber(args[1])
       if not target_col then
         notify.error("[column] Invalid target column — usage: column <N> [fill_char]")
@@ -114,22 +135,28 @@ local function setup_column_align()
       end
       ca.align_to_column(target_col, args[2] or " ")
     end,
-    complete = function() return {} end,
+    complete = function()
+      return {}
+    end,
     nargs = "*",
     range = true,
-    desc  = "Align selected char to column: column <N> [fill]",
+    desc = "Align selected char to column: column <N> [fill]",
   })
 end
 
 local function setup_table()
   local ok, tbl = pcall(require, "buffer_ctx.format.table_fmt")
-  if not ok then return end
+  if not ok then
+    return
+  end
   tbl.setup(register_subcommand, notify)
 end
 
 local function setup_text_width()
   local ok, tw = pcall(require, "buffer_ctx.format.text_width")
-  if not ok then return end
+  if not ok then
+    return
+  end
   register_subcommand("textwidth", {
     handler = function(args)
       if #args == 0 then
@@ -150,15 +177,19 @@ local function setup_text_width()
       tw.reflow_buffer(0, width)
       notify.info(string.format("Set textwidth=%d and reflowed buffer", width))
     end,
-    complete = function() return { "max", "80", "120" } end,
+    complete = function()
+      return { "max", "80", "120" }
+    end,
     nargs = "1",
-    desc  = "Reflow text to width: textwidth <N|max>",
+    desc = "Reflow text to width: textwidth <N|max>",
   })
 end
 
 local function setup_filter_lines()
   local ok, fl = pcall(require, "buffer_ctx.format.filter_lines")
-  if not ok then return end
+  if not ok then
+    return
+  end
   register_subcommand("filter", {
     handler = function(args)
       if #args == 0 then
@@ -170,8 +201,8 @@ local function setup_filter_lines()
         notify.warn("[filter] No conditions provided")
         return
       end
-      local bufnr        = vim.api.nvim_get_current_buf()
-      local before       = vim.api.nvim_buf_line_count(bufnr)
+      local bufnr = vim.api.nvim_get_current_buf()
+      local before = vim.api.nvim_buf_line_count(bufnr)
       local success, err = fl.filter_lines(bufnr, conditions, remove_flag)
       if not success then
         notify.warn(string.format("[filter] %s", err or "Unknown error"))
@@ -181,28 +212,38 @@ local function setup_filter_lines()
       notify.info(string.format("[filter] %d → %d lines", before, after))
     end,
     complete = function(arg_lead)
-      if vim.startswith("--remove", arg_lead) then return { "--remove" } end
-      if vim.startswith("-r",       arg_lead) then return { "-r" }       end
+      if vim.startswith("--remove", arg_lead) then
+        return { "--remove" }
+      end
+      if vim.startswith("-r", arg_lead) then
+        return { "-r" }
+      end
       return {}
     end,
     nargs = "+",
-    desc  = "Filter lines: filter [--remove] <pattern> ...",
+    desc = "Filter lines: filter [--remove] <pattern> ...",
   })
 end
 
 local function setup_misc()
   local ok, misc = pcall(require, "buffer_ctx.format.misc")
-  if not ok then return end
+  if not ok then
+    return
+  end
   misc.register_subcommands(register_subcommand)
 end
 
 local function setup_enum_lines()
   local ok, core = pcall(require, "buffer_ctx.format.enum_lines")
-  if not ok then return end
+  if not ok then
+    return
+  end
 
   local VALID_STYLES = { "decimal", "alpha", "ALPHA", "roman", "ROMAN" }
-  local STYLE_SET    = {}
-  for _, s in ipairs(VALID_STYLES) do STYLE_SET[s] = true end
+  local STYLE_SET = {}
+  for _, s in ipairs(VALID_STYLES) do
+    STYLE_SET[s] = true
+  end
 
   ---@param args string[]
   ---@return table opts, string|nil err
@@ -214,7 +255,8 @@ local function setup_enum_lines()
         key = key:lower()
         if key == "style" then
           if not STYLE_SET[val] then
-            return opts, string.format("Invalid style %q – valid: %s", val, table.concat(VALID_STYLES, ", "))
+            return opts,
+              string.format("Invalid style %q – valid: %s", val, table.concat(VALID_STYLES, ", "))
           end
           opts.style = val
         elseif key == "sep" then
@@ -226,9 +268,12 @@ local function setup_enum_lines()
           end
           opts.start = math.floor(n)
         elseif key == "inline" then
-          if val == "true" then opts.inline = true
-          elseif val == "false" then opts.inline = false
-          else return opts, string.format("inline= must be true or false, got %q", val)
+          if val == "true" then
+            opts.inline = true
+          elseif val == "false" then
+            opts.inline = false
+          else
+            return opts, string.format("inline= must be true or false, got %q", val)
           end
         else
           return opts, string.format("Unknown option %q", raw)
@@ -236,10 +281,12 @@ local function setup_enum_lines()
       elseif STYLE_SET[raw] then
         opts.style = raw
       else
-        return opts, string.format(
-          "Unknown argument %q – expected a style (%s) or key=value.",
-          raw, table.concat(VALID_STYLES, "|")
-        )
+        return opts,
+          string.format(
+            "Unknown argument %q – expected a style (%s) or key=value.",
+            raw,
+            table.concat(VALID_STYLES, "|")
+          )
       end
     end
     return opts, nil
@@ -256,21 +303,34 @@ local function setup_enum_lines()
     end,
     complete = function(arg_lead)
       local candidates = {
-        "decimal", "alpha", "ALPHA", "roman", "ROMAN",
-        "style=decimal", "style=alpha", "style=ALPHA", "style=roman", "style=ROMAN",
-        "sep=.", "sep=)", "sep=:",
+        "decimal",
+        "alpha",
+        "ALPHA",
+        "roman",
+        "ROMAN",
+        "style=decimal",
+        "style=alpha",
+        "style=ALPHA",
+        "style=roman",
+        "style=ROMAN",
+        "sep=.",
+        "sep=)",
+        "sep=:",
         "start=1",
-        "inline=true", "inline=false",
+        "inline=true",
+        "inline=false",
       }
       local out = {}
       for _, c in ipairs(candidates) do
-        if vim.startswith(c, arg_lead) then out[#out + 1] = c end
+        if vim.startswith(c, arg_lead) then
+          out[#out + 1] = c
+        end
       end
       return out
     end,
     nargs = "*",
     range = true,
-    desc  = "Enumerate tokens in visual selection: enum [STYLE] [sep=SEP] [start=N] [inline=bool]",
+    desc = "Enumerate tokens in visual selection: enum [STYLE] [sep=SEP] [start=N] [inline=bool]",
   })
 end
 
@@ -281,7 +341,9 @@ end
 ---@param cfg { enable?: boolean, command?: string }|nil
 function M.setup(cfg)
   cfg = cfg or {}
-  if cfg.enable == false then return end
+  if cfg.enable == false then
+    return
+  end
 
   setup_column_align()
   setup_table()
@@ -292,10 +354,10 @@ function M.setup(cfg)
 
   local cmd_name = cfg.command or "Format"
   vim.api.nvim_create_user_command(cmd_name, format_handler, {
-    nargs    = "*",
-    range    = true,
+    nargs = "*",
+    range = true,
     complete = format_complete,
-    desc     = "[buffer_ctx.format] Unified formatting command with subcommands",
+    desc = "[buffer_ctx.format] Unified formatting command with subcommands",
   })
 end
 

@@ -17,7 +17,9 @@ function M.get_module_path(filepath)
   end
   local norm = (filepath:gsub("\\", "/"))
   local lua_idx = norm:find("/lua/")
-  if not lua_idx then return nil end
+  if not lua_idx then
+    return nil
+  end
   local after = norm:sub(lua_idx + 5)
   local trimmed = (after:gsub("%.lua$", ""):gsub("/init$", ""))
   -- Parenthesized: gsub returns (string, count); only the string is the result.
@@ -29,7 +31,9 @@ end
 ---@return string
 function M.relative_to_cwd(abs_path)
   local rel = fn.fnamemodify(abs_path, ":."):gsub("\\", "/")
-  if rel:sub(1, 2) == "./" then rel = rel:sub(3) end
+  if rel:sub(1, 2) == "./" then
+    rel = rel:sub(3)
+  end
   return rel
 end
 
@@ -52,11 +56,15 @@ end
 function M.pick_depth(path, count)
   local norm = path:gsub("\\", "/")
   local parts = {}
-  for p in norm:gmatch("[^/]+") do parts[#parts + 1] = p end
+  for p in norm:gmatch("[^/]+") do
+    parts[#parts + 1] = p
+  end
   local n = #parts
   local start = math.max(1, n - count + 1)
   local result = {}
-  for i = start, n do result[#result + 1] = parts[i] end
+  for i = start, n do
+    result[#result + 1] = parts[i]
+  end
   return result
 end
 
@@ -65,7 +73,7 @@ end
 ---@return boolean
 function M.is_inside_nvim_config(abs_path)
   local config = fn.stdpath("config")
-  local norm_path   = abs_path:gsub("\\", "/"):lower()
+  local norm_path = abs_path:gsub("\\", "/"):lower()
   local norm_config = (config:gsub("\\", "/")):lower()
   return norm_path:sub(1, #norm_config) == norm_config
 end
