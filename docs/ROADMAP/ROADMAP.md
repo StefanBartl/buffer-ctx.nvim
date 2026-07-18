@@ -38,29 +38,7 @@ auditiert (2026-07-04, Nacharbeit abgeschlossen 2026-07-18):
 **Bilanz:** alle drei Audits sind abgearbeitet, es bleiben nur die bewussten
 Design-Entscheidungen (kein `safe_call`-Envelope, funktionaler Stil statt
 Metatables, README englisch). Sortier-/Datenstruktur-/Bit-Operationen-Kapitel
-sind n/a (kein eigener Algorithmus-Code).
-
-Zuletzt geschlossen (2026-07-18):
-
-- `gsub`-Mehrfachrückgabe in `uuid.generate`/`uuid.format`/`path.get_module_path`
-  (gaben `(string, count)` statt eines Strings zurück) — Ursache der
-  `redundant-return-value`-Diagnostics, mit Regressionstests abgesichert.
-- `lib.map`-Soft-Bridge für Keymaps (`util/map.lua`).
-- `@see`-Modulquerverweise.
-- CI-Workflow (`.github/workflows/ci.yml`): Specs auf stable + nightly,
-  `:checkhealth`-Smoke-Test, `luacheck` als harter Gate (0 Warnungen),
-  `stylua --check` advisory.
-- Zwei tote Code-Reste aus dem `lib.lua.uuid`-Refactor entfernt (`rand_hex`,
-  ungenutztes `notify`-require) — von luacheck gefunden.
-- `mark.yank` schrieb `"+"` direkt statt über `util/clip` — umgeleitet; damit
-  erhält es die lib.nvim-Fallback-Kette und den Unnamed-Register-Write.
-  `clip.copy` überlebt jetzt einen fehlenden Clipboard-Provider (pcall-Guard
-  + Warnung) statt den Copy komplett fallen zu lassen.
-
-Verbleibender, optionaler Folgeschritt:
-
-1. `stylua lua/ docs/TESTS/` einmal anwenden, Diff reviewen, danach das
-   CI-Lint-Gate scharf schalten (`continue-on-error` entfernen).
+sind n/a (kein eigener Algorithmus-Code). **Keine offenen Punkte.**
 
 ---
 

@@ -89,8 +89,7 @@ buffer-ctx.nvim erfüllt die Zentralen Prinzipien — das weitgehende Fehlen von
 Autocmds und Hot-Paths macht die meisten Punkte trivial erfüllt statt aktiv
 erarbeitet. Die letzte offene Lücke, der fehlende `lib.map`-Soft-Bridge für
 Keymaps, ist seit 2026-07-18 mit [`util/map.lua`](../../lua/buffer_ctx/util/map.lua)
-geschlossen. **Keine offenen Punkte** — siehe [Checklist.md](./Checklist.md)
-für den einzigen verbleibenden optionalen Folgeschritt (stylua-Gate).
+geschlossen. **Keine offenen Punkte.**
 
 ## Literatur und Referenzen
 
