@@ -72,14 +72,18 @@ Pure Functions ✅, Test-Entry `docs/TESTS/run.lua` ✅ (jetzt inkl.
 
 ### 7. Tooling — ✅
 - Lua LS: `.luarc.json` vorhanden (`diagnostics.globals=vim`, `workspace.library`) ✅ (seit 2026-07-04).
-- CI: `.github/workflows/ci.yml` seit 2026-07-18 ✅ — drei Jobs:
+- CI: `.github/workflows/ci.yml` seit 2026-07-18 ✅ — drei Jobs, alle grün:
   - **test**: `docs/TESTS/run.lua` headless auf Neovim `stable` **und** `nightly`.
   - **health**: `setup()` + `:checkhealth buffer_ctx` müssen sauber laden.
-  - **lint**: `stylua --check` + `luacheck` (Konfig: `.stylua.toml`, `.luacheckrc`).
-    Bewusst `continue-on-error: true` — die Quellen liefen nie durch stylua, ein
-    harter Gate würde an Formatierungs-Drift statt an echten Defekten scheitern.
-    Umzustellen, sobald `stylua lua/ docs/TESTS/` einmal angewendet und der Diff
-    reviewt ist. **Das ist der einzige verbleibende, optionale Folgeschritt.**
+  - **lint**: `luacheck` als **harter Gate** (0 Warnungen / 0 Fehler über 47
+    Dateien), `stylua --check` bewusst advisory (`continue-on-error` auf
+    **Step**-Ebene — ein fehlgeschlagener Step überspringt sonst die
+    Folge-Steps, wodurch luacheck zunächst gar nicht lief). Konfig:
+    `.stylua.toml`, `.luacheckrc`.
+    **Einziger verbleibender, optionaler Folgeschritt:** `stylua lua/ docs/TESTS/`
+    einmal anwenden, Diff reviewen, dann auch dieses Gate scharf schalten.
+  - luacheck fand dabei zwei echte Leichen aus dem `lib.lua.uuid`-Refactor
+    (`rand_hex` unerreichbar, ungenutztes `notify`-require in `boilerplate/`).
 - CI läuft bewusst **ohne** `lib.nvim`: die Library ist Soft-Dependency, damit
   deckt CI den Standalone-Fallback-Pfad ab (`docs/TESTS/run.lua` bricht seither
   nicht mehr ab, wenn `lib.nvim` fehlt).

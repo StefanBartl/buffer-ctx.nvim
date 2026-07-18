@@ -8,18 +8,16 @@ on:
 
 jobs:
   lint:
-    name: stylua + luacheck (advisory)
+    name: luacheck (gate) + stylua (advisory)
     runs-on: ubuntu-latest
-    # Advisory for now: the existing sources have never been run through stylua,
-    # so a hard gate would fail on formatting drift rather than on real defects.
-    # Flip continue-on-error off once `stylua lua/ docs/TESTS/` has been applied
-    # once and its diff reviewed.
-    continue-on-error: true
     steps:
       - uses: actions/checkout@v4
 
-      # Step-level, not just job-level: a failed step short-circuits the rest of
-      # the job, so without this the luacheck steps below never run.
+      # stylua stays advisory: the sources have never been run through it, so a
+      # hard gate would fail on formatting drift rather than on real defects.
+      # Drop continue-on-error once `stylua lua/ docs/TESTS/` has been applied
+      # once and its diff reviewed. It must stay step-level — a failed step
+      # short-circuits the rest of the job, which would skip luacheck below.
       - name: stylua (check only)
         continue-on-error: true
         uses: JohnnyMorganz/stylua-action@v4
