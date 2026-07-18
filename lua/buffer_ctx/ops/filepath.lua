@@ -5,14 +5,16 @@
 
 local M = {}
 local api = vim.api
-local fn  = vim.fn
-local pu  = require("buffer_ctx.util.path")
+local fn = vim.fn
+local pu = require("buffer_ctx.util.path")
 
 ---@param opts BufferCtx.FilepathOpts
 ---@return string|nil result, string|nil err
 function M.get_path(opts)
   local name = api.nvim_buf_get_name(0)
-  if not name or name == "" then return nil, "unnamed buffer" end
+  if not name or name == "" then
+    return nil, "unnamed buffer"
+  end
 
   local abs = fn.fnamemodify(name, ":p")
   local base
@@ -21,7 +23,7 @@ function M.get_path(opts)
     base = abs
   elseif opts.mode == "nvim" then
     local config = fn.stdpath("config")
-    local norm_abs    = abs:gsub("\\", "/")
+    local norm_abs = abs:gsub("\\", "/")
     local norm_config = (config:gsub("\\", "/"))
     if norm_abs:sub(1, #norm_config + 1) == norm_config .. "/" then
       base = norm_abs:sub(#norm_config + 2)
@@ -29,7 +31,9 @@ function M.get_path(opts)
       base = pu.relative_to_cwd(abs)
     end
     -- for nvim mode, format defaults to system
-    if opts.format == "lua" then opts.format = "unix" end
+    if opts.format == "lua" then
+      opts.format = "unix"
+    end
   else
     base = pu.relative_to_cwd(abs)
   end
@@ -40,7 +44,9 @@ function M.get_path(opts)
   else
     local norm = base:gsub("\\", "/")
     segments = {}
-    for p in norm:gmatch("[^/]+") do segments[#segments + 1] = p end
+    for p in norm:gmatch("[^/]+") do
+      segments[#segments + 1] = p
+    end
   end
 
   if #segments == 0 then
@@ -59,12 +65,16 @@ function M._format_segments(segments, format)
     -- If a "lua" segment exists, drop everything up to and including the last one
     local lua_at = nil
     for i, seg in ipairs(s) do
-      if seg == "lua" then lua_at = i end
+      if seg == "lua" then
+        lua_at = i
+      end
     end
     if lua_at then
       s = vim.list_slice(s, lua_at + 1)
     end
-    if #s == 0 then return "" end
+    if #s == 0 then
+      return ""
+    end
     s[#s] = fn.fnamemodify(s[#s], ":r")
     local out = table.concat(s, ".")
     out = out:gsub("^lua%.", "")
@@ -84,7 +94,9 @@ end
 ---@return string|nil result, string|nil err
 function M.get_filename(no_ext)
   local name = api.nvim_buf_get_name(0)
-  if not name or name == "" then return nil, "unnamed buffer" end
+  if not name or name == "" then
+    return nil, "unnamed buffer"
+  end
   return fn.fnamemodify(name, no_ext and ":t:r" or ":t")
 end
 

@@ -6,7 +6,9 @@ local _setup_done = false
 ---Configure and activate buffer-ctx.nvim (idempotent)
 ---@param user_opts? BufferCtx.Config
 function M.setup(user_opts)
-  if _setup_done then return end
+  if _setup_done then
+    return
+  end
   _setup_done = true
 
   local config = require("buffer_ctx.config")

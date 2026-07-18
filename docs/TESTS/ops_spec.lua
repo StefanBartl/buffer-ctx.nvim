@@ -3,12 +3,12 @@
 -- named under the actual cwd so results are deterministic without touching disk.
 
 return function(H)
-  local module_op   = require("buffer_ctx.ops.module")
-  local uuid_op      = require("buffer_ctx.ops.uuid")
+  local module_op = require("buffer_ctx.ops.module")
+  local uuid_op = require("buffer_ctx.ops.uuid")
   local timestamp_op = require("buffer_ctx.ops.timestamp")
-  local env_op       = require("buffer_ctx.ops.env")
-  local location_op  = require("buffer_ctx.ops.location")
-  local filepath_op  = require("buffer_ctx.ops.filepath")
+  local env_op = require("buffer_ctx.ops.env")
+  local location_op = require("buffer_ctx.ops.location")
+  local filepath_op = require("buffer_ctx.ops.filepath")
 
   local cwd = vim.fn.getcwd()
 
@@ -25,7 +25,11 @@ return function(H)
 
   -- uuid
   local id = uuid_op.generate()
-  H.match(id, "^%x%x%x%x%x%x%x%x%-%x%x%x%x%-4%x%x%x%-[89ab]%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x$", "uuid v4 shape")
+  H.match(
+    id,
+    "^%x%x%x%x%x%x%x%x%-%x%x%x%x%-4%x%x%x%-[89ab]%x%x%x%-%x%x%x%x%x%x%x%x%x%x%x%x$",
+    "uuid v4 shape"
+  )
   H.eq(#uuid_op.format(id, "compact"), 32, "uuid compact length")
   H.eq(uuid_op.format(id, "upper"), id:upper(), "uuid upper")
   H.eq(uuid_op.format(id, "braced"), "{" .. id .. "}", "uuid braced")
@@ -36,7 +40,11 @@ return function(H)
 
   -- timestamp
   H.match(timestamp_op.format_timestamp("unix"), "^%d+$", "timestamp unix is numeric")
-  H.match(timestamp_op.format_timestamp("iso-date"), "^%d%d%d%d%-%d%d%-%d%d$", "timestamp iso-date shape")
+  H.match(
+    timestamp_op.format_timestamp("iso-date"),
+    "^%d%d%d%d%-%d%d%-%d%d$",
+    "timestamp iso-date shape"
+  )
   local fmt, utc = timestamp_op.parse_args({ "short", "--utc" })
   H.eq(fmt, "short", "timestamp parse_args fmt")
   H.eq(utc, true, "timestamp parse_args utc flag")
@@ -57,7 +65,11 @@ return function(H)
   H.eq(location_op.parse_args({ "ABS" }), "abs", "location parse_args lowercases")
 
   H.scratch(cwd .. "/lua/loc/test.lua")
-  H.eq(location_op.get("cwd"), "lua/loc/test.lua:1", "location.get is forward-slashed on every platform")
+  H.eq(
+    location_op.get("cwd"),
+    "lua/loc/test.lua:1",
+    "location.get is forward-slashed on every platform"
+  )
 
   -- filepath
   local opts = filepath_op.parse_args({})
@@ -75,8 +87,16 @@ return function(H)
   H.eq(filepath_op.parse_args({ "rel" }).mode, "cwd", "filepath parse_args rel alias")
 
   H.scratch(cwd .. "/lua/foo/qux.lua")
-  H.eq(filepath_op.get_path({ mode = "cwd", format = "unix" }), "lua/foo/qux.lua", "filepath get_path unix")
-  H.eq(filepath_op.get_path({ mode = "cwd", format = "lua" }), "foo.qux", "filepath get_path lua style")
+  H.eq(
+    filepath_op.get_path({ mode = "cwd", format = "unix" }),
+    "lua/foo/qux.lua",
+    "filepath get_path unix"
+  )
+  H.eq(
+    filepath_op.get_path({ mode = "cwd", format = "lua" }),
+    "foo.qux",
+    "filepath get_path lua style"
+  )
 
   H.scratch(cwd .. "/somefile.lua")
   H.eq(filepath_op.get_filename(), "somefile.lua", "filepath get_filename with ext")

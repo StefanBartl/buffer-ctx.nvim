@@ -4,12 +4,28 @@ return function(H)
   local pu = require("buffer_ctx.util.path")
 
   -- get_module_path
-  H.eq(pu.get_module_path("/home/user/plugin/lua/foo/bar/init.lua"), "foo.bar", "get_module_path init.lua")
-  H.eq(pu.get_module_path("/home/user/plugin/lua/foo/bar.lua"), "foo.bar", "get_module_path plain file")
-  H.eq(pu.get_module_path("C:\\repos\\x\\lua\\a\\b\\init.lua"), "a.b", "get_module_path backslashes")
+  H.eq(
+    pu.get_module_path("/home/user/plugin/lua/foo/bar/init.lua"),
+    "foo.bar",
+    "get_module_path init.lua"
+  )
+  H.eq(
+    pu.get_module_path("/home/user/plugin/lua/foo/bar.lua"),
+    "foo.bar",
+    "get_module_path plain file"
+  )
+  H.eq(
+    pu.get_module_path("C:\\repos\\x\\lua\\a\\b\\init.lua"),
+    "a.b",
+    "get_module_path backslashes"
+  )
   H.eq(pu.get_module_path("/home/user/README.md"), nil, "get_module_path no /lua/ segment")
   -- Regression: gsub returns (string, count); the count must not leak out.
-  H.eq(select("#", pu.get_module_path("/x/lua/a/b.lua")), 1, "get_module_path returns exactly one value")
+  H.eq(
+    select("#", pu.get_module_path("/x/lua/a/b.lua")),
+    1,
+    "get_module_path returns exactly one value"
+  )
 
   -- normalize_sep
   H.eq(pu.normalize_sep("a\\b/c"), "a/b/c", "normalize_sep default")
@@ -28,5 +44,8 @@ return function(H)
   -- is_inside_nvim_config
   local config = vim.fn.stdpath("config")
   H.ok(pu.is_inside_nvim_config(config .. "/lua/foo.lua"), "is_inside_nvim_config: inside")
-  H.ok(not pu.is_inside_nvim_config("/definitely/not/nvim/config/foo.lua"), "is_inside_nvim_config: outside")
+  H.ok(
+    not pu.is_inside_nvim_config("/definitely/not/nvim/config/foo.lua"),
+    "is_inside_nvim_config: outside"
+  )
 end

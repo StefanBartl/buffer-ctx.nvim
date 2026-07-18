@@ -37,7 +37,9 @@ return function(H)
   -- BufDelete/BufWipeout cleanup autocmd is registered
   local autocmds = vim.api.nvim_get_autocmds({ group = "BufferCtxMarkCleanup" })
   local events = {}
-  for _, ac in ipairs(autocmds) do events[ac.event] = true end
+  for _, ac in ipairs(autocmds) do
+    events[ac.event] = true
+  end
   H.ok(events["BufDelete"], "BufferCtxMarkCleanup handles BufDelete")
   H.ok(events["BufWipeout"], "BufferCtxMarkCleanup handles BufWipeout")
 

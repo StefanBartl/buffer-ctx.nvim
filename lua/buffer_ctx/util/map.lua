@@ -17,8 +17,12 @@ local has_lib = ok_lib_map and type(lib_map) == "function"
 ---@param opts? table  extra vim.keymap.set options, merged over the defaults
 ---@return nil
 function M.set(modes, lhs, rhs, desc, opts)
-  if type(lhs) ~= "string" or lhs == "" then return end
-  if type(rhs) ~= "function" and type(rhs) ~= "string" then return end
+  if type(lhs) ~= "string" or lhs == "" then
+    return
+  end
+  if type(rhs) ~= "function" and type(rhs) ~= "string" then
+    return
+  end
 
   local merged = vim.tbl_extend("force", { noremap = true, silent = true }, opts or {})
   if has_lib then

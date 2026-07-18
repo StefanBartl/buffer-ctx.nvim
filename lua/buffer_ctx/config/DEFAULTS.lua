@@ -5,24 +5,24 @@
 return {
   keymaps = {
     location_copy = "<leader>cnl",
-    module_copy   = "<leader>cnm",
+    module_copy = "<leader>cnm",
     filepath_copy = "<leader>cnf",
   },
   commands = true,
   format = {
-    enable  = true,
+    enable = true,
     command = "Format",
   },
   mark = {
-    enable  = true,
+    enable = true,
     command = "Mark",
     keymaps = {
       toggle = "<S-m>",
-      yank   = "<C-p>",
+      yank = "<C-p>",
     },
     sign = {
       text = "●",
-      hl   = "ErrorMsg",
+      hl = "ErrorMsg",
     },
   },
   which_key = true,
