@@ -3,7 +3,7 @@
 ## Requirements
 
 - Neovim **0.9+**
-- *(optional)* [lib.nvim](https://github.com/StefanBartl/lib.nvim) — used for `notify` when installed, falls back to plain `vim.notify` otherwise
+- [lib.nvim](https://github.com/StefanBartl/lib.nvim) — **required**: the `:Insert`/`:Copy`/`:Format`/`:Mark` command layer is built on `lib.nvim.usercmd.composer`. `notify`/`map` remain a soft dependency on top of that (nicer formatting when installed, falls back to plain `vim.notify`/`vim.keymap.set` otherwise)
 - *(optional)* [which-key.nvim](https://github.com/folke/which-key.nvim) — labels the `<leader>cn` keymap group when installed
 - *(optional)* [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) — enables `:Telescope buffer_ctx boilerplate` with a live preview
 - *(optional)* `git` in `PATH` — only for the `git` subcommand
@@ -22,6 +22,7 @@
 ```lua
 {
   "stefanbartl/buffer-ctx.nvim",
+  dependencies = { "stefanbartl/lib.nvim" },
   event = "VeryLazy",
   opts  = {},
 }
@@ -31,6 +32,7 @@
 ```lua
 {
   "stefanbartl/buffer-ctx.nvim",
+  dependencies = { "stefanbartl/lib.nvim" },
   cmd  = { "Insert", "Copy", "Format", "Mark" },
   opts = {},
 }
@@ -40,6 +42,7 @@
 ```lua
 {
   "stefanbartl/buffer-ctx.nvim",
+  dependencies = { "stefanbartl/lib.nvim" },
   lazy = false,
   opts = {},
 }
@@ -51,6 +54,7 @@
 ```lua
 use {
   "stefanbartl/buffer-ctx.nvim",
+  requires = { "stefanbartl/lib.nvim" },
   config = function()
     require("buffer_ctx").setup()
   end,
@@ -61,6 +65,7 @@ use {
 ```lua
 use {
   "stefanbartl/buffer-ctx.nvim",
+  requires = { "stefanbartl/lib.nvim" },
   module_pattern = "buffer_ctx", -- eager
   config = function()
     require("buffer_ctx").setup()

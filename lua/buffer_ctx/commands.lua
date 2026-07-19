@@ -1,10 +1,15 @@
 ---@module 'buffer_ctx.commands'
 ---@brief :Insert / :Copy dispatch — resolves a subcommand to an ops/* handler
---- and routes the result into a sink (cursor insert or clipboard copy).
+--- and routes the result into a sink (cursor insert or clipboard copy). Both
+--- commands are built via lib.nvim.usercmd.composer, sharing one route
+--- factory (build_routes(sink)) since they dispatch through the exact same
+--- DISPATCH table and differ only in where the result goes.
 ---@see buffer_ctx.format for the sibling :Format command tree
 ---@see buffer_ctx.mark for the sibling :Mark command tree
 ---@see buffer_ctx.util.cursor insert sink
 ---@see buffer_ctx.util.clip copy sink
+
+local composer = require("lib.nvim.usercmd.composer")
 
 local M = {}
 
@@ -313,91 +318,6 @@ local SUBCMD_ARGS = {
   env = nil, -- populated lazily from env_op.list_names()
 }
 
-local function filter(list, lead)
-  if lead == "" then
-    return list
-  end
-  local out = {}
-  for _, v in ipairs(list) do
-    if v:sub(1, #lead) == lead then
-      out[#out + 1] = v
-    end
-  end
-  return out
-end
-
-local function complete(arglead, cmdline, _)
-  -- Count committed tokens (space-separated, excluding trailing space or current token)
-  local tokens = {}
-  for t in cmdline:gmatch("%S+") do
-    tokens[#tokens + 1] = t
-  end
-  local trailing_space = cmdline:sub(-1) == " "
-  local committed = #tokens - (trailing_space and 0 or 1) - 1 -- subtract command itself
-
-  if committed <= 0 then
-    return filter(SUBCMDS, arglead)
-  end
-
-  local subcmd = tokens[2]
-  local arg_idx = committed -- 1 = completing first arg after subcmd
-
-  if subcmd == "boilerplate" then
-    if arg_idx == 1 then
-      return filter(boiler.list_keys(), arglead)
-    end
-    return {}
-  end
-
-  if subcmd == "snippet" then
-    if arg_idx == 1 then
-      return filter(snippet.list_keys(), arglead)
-    end
-    return {}
-  end
-
-  if subcmd == "env" then
-    if arg_idx == 1 then
-      return filter(env_op.list_names(), arglead)
-    end
-    return {}
-  end
-
-  if subcmd == "annotation" then
-    if arg_idx == 1 then
-      return filter(ANNOTATION_TYPES, arglead)
-    end
-    return {}
-  end
-
-  local args = SUBCMD_ARGS[subcmd]
-  if args and arg_idx == 1 then
-    return filter(args, arglead)
-  end
-
-  return {}
-end
-
-local function make_handler(sink)
-  return function(a)
-    local subcmd = a.fargs[1]
-    if not subcmd or subcmd == "" then
-      notify.error("usage: {subcmd} [args…]  (tab for subcommands)")
-      return
-    end
-    local handler = DISPATCH[subcmd]
-    if not handler then
-      notify.error("unknown subcommand: " .. subcmd)
-      return
-    end
-    local fargs = vim.list_slice(a.fargs, 2)
-    -- a.range is 0 when the user gave no range; only then are line1/line2
-    -- meaningless (both default to the cursor line).
-    local ctx = (a.range and a.range > 0) and { line1 = a.line1, line2 = a.line2 } or nil
-    handler(fargs, sink, ctx)
-  end
-end
-
 ---Call a subcommand directly from Lua
 ---@param subcmd string
 ---@param fargs string[]
@@ -412,20 +332,88 @@ function M._dispatch(subcmd, fargs, sink, ctx)
   handler(fargs, sink, ctx)
 end
 
+---@param list string[]
+---@param lead string
+---@return string[]
+local function prefix(list, lead)
+  if lead == "" then
+    return list
+  end
+  local out = {}
+  for _, v in ipairs(list) do
+    if v:sub(1, #lead) == lead then
+      out[#out + 1] = v
+    end
+  end
+  return out
+end
+
+-- Dynamically-populated first-token completion for the three subcommands
+-- whose valid values come from user config rather than a fixed list.
+composer.register_type("BUFFER_CTX_BOILERPLATE", {
+  validate = function(raw) return true, raw, nil end,
+  complete = function(arg_lead) return prefix(boiler.list_keys(), arg_lead) end,
+})
+composer.register_type("BUFFER_CTX_SNIPPET", {
+  validate = function(raw) return true, raw, nil end,
+  complete = function(arg_lead) return prefix(snippet.list_keys(), arg_lead) end,
+})
+composer.register_type("BUFFER_CTX_ENV", {
+  validate = function(raw) return true, raw, nil end,
+  complete = function(arg_lead) return prefix(env_op.list_names(), arg_lead) end,
+})
+
+local CUSTOM_ARG_TYPE = {
+  boilerplate = "BUFFER_CTX_BOILERPLATE",
+  snippet = "BUFFER_CTX_SNIPPET",
+  env = "BUFFER_CTX_ENV",
+}
+
+---Build the 14 `:Insert`/`:Copy` routes sharing DISPATCH, differing only in sink.
+--- Each route declares a single optional first-arg (matching the existing
+--- completion, which only ever completed the first token after the
+--- subcommand) and forwards the reconstructed full token list into the
+--- unchanged M._dispatch, so every handler's own fargs parsing is untouched.
+---@param sink BufferCtx.Sink
+---@return table[]
+local function build_routes(sink)
+  local routes = {}
+  for _, name in ipairs(SUBCMDS) do
+    local values = SUBCMD_ARGS[name]
+    routes[#routes + 1] = {
+      path = { name },
+      args = {
+        { name = "a1", type = CUSTOM_ARG_TYPE[name] or "STRING", optional = true, values = values },
+      },
+      range = true,
+      desc = ("%s → :%s"):format(name, sink == "clip" and "Copy" or "Insert"),
+      run = function(ctx)
+        local fargs = {}
+        if ctx.args.a1 ~= nil then
+          fargs[1] = ctx.args.a1
+        end
+        for _, t in ipairs(ctx.rest) do
+          fargs[#fargs + 1] = t
+        end
+        -- ctx.range.range is 0 when the user gave no range; only then are
+        -- line1/line2 meaningless (both default to the cursor line).
+        local range_ctx = (ctx.range.range and ctx.range.range > 0)
+          and { line1 = ctx.range.line1, line2 = ctx.range.line2 } or nil
+        M._dispatch(name, fargs, sink, range_ctx)
+      end,
+    }
+  end
+  return routes
+end
+
 function M.register()
-  -- range = true so `:'<,'>Copy location range` receives the selection; it
-  -- stays optional, every other subcommand ignores it.
-  vim.api.nvim_create_user_command("Insert", make_handler("cursor"), {
-    nargs = "+",
-    range = true,
-    complete = complete,
+  composer.verb("Insert", {
     desc = "Insert context text at cursor",
+    routes = build_routes("cursor"),
   })
-  vim.api.nvim_create_user_command("Copy", make_handler("clip"), {
-    nargs = "+",
-    range = true,
-    complete = complete,
+  composer.verb("Copy", {
     desc = "Copy context text to clipboard",
+    routes = build_routes("clip"),
   })
 end
 

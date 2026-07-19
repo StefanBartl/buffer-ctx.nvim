@@ -8,8 +8,15 @@
 ---   :Format filter [--remove] <pattern> ...
 ---   :Format enum [STYLE] [sep=SEP] [start=N] [inline=true|false]
 ---   :Format trim | sort [-r|-i|-n] | unique [-i] | case <mode> | indent | clear
+--- Built via lib.nvim.usercmd.composer: subcommand setup (register_subcommand,
+--- the per-subcommand handler/complete/desc defs below and in the sibling
+--- table_fmt/misc/blank_lines modules) is unchanged, only the final
+--- registration step routes through composer instead of a hand-rolled
+--- complete()/handler() pair.
 ---@see buffer_ctx.commands for the sibling :Insert / :Copy dispatch
 ---@see buffer_ctx.format.types for the subcommand type anchors
+
+local composer = require("lib.nvim.usercmd.composer")
 
 local M = {}
 
@@ -33,87 +40,6 @@ local function register_subcommand(name, def)
     error(string.format("Subcommand '%s': handler must be a function", name))
   end
   subcommands[name] = def
-end
-
----@param cmdline string
----@return string|nil, string[]
-local function parse_command_line(cmdline)
-  local args_str = cmdline:match("^%s*Format%s+(.*)$") or cmdline:match("^%s*(.*)$") or ""
-  local tokens = {}
-  for token in args_str:gmatch("%S+") do
-    tokens[#tokens + 1] = token
-  end
-  if #tokens == 0 then
-    return nil, {}
-  end
-  local sub = tokens[1]
-  local args = {}
-  for i = 2, #tokens do
-    args[#args + 1] = tokens[i]
-  end
-  return sub, args
-end
-
----@param arg_lead  string
----@param cmdline   string
----@param cursor_pos integer
----@return string[]
-local function format_complete(arg_lead, cmdline, cursor_pos)
-  local sub = parse_command_line(cmdline)
-  if not sub or sub == arg_lead then
-    local out = {}
-    for name in pairs(subcommands) do
-      if vim.startswith(name, arg_lead) then
-        out[#out + 1] = name
-      end
-    end
-    table.sort(out)
-    return out
-  end
-  local def = subcommands[sub]
-  if def and type(def.complete) == "function" then
-    local ok, result = pcall(def.complete, arg_lead, cmdline, cursor_pos)
-    if ok and result then
-      return result
-    end
-  end
-  return {}
-end
-
----@param opts table  nvim_create_user_command opts
-local function format_handler(opts)
-  local args = opts.fargs or {}
-  if #args == 0 then
-    notify.info(
-      "Usage: :Format <subcommand> [args...]\n"
-        .. "Available: "
-        .. table.concat(vim.tbl_keys(subcommands), ", ")
-    )
-    return
-  end
-  local sub = args[1]
-  local subargs = {}
-  for i = 2, #args do
-    subargs[#subargs + 1] = args[i]
-  end
-  local def = subcommands[sub]
-  if not def then
-    notify.error(
-      string.format(
-        "Unknown subcommand: '%s'  Available: %s",
-        sub,
-        table.concat(vim.tbl_keys(subcommands), ", ")
-      )
-    )
-    return
-  end
-  -- opts.range is 0 when the command was invoked with no range prefix; only
-  -- then are line1/line2 meaningless (both default to the cursor line).
-  local ctx = (opts.range and opts.range > 0) and { line1 = opts.line1, line2 = opts.line2 } or nil
-  local ok, err = pcall(def.handler, subargs, ctx)
-  if not ok then
-    notify.error(string.format("[%s] %s", sub, tostring(err)))
-  end
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -349,6 +275,54 @@ end
 -- Public entry point
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---Build one composer route per registered subcommand. A single optional
+--- first-arg (`a1`) is declared, using a type whose completer delegates to
+--- the subcommand's own `def.complete(arg_lead)` — every existing completer
+--- here is already position-agnostic (offers the same candidates regardless
+--- of how many tokens precede arg_lead), so this recovers real completion at
+--- the first slot; further tokens fall through to `ctx.rest` uncompleted,
+--- same tradeoff already accepted for :Insert/:Copy in buffer_ctx.commands.
+--- `def.handler(args, ctx)` itself is called completely unchanged.
+---@return table[]
+local function build_routes()
+  local routes = {}
+  for name, def in pairs(subcommands) do
+    composer.register_type("BUFFER_CTX_FORMAT_" .. name:upper(), {
+      validate = function(raw) return true, raw, nil end,
+      complete = function(arg_lead)
+        local ok, result = pcall(def.complete, arg_lead)
+        return (ok and result) or {}
+      end,
+    })
+    routes[#routes + 1] = {
+      path = { name },
+      args = {
+        { name = "a1", type = "BUFFER_CTX_FORMAT_" .. name:upper(), optional = true },
+      },
+      range = true,
+      desc = def.desc,
+      run = function(ctx)
+        local args = {}
+        if ctx.args.a1 ~= nil then
+          args[1] = ctx.args.a1
+        end
+        for _, t in ipairs(ctx.rest) do
+          args[#args + 1] = t
+        end
+        -- ctx.range.range is 0 when no range prefix was given; only then are
+        -- line1/line2 meaningless (both default to the cursor line).
+        local range_ctx = (ctx.range.range and ctx.range.range > 0)
+          and { line1 = ctx.range.line1, line2 = ctx.range.line2 } or nil
+        local ok, err = pcall(def.handler, args, range_ctx)
+        if not ok then
+          notify.error(string.format("[%s] %s", name, tostring(err)))
+        end
+      end,
+    }
+  end
+  return routes
+end
+
 ---@param cfg { enable?: boolean, command?: string }|nil
 function M.setup(cfg)
   cfg = cfg or {}
@@ -364,12 +338,9 @@ function M.setup(cfg)
   setup_enum_lines()
   setup_blank_lines()
 
-  local cmd_name = cfg.command or "Format"
-  vim.api.nvim_create_user_command(cmd_name, format_handler, {
-    nargs = "*",
-    range = true,
-    complete = format_complete,
-    desc = "[buffer_ctx.format] Unified formatting command with subcommands",
+  composer.verb(cfg.command or "Format", {
+    desc = "Unified formatting command with subcommands",
+    routes = build_routes(),
   })
 end
 

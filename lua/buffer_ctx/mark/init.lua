@@ -4,13 +4,16 @@
 --- :Mark toggle   Toggle the mark on the current line (sign or extmark indicator)
 --- :Mark yank     Yank all marked lines (in buffer order) to the system clipboard
 ---
---- Compat commands registered automatically:
+--- Built via lib.nvim.usercmd.composer. Compat commands are registered
+--- directly (untouched by composer, preserving their exact standalone
+--- surface):
 ---   :MarkLineToggle   →  :Mark toggle
 ---   :MarkLinesYank    →  :Mark yank
 
 ---@see buffer_ctx.util.map for the lib.nvim keymap soft bridge
 ---@see buffer_ctx.util.clip for the clipboard sink M.yank writes through
 
+local composer = require("lib.nvim.usercmd.composer")
 local notify = require("buffer_ctx.util.notify")
 local map = require("buffer_ctx.util.map")
 local clip = require("buffer_ctx.util.clip")
@@ -112,34 +115,6 @@ function M.yank(bufnr)
   end
 end
 
--- ── Subcommand registry ───────────────────────────────────────────────────────
-
-local SUBCOMMANDS = { "toggle", "yank" }
-
-local function dispatch(subcmd)
-  if subcmd == "toggle" then
-    M.toggle(vim.api.nvim_win_get_cursor(0)[1])
-  elseif subcmd == "yank" then
-    M.yank()
-  else
-    notify.warn("Unknown subcommand '" .. tostring(subcmd) .. "'. Valid: toggle, yank")
-  end
-end
-
-local function complete(arglead)
-  if arglead == "" then
-    return SUBCOMMANDS
-  end
-  local lead = arglead:lower()
-  local out = {}
-  for _, s in ipairs(SUBCOMMANDS) do
-    if s:sub(1, #lead) == lead then
-      out[#out + 1] = s
-    end
-  end
-  return out
-end
-
 -- ── Setup ─────────────────────────────────────────────────────────────────────
 
 ---@param opts BufferCtx.MarkConfig
@@ -152,14 +127,14 @@ function M.setup(opts)
     sign_opts.hl = opts.sign.hl or sign_opts.hl
   end
 
-  vim.api.nvim_create_user_command(cmd_name, function(info)
-    dispatch(info.fargs[1] or "")
-  end, {
-    desc = "[buffer-ctx] Line-mark operations: toggle / yank",
-    nargs = "?",
-    complete = function(arglead)
-      return complete(arglead)
-    end,
+  composer.verb(cmd_name, {
+    desc = "Line-mark operations: toggle / yank",
+    routes = {
+      { path = { "toggle" }, desc = "Toggle the mark on the current line",
+        run = function() M.toggle(vim.api.nvim_win_get_cursor(0)[1]) end },
+      { path = { "yank" }, desc = "Yank all marked lines to the system clipboard",
+        run = function() M.yank() end },
+    },
   })
 
   -- Compat commands (preserve wkdoptions.ui.line_marker API)
