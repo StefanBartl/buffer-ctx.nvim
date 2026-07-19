@@ -31,6 +31,7 @@ CONTENTS                                               *buffer-ctx-contents*
      6.4  filter ................ |:Format-filter|
      6.5  enum .................. |:Format-enum|
      6.6  misc .................. |:Format-misc|
+     6.7  squeeze ............... |:Format-squeeze|
   7. Mark command .............. |buffer-ctx-mark|
      7.1  toggle ................ |:Mark-toggle|
      7.2  yank .................. |:Mark-yank|
@@ -604,6 +605,25 @@ Examples: >
   :Format clear
     Erase all lines in the buffer.
 
+------------------------------------------------------------------------------
+6.7  squeeze                                          *:Format-squeeze*
+
+  :Format squeeze
+
+Collapse consecutive blank lines down to at most one, so a run of blank
+lines never separates two pieces of text by more than a single empty line.
+
+Operates on the whole buffer by default. With an explicit range — a visual
+selection (press `:` right after v/V/CTRL-V, Neovim fills in `'<,'>` for
+you) or a plain line range — only that span is squeezed; a blank line just
+outside the range is left untouched, since it was not part of the selection.
+
+Examples: >
+  :Format squeeze             (whole buffer)
+  :'<,'>Format squeeze        (visual selection only)
+  :10,20Format squeeze        (explicit line range only)
+<
+
 ==============================================================================
 7. MARK COMMAND                                        *buffer-ctx-mark*
 
@@ -760,6 +780,7 @@ Checks:
       filter_lines.lua         Line filter (keep / remove)
       enum_lines.lua           Token enumeration for visual selection
       misc.lua                 trim, sort, unique, case, indent, clear
+      blank_lines.lua          squeeze (collapse blank-line runs, range-aware)
     mark/
       init.lua                 :Mark command + toggle/yank logic + compat cmds
     util/

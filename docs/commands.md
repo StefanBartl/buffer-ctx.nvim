@@ -50,6 +50,7 @@ Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Ma
 | `case <mode>` | `upper`/`lower`/`title`/`sentence` | Change case |
 | `indent [--spaces\|--tabs] [N]` | flags, width | Fix indentation |
 | `clear` | — | Clear buffer |
+| `squeeze` | — (range-aware) | Collapse consecutive blank lines to at most one |
 
 ## Subcommand reference
 

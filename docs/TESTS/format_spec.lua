@@ -134,4 +134,45 @@ return function(H)
   vim.api.nvim_buf_set_lines(buf_misc, 0, -1, false, { "hello world" })
   vim.cmd("Format case upper")
   H.eq(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false)[1], "HELLO WORLD", "misc: case upper")
+
+  -- blank_lines: pure squeeze_lines()
+  local blank_lines = require("buffer_ctx.format.blank_lines")
+  local squeezed, removed = blank_lines.squeeze_lines({ "a", "", "", "", "b", "", "c" })
+  H.eq(table.concat(squeezed, "|"), "a||b||c", "squeeze_lines collapses runs to one blank")
+  H.eq(removed, 2, "squeeze_lines reports the count removed")
+
+  local unchanged, removed0 = blank_lines.squeeze_lines({ "a", "", "b" })
+  H.eq(table.concat(unchanged, "|"), "a||b", "squeeze_lines is a no-op on already-clean input")
+  H.eq(removed0, 0, "squeeze_lines reports 0 removed when nothing changes")
+
+  -- blank_lines: :Format squeeze on the whole buffer
+  local buf_squeeze = H.scratch(vim.fn.getcwd() .. "/squeeze_test.lua")
+  vim.api.nvim_buf_set_lines(buf_squeeze, 0, -1, false, { "a", "", "", "", "b", "", "c", "", "" })
+  vim.cmd("Format squeeze")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_squeeze, 0, -1, false), "|"),
+    "a||b||c|",
+    "Format squeeze collapses blank runs across the whole buffer"
+  )
+
+  -- blank_lines: :Format squeeze with an explicit range leaves the rest alone
+  vim.api.nvim_buf_set_lines(
+    buf_squeeze,
+    0,
+    -1,
+    false,
+    { "1", "", "", "2", "", "", "3", "", "", "4" }
+  )
+  vim.cmd("4,7Format squeeze")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_squeeze, 0, -1, false), "|"),
+    "1|||2||3|||4",
+    "Format squeeze with a range only touches lines inside it"
+  )
+
+  -- blank_lines: invalid buffer guard does not crash
+  H.ok(
+    select(1, blank_lines.squeeze_buffer(999999)) == nil,
+    "squeeze_buffer on an invalid buffer returns nil instead of erroring"
+  )
 end

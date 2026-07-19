@@ -57,17 +57,27 @@ See README.md → Configuration for the exact option shapes.
 
 | command | subcmds |
 | --- | --- |
-| `:Insert` | `filepath`, `filename`, `module`, `timestamp`, `uuid`, `annotation`, `boilerplate`, `location`, `env` |
-| `:Copy` | `filepath`, `filename`, `module`, `timestamp`, `uuid`, `annotation`, `boilerplate`, `location`, `env` |
-| `:Format` | `column`, `table`, `textwidth`, `filter`, `enum`, `trim`, `sort`, `unique`, `case`, `indent`, `clear` |
+| `:Insert` | `filepath`, `filename`, `module`, `timestamp`, `date`, `uuid`, `annotation`, `boilerplate`, `snippet`, `location`, `env`, `git`, `linecount`, `bufnr` |
+| `:Copy` | same catalog as `:Insert` |
+| `:Format` | `column`, `table`, `textwidth`, `filter`, `enum`, `trim`, `sort`, `unique`, `case`, `indent`, `clear`, `squeeze` |
 | `:Mark` | `toggle`, `yank` |
+
+`filepath` also accepts `nvim_module` as an alias for the `module` subcommand.
+`location` and `Format squeeze` accept a command range (`:'<,'>` / `:L1,L2`);
+`location` additionally takes a `range` arg to switch its output to
+`path:L1-L2`. See [commands.md](commands.md) for full per-subcommand args.
 
 ---
 
 ## Autocommands
 
-`buffer-ctx.nvim` registers no autocommands at present. See
-`lua/buffer_ctx/bindings/autocmds.lua` for the extension point.
+| event(s) | augroup | action |
+| --- | --- | --- |
+| `BufDelete`, `BufWipeout` | `BufferCtxMarkCleanup` | Clear `:Mark` state for the deleted/wiped buffer, so it doesn't grow unbounded over a session |
+
+Registered by `lua/buffer_ctx/mark/init.lua` when the `:Mark` subsystem is
+enabled (default). `lua/buffer_ctx/bindings/autocmds.lua` remains a no-op —
+an extension point for future autocmds, not currently used.
 
 ---
 

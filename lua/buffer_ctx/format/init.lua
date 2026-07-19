@@ -107,7 +107,10 @@ local function format_handler(opts)
     )
     return
   end
-  local ok, err = pcall(def.handler, subargs)
+  -- opts.range is 0 when the command was invoked with no range prefix; only
+  -- then are line1/line2 meaningless (both default to the cursor line).
+  local ctx = (opts.range and opts.range > 0) and { line1 = opts.line1, line2 = opts.line2 } or nil
+  local ok, err = pcall(def.handler, subargs, ctx)
   if not ok then
     notify.error(string.format("[%s] %s", sub, tostring(err)))
   end
@@ -233,6 +236,14 @@ local function setup_misc()
   misc.register_subcommands(register_subcommand)
 end
 
+local function setup_blank_lines()
+  local ok, bl = pcall(require, "buffer_ctx.format.blank_lines")
+  if not ok then
+    return
+  end
+  bl.register_subcommands(register_subcommand)
+end
+
 local function setup_enum_lines()
   local ok, core = pcall(require, "buffer_ctx.format.enum_lines")
   if not ok then
@@ -351,6 +362,7 @@ function M.setup(cfg)
   setup_filter_lines()
   setup_misc()
   setup_enum_lines()
+  setup_blank_lines()
 
   local cmd_name = cfg.command or "Format"
   vim.api.nvim_create_user_command(cmd_name, format_handler, {

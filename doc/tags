@@ -2,6 +2,7 @@
 :Format-enum	buffer-ctx.txt	/*:Format-enum*
 :Format-filter	buffer-ctx.txt	/*:Format-filter*
 :Format-misc	buffer-ctx.txt	/*:Format-misc*
+:Format-squeeze	buffer-ctx.txt	/*:Format-squeeze*
 :Format-table	buffer-ctx.txt	/*:Format-table*
 :Format-textwidth	buffer-ctx.txt	/*:Format-textwidth*
 :Insert-annotation	buffer-ctx.txt	/*:Insert-annotation*
