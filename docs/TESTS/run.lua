@@ -12,10 +12,13 @@
 local dir = debug.getinfo(1, "S").source:sub(2):match("(.*[/\\])") or "./"
 local H = dofile(dir .. "harness.lua")
 
--- buffer-ctx.nvim depends on lib.nvim at runtime (util/path.lua,
--- util/clip.lua, util/notify.lua), so the suite needs it on the
--- runtimepath. A sibling checkout wins over the plugin-manager copy: the
--- bootstrap clone under stdpath("data")/lazy is frequently stale.
+-- buffer-ctx.nvim depends on lib.nvim at runtime: util/{path,clip,notify}.lua
+-- use it as a soft/cosmetic dependency, but commands.lua/format/mark now
+-- `require("lib.nvim.usercmd.composer")` unconditionally at module load (the
+-- composer migration), so it's a HARD dependency for format_spec.lua and
+-- mark_spec.lua specifically, which call buffer_ctx.setup(). The suite needs
+-- it on the runtimepath. A sibling checkout wins over the plugin-manager
+-- copy: the bootstrap clone under stdpath("data")/lazy is frequently stale.
 local function add_lib_nvim()
   local candidates = {}
   if vim.env.LIB_NVIM_PATH then
@@ -39,12 +42,13 @@ local function add_lib_nvim()
   return nil
 end
 
--- lib.nvim is a *soft* dependency: util/{notify,map,path,clip}.lua fall back to
--- native equivalents when it is absent. Running without it is therefore a valid
--- (and CI-relevant) configuration — it exercises the standalone fallback path.
+-- util/{notify,map,path,clip}.lua fall back to native equivalents when
+-- lib.nvim is absent, but format_spec.lua/mark_spec.lua call buffer_ctx.setup()
+-- which now hard-requires lib.nvim.usercmd.composer (no pcall, matching every
+-- other composer-migrated plugin) — so those two specs WILL fail without it.
 if not add_lib_nvim() then
-  print("note  lib.nvim not found — exercising the standalone fallback path.")
-  print("      Set $LIB_NVIM_PATH or check it out next to this repo to test the bridge.")
+  print("note  lib.nvim not found — format_spec.lua/mark_spec.lua will fail.")
+  print("      Set $LIB_NVIM_PATH or check it out next to this repo.")
 end
 
 -- Ordered so failures point at the smallest layer first.

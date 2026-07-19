@@ -60,8 +60,11 @@ out to the `git` executable. Every other subcommand is shell-free.
 2. REQUIREMENTS                                    *buffer-ctx-requirements*
 
   - Neovim 0.9 or later
-  - (optional) lib.nvim (https://github.com/StefanBartl/lib.nvim)
-    Used for `notify` when installed; falls back to plain `vim.notify`.
+  - lib.nvim (https://github.com/StefanBartl/lib.nvim) — REQUIRED
+    The `:Insert`/`:Copy`/`:Format`/`:Mark` command layer is built on
+    `lib.nvim.usercmd.composer`. `notify`/`map` remain a soft dependency on
+    top of that (nicer formatting when installed, falls back to plain
+    `vim.notify`/`vim.keymap.set` otherwise).
   - (optional) which-key.nvim (https://github.com/folke/which-key.nvim)
     Labels the `<leader>cn` keymap group when installed.
   - (optional) telescope.nvim
@@ -75,6 +78,7 @@ out to the `git` executable. Every other subcommand is shell-free.
 lazy.nvim, recommended (load shortly after startup): >lua
   {
     "stefanbartl/buffer-ctx.nvim",
+    dependencies = { "stefanbartl/lib.nvim" },
     event = "VeryLazy",
     opts  = {},
   }
@@ -82,6 +86,7 @@ lazy.nvim, recommended (load shortly after startup): >lua
 lazy.nvim, lazy-loaded on command use: >lua
   {
     "stefanbartl/buffer-ctx.nvim",
+    dependencies = { "stefanbartl/lib.nvim" },
     cmd  = { "Insert", "Copy", "Format", "Mark" },
     opts = {},
   }
@@ -89,6 +94,7 @@ lazy.nvim, lazy-loaded on command use: >lua
 packer: >lua
   use {
     "stefanbartl/buffer-ctx.nvim",
+    requires = { "stefanbartl/lib.nvim" },
     config = function()
       require("buffer_ctx").setup()
     end,
@@ -170,7 +176,8 @@ Both `:Insert` and `:Copy` accept the same subcommands and arguments.
   :Insert {subcmd} [args…]   Insert at cursor
   :Copy   {subcmd} [args…]   Copy to clipboard
 
-Tab completion is context-aware at every argument position.
+Tab completion covers the subcommand and its first argument; further tokens
+have no completion (forwarded straight to the subcommand's own parser).
 See |buffer-ctx-completion|.
 
 ------------------------------------------------------------------------------
@@ -475,7 +482,9 @@ Examples: >
 
   :Format {subcmd} [args…]
 
-Unified buffer/selection formatting. All subcommands support tab completion.
+Unified buffer/selection formatting. Tab completion covers the subcommand
+and its first argument (e.g. `-r`/`--reverse` for `sort`, a style/`key=`
+for `enum`); further tokens have no completion.
 
 ------------------------------------------------------------------------------
 6.1  column                                            *:Format-column*
@@ -748,7 +757,9 @@ Checks:
   - `vim.uv` / `vim.loop` available
   - `vim.fn.setreg` available
   - Plugin loaded (guard flag set)
+  - lib.nvim detected? (required — command layer, lib.nvim.usercmd.composer)
   - lib.nvim detected? (optional — notify upgrade)
+  - lib.nvim detected? (optional — map upgrade)
   - which-key detected? (optional — <leader>cn group label)
   - `buffer_ctx.bindings` loadable
   - Format subsystem: enabled flag, `:Format` registered, each sub-module loadable
@@ -764,7 +775,7 @@ Checks:
       init.lua                 setup()/get() — deep-merge over DEFAULTS
       DEFAULTS.lua              Pluginside default configuration
     @types.lua                 LuaLS annotations
-    commands.lua               :Insert / :Copy + shared dispatch
+    commands.lua               :Insert / :Copy (lib.nvim.usercmd.composer) + shared dispatch
     health.lua                 checkhealth provider
     bindings/
       init.lua                  Orchestrates usrcmds + keymaps + which_key + autocmds
@@ -773,7 +784,7 @@ Checks:
       which_key.lua              Optional <leader>cn group label
       autocmds.lua               Extension point (no autocmds registered today)
     format/
-      init.lua                 :Format command + subcommand registry
+      init.lua                 :Format command (lib.nvim.usercmd.composer) + subcommand registry
       column_align.lua         Column-alignment (visual selection)
       table_fmt.lua            Markdown table formatter
       text_width.lua           Text reflow (word-wrap)
@@ -782,7 +793,7 @@ Checks:
       misc.lua                 trim, sort, unique, case, indent, clear
       blank_lines.lua          squeeze (collapse blank-line runs, range-aware)
     mark/
-      init.lua                 :Mark command + toggle/yank logic + compat cmds
+      init.lua                 :Mark command (lib.nvim.usercmd.composer) + toggle/yank logic + compat cmds
     util/
       notify.lua               "[buffer-ctx] " notify wrapper; upgrades to lib.nvim if present
       map.lua                  keymap wrapper; upgrades to lib.nvim.map if present

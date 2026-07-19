@@ -40,15 +40,26 @@ jobs:
         nvim: [stable, nightly]
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: buffer-ctx.nvim
+
+      # lib.nvim is now a real runtime dependency of the default setup() path
+      # (:Insert/:Copy/:Format/:Mark all require lib.nvim.usercmd.composer at
+      # module load, not just lazily) as of the composer migration -- checked
+      # out as a sibling so `rtp+=../lib.nvim` matches docs/TESTS/run.lua's own
+      # sibling-checkout lookup.
+      - uses: actions/checkout@v4
+        with:
+          repository: StefanBartl/lib.nvim
+          path: lib.nvim
 
       - uses: rhysd/action-setup-vim@v1
         with:
           neovim: true
           version: ${{ matrix.nvim }}
 
-      # lib.nvim is a soft dependency; CI deliberately runs without it so the
-      # standalone fallback path (util/{notify,map,path,clip}.lua) stays green.
       - name: Run docs/TESTS/run.lua
+        working-directory: buffer-ctx.nvim
         run: nvim --headless -u NONE -c "set rtp+=." -l docs/TESTS/run.lua
 
   health:
@@ -56,6 +67,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          path: buffer-ctx.nvim
+
+      - uses: actions/checkout@v4
+        with:
+          repository: StefanBartl/lib.nvim
+          path: lib.nvim
 
       - uses: rhysd/action-setup-vim@v1
         with:
@@ -63,9 +81,10 @@ jobs:
           version: stable
 
       - name: setup() + :checkhealth buffer_ctx
+        working-directory: buffer-ctx.nvim
         run: |
           nvim --headless -u NONE \
-            -c "set rtp+=." \
+            -c "set rtp+=.,../lib.nvim" \
             -c "lua require('buffer_ctx').setup({})" \
             -c "checkhealth buffer_ctx" \
             -c "qa!"
