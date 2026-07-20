@@ -14,6 +14,8 @@
 ---@see buffer_ctx.util.clip for the clipboard sink M.yank writes through
 
 local composer = require("lib.nvim.usercmd.composer")
+local usercmd = require("lib.nvim.usercmd")
+local autocmd = require("lib.nvim.autocmd")
 local notify = require("buffer_ctx.util.notify")
 local map = require("buffer_ctx.util.map")
 local clip = require("buffer_ctx.util.clip")
@@ -138,21 +140,20 @@ function M.setup(opts)
   })
 
   -- Compat commands (preserve wkdoptions.ui.line_marker API)
-  vim.api.nvim_create_user_command("MarkLineToggle", function()
+  usercmd.create("MarkLineToggle", function()
     M.toggle(vim.api.nvim_win_get_cursor(0)[1])
   end, { desc = "[buffer-ctx compat] Toggle mark on current line" })
 
-  vim.api.nvim_create_user_command("MarkLinesYank", function()
+  usercmd.create("MarkLinesYank", function()
     M.yank()
   end, { desc = "[buffer-ctx compat] Yank all marked lines" })
 
   -- Clear mark state for buffers that get deleted/wiped out, so `marked`
   -- doesn't grow unbounded over a long session.
-  vim.api.nvim_create_autocmd({ "BufDelete", "BufWipeout" }, {
-    group = vim.api.nvim_create_augroup("BufferCtxMarkCleanup", { clear = true }),
-    callback = function(args)
-      marked[args.buf] = nil
-    end,
+  autocmd.create({ "BufDelete", "BufWipeout" }, function(args)
+    marked[args.buf] = nil
+  end, {
+    group = "BufferCtxMarkCleanup",
     desc = "[buffer-ctx] clear mark state for deleted buffer",
   })
 
