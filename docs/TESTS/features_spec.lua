@@ -138,6 +138,14 @@ return function(H)
     "timestamp utc matches os.date UTC"
   )
 
+  -- ── :Insert date now takes the same [format] [--utc] grammar as timestamp ──
+  vim.fn.setreg('"', "")
+  require("buffer_ctx.commands")._dispatch("date", { "long" }, "clip")
+  H.match(vim.fn.getreg('"'), "^%a+day, %a+ %d+, %d%d%d%d$", "date long format via dispatch")
+  vim.fn.setreg('"', "")
+  require("buffer_ctx.commands")._dispatch("date", {}, "clip")
+  H.match(vim.fn.getreg('"'), "^%d%d%d%d%-%d%d%-%d%d$", "date with no args still defaults to iso-date")
+
   -- ── filepath nvim_module alias ───────────────────────────────────────────
   -- The alias lives in the dispatch layer, so drive it the way a user would.
   H.scratch(cwd .. "/lua/aliased/mod.lua")

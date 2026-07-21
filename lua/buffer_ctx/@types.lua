@@ -12,7 +12,7 @@
 
 ---@alias BufferCtx.ModuleStyle "require" | "lua_ls" | "luals" | "js" | "c" | "generic"
 
----@alias BufferCtx.TimestampFormat "iso" | "iso-date" | "iso-time" | "unix" | "human" | "short" | "log" | "filename"
+---@alias BufferCtx.TimestampFormat "iso" | "iso-date" | "iso-time" | "unix" | "human" | "short" | "log" | "filename" | "long" | "weekday" | "time" | "12h" | "rfc2822"
 
 ---@alias BufferCtx.UUIDFormat "standard" | "compact" | "upper" | "braced"
 

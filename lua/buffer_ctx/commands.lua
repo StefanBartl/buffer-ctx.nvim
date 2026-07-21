@@ -109,8 +109,10 @@ local DISPATCH = {
     sink_text(result, sink)
   end,
 
-  date = function(_, sink)
-    local result = timestamp.format_timestamp("iso-date", cfg("timestamp").utc == true)
+  date = function(fargs, sink)
+    local fmt, utc = timestamp.parse_date_args(fargs)
+    -- Sticky config UTC; an explicit --utc can only turn it on, never off.
+    local result = timestamp.format_timestamp(fmt, utc or cfg("timestamp").utc == true)
     sink_text(result, sink)
   end,
 
@@ -280,6 +282,23 @@ local ANNOTATION_TYPES = {
   "deprecated",
 }
 
+local TIMESTAMP_FORMATS = {
+  "iso",
+  "iso-date",
+  "iso-time",
+  "unix",
+  "human",
+  "short",
+  "log",
+  "filename",
+  "long",
+  "weekday",
+  "time",
+  "12h",
+  "rfc2822",
+  "--utc",
+}
+
 local SUBCMD_ARGS = {
   filepath = {
     "relative",
@@ -299,17 +318,8 @@ local SUBCMD_ARGS = {
   filename = { "noext" },
   module = { "require", "lua_ls", "js", "c", "generic" },
   git = { "hash", "short", "branch", "tag" },
-  timestamp = {
-    "iso",
-    "iso-date",
-    "iso-time",
-    "unix",
-    "human",
-    "short",
-    "log",
-    "filename",
-    "--utc",
-  },
+  timestamp = TIMESTAMP_FORMATS,
+  date = TIMESTAMP_FORMATS,
   uuid = { "standard", "compact", "upper", "braced" },
   annotation = ANNOTATION_TYPES,
   location = { "cwd", "abs", "lua", "range" },

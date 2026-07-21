@@ -16,7 +16,7 @@ Four command trees:
 | `module` | `[require\|lua_ls\|js\|c\|generic]` | Lua `require(…)` or `---@module` |
 | `location` | `[cwd\|abs\|lua] [range]` | `path:line`, or `path:L1-L2` with `range` |
 | `timestamp` | `[format] [--utc]` | Current timestamp |
-| `date` | — | Shorthand for `timestamp iso-date` |
+| `date` | `[format] [--utc]` | Shorthand for `timestamp`, defaulting to `iso-date` |
 | `uuid` | `[standard\|compact\|upper\|braced]` | UUID v4 |
 | `annotation` | `module\|class\|field\|param\|return\|function\|alias\|overload\|diagnostic\|deprecated` | LuaLS annotation line(s) |
 | `boilerplate` | `[template] [name]` | Multi-line code template (no arg → picker) |
@@ -130,21 +130,36 @@ A single-line range has no span to express, so it collapses to `path:42`.
 | `short` | `22.06.2026` |
 | `log` | `2026-06-22 14:35:00` |
 | `filename` | `20260622_143500` |
+| `long` | `Monday, June 22, 2026` |
+| `weekday` | `Monday` |
+| `time` | `14:35:00` (alias of `iso-time`) |
+| `12h` | `02:35:00 PM` |
+| `rfc2822` | `Mon, 22 Jun 2026 14:35:00` |
 
 ```
 :Insert timestamp               → 2026-06-22T14:35:00
 :Insert timestamp short --utc   → 22.06.2026 (UTC)
+:Insert timestamp 12h           → 02:35:00 PM
 ```
 
 Set `timestamp = { utc = true }` in the config (see [Configuration](configuration.md))
 to make every timestamp UTC without passing `--utc` each time.
 
-### `date`
+`weekday`/`long`/`rfc2822` always render English weekday/month names
+regardless of system locale — `os.date`'s `%A`/`%B`/`%a`/`%b` follow the C
+locale (e.g. a German locale renders `%a` as `"Di"`), so these are built from
+a fixed name table instead. `12h` is likewise hand-built rather than using
+`%I:%M:%S %p`, since Windows' C runtime silently drops `%p`.
 
-Shorthand for `timestamp iso-date`.
+### `date [format] [--utc]`
+
+Shorthand for `timestamp`, defaulting to `iso-date` instead of `iso`. Takes
+the same `[format]` values and `--utc` flag.
 
 ```
-:Insert date               → 2026-06-22
+:Insert date                    → 2026-06-22
+:Insert date long                → Monday, June 22, 2026
+:Insert date iso --utc           → 2026-06-22T14:35:00 (UTC)
 ```
 
 ### `uuid [format]`

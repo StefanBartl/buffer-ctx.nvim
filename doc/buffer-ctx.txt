@@ -286,12 +286,23 @@ format ~
   `short`     22.06.2026
   `log`       2026-06-22 14:35:00
   `filename`  20260622_143500
+  `long`      Monday, June 22, 2026
+  `weekday`   Monday
+  `time`      14:35:00              (alias of `iso-time`)
+  `12h`       02:35:00 PM
+  `rfc2822`   Mon, 22 Jun 2026 14:35:00
 
   `--utc`     output in UTC instead of local time
+
+  `weekday`/`long`/`rfc2822` always render English weekday/month names
+  regardless of `'v:lang'`/system locale (`os.date`'s `%A`/`%B`/`%a`/`%b`
+  follow the C locale, e.g. German renders `%a` as "Di"); `12h` is built by
+  hand since Windows' C runtime drops `%p` (AM/PM) silently.
 
 Examples: >
   :Insert timestamp               → 2026-06-22T14:35:00
   :Insert timestamp short --utc   → 22.06.2026 (UTC)
+  :Insert timestamp 12h           → 02:35:00 PM
 <
 
 ------------------------------------------------------------------------------
@@ -403,13 +414,18 @@ Examples: >
 ------------------------------------------------------------------------------
 5.10  date                                                *:Insert-date*
 
-  :Insert date
+  :Insert date [format] [--utc]
 
-Shorthand for `:Insert timestamp iso-date`. Honours the `timestamp.utc`
-config option, see |buffer-ctx-config|.
+Shorthand for |:Insert-timestamp| defaulting to `iso-date` instead of `iso`
+— same `[format]` values (`iso`, `iso-date`, `iso-time`, `unix`, `human`,
+`short`, `log`, `filename`, `long`, `weekday`, `time`, `12h`, `rfc2822`) and
+the same `--utc` flag apply. Honours the `timestamp.utc` config option, see
+|buffer-ctx-config|.
 
-Example: >
-  :Insert date               → 2026-06-22
+Examples: >
+  :Insert date                    → 2026-06-22
+  :Insert date long               → Monday, June 22, 2026
+  :Insert date iso --utc          → 2026-06-22T14:35:00 (UTC)
 <
 
 ------------------------------------------------------------------------------
@@ -803,7 +819,7 @@ Checks:
     ops/
       filepath.lua             Path formatting (mode + format + depth)
       module.lua               Lua module path → statement
-      timestamp.lua            Timestamp generation (8 formats)
+      timestamp.lua            Timestamp generation (13 formats)
       uuid.lua                 UUID v4 generation
       annotation.lua           LuaLS annotation lines (with interactive dialog)
       location.lua             path:line (and path:L1-L2) from cursor/range
