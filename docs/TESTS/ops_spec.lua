@@ -51,6 +51,21 @@ return function(H)
   local fmt2, utc2 = timestamp_op.parse_args({})
   H.eq(fmt2, "iso", "timestamp parse_args default fmt")
   H.eq(utc2, false, "timestamp parse_args default utc")
+  H.match(timestamp_op.format_timestamp("12h"), "^%d%d:%d%d:%d%d [AP]M$", "timestamp 12h shape")
+  H.match(timestamp_op.format_timestamp("weekday"), "^%a+$", "timestamp weekday shape")
+  H.match(
+    timestamp_op.format_timestamp("rfc2822"),
+    "^%a%a%a, %d%d %a%a%a %d%d%d%d %d%d:%d%d:%d%d$",
+    "timestamp rfc2822 shape"
+  )
+
+  -- date subcommand args: same grammar as timestamp, defaults to iso-date
+  local dfmt, dutc = timestamp_op.parse_date_args({})
+  H.eq(dfmt, "iso-date", "date parse_args default fmt")
+  H.eq(dutc, false, "date parse_args default utc")
+  local dfmt2, dutc2 = timestamp_op.parse_date_args({ "long", "--utc" })
+  H.eq(dfmt2, "long", "date parse_args fmt override")
+  H.eq(dutc2, true, "date parse_args utc flag")
 
   -- env
   vim.fn.setenv("BUFFER_CTX_TEST_VAR", "hello")
