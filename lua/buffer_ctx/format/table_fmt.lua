@@ -11,6 +11,15 @@ local notify = require("buffer_ctx.util.notify")
 
 local M = {}
 
+-- Optional: per-file progress for the "cwd" scope, which formats every
+-- *.md file under cwd and can take a while in a large tree. No-op (returns
+-- nil) when lib.nvim isn't installed — formatting still runs, just silently.
+local ok_progress, progress_mod = pcall(require, "lib.nvim.progress")
+local function new_progress()
+  if not ok_progress then return nil end
+  return progress_mod.create({ title = "[buffer_ctx.table_fmt]" })
+end
+
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Module-level defaults
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -432,8 +441,12 @@ function M.format_tables_in_scope(opts)
       notify.info("No *.md files found under " .. cwd)
       return true, nil
     end
+    local prog = new_progress()
     local errors, cnt = {}, 0
-    for _, path in ipairs(files) do
+    for i, path in ipairs(files) do
+      if prog then
+        prog:update({ text = vim.fn.fnamemodify(path, ":t"), current = i, total = #files })
+      end
       local ok, err = format_file(
         path,
         opts.header_align or _cfg.header_align,
@@ -444,6 +457,9 @@ function M.format_tables_in_scope(opts)
       else
         errors[#errors + 1] = err
       end
+    end
+    if prog then
+      prog:finish(string.format("Formatted %d/%d file(s)", cnt, #files))
     end
     if #errors > 0 then
       notify.warn(
