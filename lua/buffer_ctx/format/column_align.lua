@@ -170,19 +170,30 @@ end
 
 ---Interactive alignment with prompts.
 function M.align_interactive()
-  local target_input = vim.fn.input("Target column: ", state.last_target_col or "")
-  if target_input == "" then
-    return
-  end
-  local target_col = tonumber(target_input)
-  if not target_col or target_col < 1 then
-    notify.error("Invalid column number")
-    return
-  end
-  local fill_default = state.last_fill_char or " "
-  local fill_input = vim.fn.input("Fill character (default: space): ", fill_default)
-  local fill_char = (fill_input == "") and " " or fill_input
-  M.align_to_column(target_col, fill_char)
+  local kit = require("lib.nvim.ui.kit")
+  kit.input({
+    title = "Target column: ",
+    default = tostring(state.last_target_col or ""),
+    on_submit = function(target_input)
+      if target_input == "" then
+        return
+      end
+      local target_col = tonumber(target_input)
+      if not target_col or target_col < 1 then
+        notify.error("Invalid column number")
+        return
+      end
+      local fill_default = state.last_fill_char or " "
+      kit.input({
+        title = "Fill character (default: space): ",
+        default = fill_default,
+        on_submit = function(fill_input)
+          local fill_char = (fill_input == "") and " " or fill_input
+          M.align_to_column(target_col, fill_char)
+        end,
+      })
+    end,
+  })
 end
 
 ---Repeat the last alignment.
