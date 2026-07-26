@@ -150,17 +150,18 @@ local DISPATCH = {
         notify.error("no snippets configured (snippets = { paths = {…} })")
         return
       end
-      vim.ui.select(keys, { prompt = "Snippet:" }, function(choice)
-        if not choice then
-          return
-        end
-        local lines, err = snippet.get(choice)
-        if not lines then
-          notify.error(err or "snippet failed")
-          return
-        end
-        sink_lines(lines, sink)
-      end)
+      require("lib.nvim.ui.kit").select({
+        items = keys,
+        title = "Snippet:",
+        on_select = function(choice)
+          local lines, err = snippet.get(choice)
+          if not lines then
+            notify.error(err or "snippet failed")
+            return
+          end
+          sink_lines(lines, sink)
+        end,
+      })
       return
     end
     local lines, err = snippet.get(name)
@@ -223,22 +224,24 @@ local DISPATCH = {
       -- feature is usable without relying on tab completion.
       local keys = boiler.list_keys()
       local descs = boiler.describe()
-      vim.ui.select(keys, {
-        prompt = "Boilerplate template:",
-        format_item = function(item)
-          return string.format("%-22s %s", item, descs[item] or "")
+      local display = {}
+      for i, item in ipairs(keys) do
+        display[i] = string.format("%-22s %s", item, descs[item] or "")
+      end
+      require("lib.nvim.ui.kit").select({
+        items = display,
+        title = "Boilerplate template:",
+        on_select = function(_, idx)
+          local choice = keys[idx]
+          if not choice then return end
+          local lines, err = boiler.get(choice, nil)
+          if not lines then
+            notify.error(err or "boilerplate failed")
+            return
+          end
+          sink_lines(lines, sink)
         end,
-      }, function(choice)
-        if not choice then
-          return
-        end
-        local lines, err = boiler.get(choice, nil)
-        if not lines then
-          notify.error(err or "boilerplate failed")
-          return
-        end
-        sink_lines(lines, sink)
-      end)
+      })
       return
     end
     local lines, err = boiler.get(key, name)
