@@ -96,6 +96,31 @@ return function(H)
     "column_align pads to target column"
   )
 
+  -- align_interactive: chains two kit.input prompts (target column, fill char)
+  vim.api.nvim_buf_set_lines(buf_col, 0, -1, false, { "y=5" })
+  vim.api.nvim_buf_set_mark(buf_col, "<", 1, 2, {})
+  vim.api.nvim_buf_set_mark(buf_col, ">", 1, 2, {})
+  local captured_titles = {}
+  package.loaded["lib.nvim.ui.kit"] = {
+    input = function(opts)
+      captured_titles[#captured_titles + 1] = opts.title
+      if opts.title:find("Target column") then opts.on_submit("8") end
+      if opts.title:find("Fill character") then opts.on_submit("*") end
+    end,
+  }
+  package.loaded["buffer_ctx.format.column_align"] = nil
+  column_align = require("buffer_ctx.format.column_align")
+  column_align.align_interactive()
+  H.ok(#captured_titles == 2, "align_interactive: asks two kit.input prompts in sequence -> " ..
+    vim.inspect(captured_titles))
+  H.eq(
+    vim.api.nvim_buf_get_lines(buf_col, 0, -1, false)[1],
+    "y=*****5",
+    "align_interactive: uses the submitted column/fill-char"
+  )
+  package.loaded["lib.nvim.ui.kit"] = nil
+  package.loaded["buffer_ctx.format.column_align"] = nil
+
   -- text_width: reflows long line into width-bounded chunks (regression: used to crash)
   local buf_tw = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf_tw, 0, -1, false, { "one two three four five" })
