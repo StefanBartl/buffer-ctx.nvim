@@ -233,25 +233,25 @@ local DISPATCH = {
         title = "Boilerplate template:",
         on_select = function(_, idx)
           local choice = keys[idx]
-          if not choice then return end
-          boiler.get(choice, nil, function(lines, err)
-            if not lines then
-              notify.error(err or "boilerplate failed")
-              return
-            end
-            sink_lines(lines, sink)
-          end)
+          if not choice then
+            return
+          end
+          local lines, err = boiler.get(choice, nil)
+          if not lines then
+            notify.error(err or "boilerplate failed")
+            return
+          end
+          sink_lines(lines, sink)
         end,
       })
       return
     end
-    boiler.get(key, name, function(lines, err)
-      if not lines then
-        notify.error(err or "boilerplate failed")
-        return
-      end
-      sink_lines(lines, sink)
-    end)
+    local lines, err = boiler.get(key, name)
+    if not lines then
+      notify.error(err or "boilerplate failed")
+      return
+    end
+    sink_lines(lines, sink)
   end,
 }
 
@@ -356,16 +356,28 @@ end
 -- Dynamically-populated first-token completion for the three subcommands
 -- whose valid values come from user config rather than a fixed list.
 composer.register_type("BUFFER_CTX_BOILERPLATE", {
-  validate = function(raw) return true, raw, nil end,
-  complete = function(arg_lead) return prefix(boiler.list_keys(), arg_lead) end,
+  validate = function(raw)
+    return true, raw, nil
+  end,
+  complete = function(arg_lead)
+    return prefix(boiler.list_keys(), arg_lead)
+  end,
 })
 composer.register_type("BUFFER_CTX_SNIPPET", {
-  validate = function(raw) return true, raw, nil end,
-  complete = function(arg_lead) return prefix(snippet.list_keys(), arg_lead) end,
+  validate = function(raw)
+    return true, raw, nil
+  end,
+  complete = function(arg_lead)
+    return prefix(snippet.list_keys(), arg_lead)
+  end,
 })
 composer.register_type("BUFFER_CTX_ENV", {
-  validate = function(raw) return true, raw, nil end,
-  complete = function(arg_lead) return prefix(env_op.list_names(), arg_lead) end,
+  validate = function(raw)
+    return true, raw, nil
+  end,
+  complete = function(arg_lead)
+    return prefix(env_op.list_names(), arg_lead)
+  end,
 })
 
 local CUSTOM_ARG_TYPE = {
@@ -403,7 +415,8 @@ local function build_routes(sink)
         -- ctx.range.range is 0 when the user gave no range; only then are
         -- line1/line2 meaningless (both default to the cursor line).
         local range_ctx = (ctx.range.range and ctx.range.range > 0)
-          and { line1 = ctx.range.line1, line2 = ctx.range.line2 } or nil
+            and { line1 = ctx.range.line1, line2 = ctx.range.line2 }
+          or nil
         M._dispatch(name, fargs, sink, range_ctx)
       end,
     }

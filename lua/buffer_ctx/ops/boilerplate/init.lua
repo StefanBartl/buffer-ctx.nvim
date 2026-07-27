@@ -11,11 +11,16 @@ local M = {}
 ---@field module string   template sub-module name
 ---@field fn string       function name within that module
 ---@field desc string
----@field has_id boolean    true if the generator accepts an id/name argument
----@field is_async? boolean true if the generator is `gen(callback)` /
----                         `gen(name, callback)` instead of returning lines
----                         directly (only guard-clause so far, which prompts
----                         via kit.form)
+---@field has_id boolean         true if the generator accepts an id/name argument
+---@field is_interactive? boolean true if the generator prompts interactively
+---                               (only guard-clause so far, via kit.form +
+---                               kit.sync) -- still a plain `gen()`/`gen(name)`
+---                               returning lines synchronously like every
+---                               other template, but a caller that must not
+---                               pop a prompt as a side effect (e.g. a
+---                               live-preview pane on cursor movement) should
+---                               check this first and skip/placeholder
+---                               instead of calling `M.get`
 
 local REGISTRY = {
   {
@@ -59,7 +64,7 @@ local REGISTRY = {
     fn = "guard_interactive",
     desc = "Guard clause pattern",
     has_id = false,
-    is_async = true, -- guard_interactive(callback) prompts via kit.form
+    is_interactive = true, -- guard_interactive() prompts via kit.form + kit.sync
   },
   {
     key = "html-figure",
@@ -167,76 +172,48 @@ function M.list_keys()
   return keys
 end
 
----True when `key`'s generator is async (`gen(callback)`/`gen(name, callback)`
----and prompts interactively, e.g. guard-clause via kit.form) rather than
----returning lines directly. Callers that can't use the callback form of
----`M.get` (e.g. a live-preview pane that must not pop a prompt as a side
----effect of cursor movement) should check this first and skip/placeholder
----instead of calling `M.get` with no callback.
+---True when `key`'s generator prompts interactively (currently only
+---guard-clause, via kit.form + kit.sync). It's still a plain synchronous
+---`M.get` call like any other template -- this is only for a caller that
+---must not trigger a prompt as a side effect of something other than an
+---explicit user selection (e.g. a live-preview pane on cursor movement),
+---which should check this first and skip/placeholder instead of calling
+---`M.get`.
 ---@param key string
 ---@return boolean
-function M.is_async(key)
+function M.is_interactive(key)
   for _, e in ipairs(REGISTRY) do
     if e.key == key then
-      return e.is_async == true
+      return e.is_interactive == true
     end
   end
   return false
 end
 
----Generate template lines for the given key. Synchronous entries (all but
----guard-clause) return `lines` directly and, if `callback` was given, also
----invoke it with the same result -- so every call site can use the callback
----form uniformly without branching on `entry.is_async`. Async entries
----(currently only guard-clause, which prompts via kit.form) never return
----`lines` directly -- the result only ever reaches the caller through
----`callback`, so passing no callback for those silently drops the result.
+---Generate template lines for the given key.
 ---@param key string
 ---@param name? string  optional id/name arg passed to the generator
----@param callback? fun(lines: string[]|nil, err: string|nil)
----@return string[]|nil lines, string|nil err  # nil,nil for async entries
-function M.get(key, name, callback)
+---@return string[]|nil lines, string|nil err
+function M.get(key, name)
   for _, entry in ipairs(REGISTRY) do
     if entry.key == key then
       local mod_path = "buffer_ctx.ops.boilerplate.templates." .. entry.module
       local ok, tmod = pcall(require, mod_path)
       if not ok then
-        local err = "could not load template module: " .. mod_path
-        if callback then callback(nil, err) end
-        return nil, err
+        return nil, "could not load template module: " .. mod_path
       end
       local gen = tmod[entry.fn]
       if type(gen) ~= "function" then
-        local err = "template function not found: " .. entry.fn
-        if callback then callback(nil, err) end
-        return nil, err
+        return nil, "template function not found: " .. entry.fn
       end
 
-      if entry.is_async then
-        local cb = callback or function() end
-        if entry.has_id and name and name ~= "" then
-          gen(name, cb)
-        else
-          gen(cb)
-        end
-        return nil, nil
-      end
-
-      local result
       if entry.has_id and name and name ~= "" then
-        result = gen(name)
-      else
-        result = gen()
+        return gen(name)
       end
-      if callback then
-        callback(result, nil)
-      end
-      return result
+      return gen()
     end
   end
-  local err = "unknown template: " .. tostring(key)
-  if callback then callback(nil, err) end
-  return nil, err
+  return nil, "unknown template: " .. tostring(key)
 end
 
 return M
