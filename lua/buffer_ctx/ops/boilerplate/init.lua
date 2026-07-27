@@ -167,6 +167,23 @@ function M.list_keys()
   return keys
 end
 
+---True when `key`'s generator is async (`gen(callback)`/`gen(name, callback)`
+---and prompts interactively, e.g. guard-clause via kit.form) rather than
+---returning lines directly. Callers that can't use the callback form of
+---`M.get` (e.g. a live-preview pane that must not pop a prompt as a side
+---effect of cursor movement) should check this first and skip/placeholder
+---instead of calling `M.get` with no callback.
+---@param key string
+---@return boolean
+function M.is_async(key)
+  for _, e in ipairs(REGISTRY) do
+    if e.key == key then
+      return e.is_async == true
+    end
+  end
+  return false
+end
+
 ---Generate template lines for the given key. Synchronous entries (all but
 ---guard-clause) return `lines` directly and, if `callback` was given, also
 ---invoke it with the same result -- so every call site can use the callback

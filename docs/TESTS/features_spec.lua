@@ -121,6 +121,31 @@ return function(H)
     "boilerplate honours the id arg"
   )
 
+  -- guard-clause is async (prompts via kit.form): is_async() lets callers
+  -- that can't use a callback (e.g. a live-preview pane) detect and skip it
+  -- instead of accidentally popping a prompt or silently dropping the result.
+  H.ok(boiler.is_async("guard-clause"), "boiler.is_async('guard-clause') is true")
+  H.ok(not boiler.is_async("lua-test"), "boiler.is_async('lua-test') is false")
+  H.ok(not boiler.is_async("does-not-exist"), "boiler.is_async(unknown key) is false, not an error")
+
+  do
+    package.loaded["lib.nvim.ui.kit"] = {
+      form = function(opts)
+        opts.on_submit({ condition = "ready", negation = "y" })
+      end,
+    }
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+    local captured_lines, captured_err
+    boiler.get("guard-clause", nil, function(lines, err)
+      captured_lines, captured_err = lines, err
+    end)
+    H.eq(captured_err, nil, "guard-clause callback: no error")
+    H.ok(captured_lines ~= nil and captured_lines[1] == "if not ready then",
+      "guard-clause callback: negation applied, condition substituted")
+    package.loaded["lib.nvim.ui.kit"] = nil
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+  end
+
   -- ── env completion ───────────────────────────────────────────────────────
   local env_op = require("buffer_ctx.ops.env")
   vim.fn.setenv("BUFFER_CTX_SPEC_VAR", "1")
