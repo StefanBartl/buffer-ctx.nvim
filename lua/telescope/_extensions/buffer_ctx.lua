@@ -27,9 +27,18 @@ local boiler = require("buffer_ctx.ops.boilerplate")
 ---@param entry table
 ---@param bufnr integer
 local function preview_template(entry, bufnr)
-  local lines, err = boiler.get(entry.value, nil)
-  if not lines then
-    lines = { "-- preview unavailable: " .. (err or "unknown error") }
+  local lines
+  if boiler.is_async(entry.value) then
+    -- Interactive templates (guard-clause) prompt via kit.form -- must not
+    -- pop that prompt as a side effect of the cursor merely hovering this
+    -- entry in the picker, so show a static placeholder instead.
+    lines = { "-- interactive template: prompts for input when selected" }
+  else
+    local err
+    lines, err = boiler.get(entry.value, nil)
+    if not lines then
+      lines = { "-- preview unavailable: " .. (err or "unknown error") }
+    end
   end
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, lines)
   -- Best-effort syntax highlighting from the template's key prefix.
@@ -71,12 +80,16 @@ local function boilerplate_picker(opts)
           if not entry then
             return
           end
-          local lines, err = boiler.get(entry.value, nil)
-          if not lines then
-            require("buffer_ctx.util.notify").error(err or "boilerplate failed")
-            return
-          end
-          require("buffer_ctx.util.cursor").insert_lines(lines)
+          -- Callback form: for is_async entries (guard-clause), M.get opens
+          -- a kit.form prompt and only delivers the result here, once the
+          -- user answers -- there is no synchronous return to check.
+          boiler.get(entry.value, nil, function(lines, err)
+            if not lines then
+              require("buffer_ctx.util.notify").error(err or "boilerplate failed")
+              return
+            end
+            require("buffer_ctx.util.cursor").insert_lines(lines)
+          end)
         end)
         return true
       end,
