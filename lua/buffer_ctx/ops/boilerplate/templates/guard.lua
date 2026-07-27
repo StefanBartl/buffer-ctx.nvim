@@ -17,28 +17,29 @@ function M.guard(condition, is_negated)
   }
 end
 
----Interactive guard clause generation
----@return string[]|nil
-function M.guard_interactive()
-  local utils = require("buffer_ctx.ops.boilerplate.templates.utils")
-  local values = utils.process_prompts({
-    {
-      name = "condition",
-      prompt = "Condition to check (empty for 'condition')",
-      default = "condition",
-      required = false,
+---Interactive guard clause generation. Async: neither field is `required`,
+---so `on_submit` always fires eventually (Esc on a field just keeps its
+---default and moves on) -- same effective semantics as the old
+---utils.process_prompts chain, just callback- instead of return-based.
+---@param callback fun(lines: string[]|nil)
+function M.guard_interactive(callback)
+  require("lib.nvim.ui.kit").form({
+    fields = {
+      {
+        name = "condition",
+        label = "Condition to check (empty for 'condition'): ",
+        default = "condition",
+      },
+      {
+        name = "negation",
+        label = "Use 'not' prefix? (y/n): ",
+        default = "n",
+      },
     },
-    {
-      name = "negation",
-      prompt = "Use 'not' prefix? (y/n)",
-      default = "n",
-      required = false,
-    },
+    on_submit = function(values)
+      callback(M.guard(values.condition, tostring(values.negation):lower() == "y"))
+    end,
   })
-  if not values then
-    return nil
-  end
-  return M.guard(values.condition, values.negation:lower() == "y")
 end
 
 return M

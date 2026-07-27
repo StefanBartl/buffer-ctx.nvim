@@ -234,22 +234,24 @@ local DISPATCH = {
         on_select = function(_, idx)
           local choice = keys[idx]
           if not choice then return end
-          local lines, err = boiler.get(choice, nil)
-          if not lines then
-            notify.error(err or "boilerplate failed")
-            return
-          end
-          sink_lines(lines, sink)
+          boiler.get(choice, nil, function(lines, err)
+            if not lines then
+              notify.error(err or "boilerplate failed")
+              return
+            end
+            sink_lines(lines, sink)
+          end)
         end,
       })
       return
     end
-    local lines, err = boiler.get(key, name)
-    if not lines then
-      notify.error(err or "boilerplate failed")
-      return
-    end
-    sink_lines(lines, sink)
+    boiler.get(key, name, function(lines, err)
+      if not lines then
+        notify.error(err or "boilerplate failed")
+        return
+      end
+      sink_lines(lines, sink)
+    end)
   end,
 }
 
