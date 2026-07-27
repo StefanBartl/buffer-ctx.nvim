@@ -17,13 +17,17 @@ function M.guard(condition, is_negated)
   }
 end
 
----Interactive guard clause generation. Async: neither field is `required`,
----so `on_submit` always fires eventually (Esc on a field just keeps its
----default and moves on) -- same effective semantics as the old
----utils.process_prompts chain, just callback- instead of return-based.
----@param callback fun(lines: string[]|nil)
-function M.guard_interactive(callback)
-  require("lib.nvim.ui.kit").form({
+---Interactive guard clause generation. Plain synchronous function, like
+---every other template's generator -- kit.sync (lib.nvim's vim.wait bridge,
+---see UI-KIT-CONCEPT.md §13a) blocks on the kit.form prompt and unwraps its
+---result here, so callers don't need a callback. Neither field is
+---`required`, so a cancelled kit.sync (<Esc> on a field) can only happen if
+---the whole form is dismissed some other way -- kit.form's own cancel value
+---then falls through to the `not values` check below.
+---@return string[]|nil
+function M.guard_interactive()
+  local kit = require("lib.nvim.ui.kit")
+  local values, cancelled = kit.sync(kit.form, {
     fields = {
       {
         name = "condition",
@@ -36,10 +40,11 @@ function M.guard_interactive(callback)
         default = "n",
       },
     },
-    on_submit = function(values)
-      callback(M.guard(values.condition, tostring(values.negation):lower() == "y"))
-    end,
   })
+  if cancelled or not values then
+    return nil
+  end
+  return M.guard(values.condition, tostring(values.negation):lower() == "y")
 end
 
 return M

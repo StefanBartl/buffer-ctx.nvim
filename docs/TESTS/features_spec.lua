@@ -121,27 +121,47 @@ return function(H)
     "boilerplate honours the id arg"
   )
 
-  -- guard-clause is async (prompts via kit.form): is_async() lets callers
-  -- that can't use a callback (e.g. a live-preview pane) detect and skip it
-  -- instead of accidentally popping a prompt or silently dropping the result.
-  H.ok(boiler.is_async("guard-clause"), "boiler.is_async('guard-clause') is true")
-  H.ok(not boiler.is_async("lua-test"), "boiler.is_async('lua-test') is false")
-  H.ok(not boiler.is_async("does-not-exist"), "boiler.is_async(unknown key) is false, not an error")
+  -- guard-clause is interactive (prompts via kit.form + kit.sync, blocking
+  -- until answered): is_interactive() lets a caller that must not trigger a
+  -- prompt as a side effect (e.g. a live-preview pane on cursor movement)
+  -- detect and skip it instead. M.get itself is still a plain synchronous
+  -- call for every template, guard-clause included.
+  H.ok(boiler.is_interactive("guard-clause"), "boiler.is_interactive('guard-clause') is true")
+  H.ok(not boiler.is_interactive("lua-test"), "boiler.is_interactive('lua-test') is false")
+  H.ok(
+    not boiler.is_interactive("does-not-exist"),
+    "boiler.is_interactive(unknown key) is false, not an error"
+  )
 
   do
+    -- Stub kit.form (resolves synchronously, as if the user answered
+    -- instantly) and kit.sync with a lightweight equivalent of the real
+    -- lib.nvim.ui.kit.sync.open contract (wraps on_submit/on_cancel, returns
+    -- the result) -- guard.lua calls kit.sync(kit.form, {...}) directly.
     package.loaded["lib.nvim.ui.kit"] = {
       form = function(opts)
         opts.on_submit({ condition = "ready", negation = "y" })
       end,
+      sync = function(open_fn, sync_opts)
+        local result, cancelled
+        open_fn(vim.tbl_extend("force", sync_opts, {
+          on_submit = function(v)
+            result = v
+          end,
+          on_cancel = function()
+            cancelled = true
+          end,
+        }))
+        return result, cancelled or false, false
+      end,
     }
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
-    local captured_lines, captured_err
-    boiler.get("guard-clause", nil, function(lines, err)
-      captured_lines, captured_err = lines, err
-    end)
-    H.eq(captured_err, nil, "guard-clause callback: no error")
-    H.ok(captured_lines ~= nil and captured_lines[1] == "if not ready then",
-      "guard-clause callback: negation applied, condition substituted")
+    local lines, err = boiler.get("guard-clause", nil)
+    H.eq(err, nil, "guard-clause: no error")
+    H.ok(
+      lines ~= nil and lines[1] == "if not ready then",
+      "guard-clause: negation applied, condition substituted"
+    )
     package.loaded["lib.nvim.ui.kit"] = nil
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
   end

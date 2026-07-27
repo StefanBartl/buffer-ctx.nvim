@@ -28,10 +28,11 @@ local boiler = require("buffer_ctx.ops.boilerplate")
 ---@param bufnr integer
 local function preview_template(entry, bufnr)
   local lines
-  if boiler.is_async(entry.value) then
+  if boiler.is_interactive(entry.value) then
     -- Interactive templates (guard-clause) prompt via kit.form -- must not
-    -- pop that prompt as a side effect of the cursor merely hovering this
-    -- entry in the picker, so show a static placeholder instead.
+    -- pop that prompt (and block on kit.sync's vim.wait) as a side effect of
+    -- the cursor merely hovering this entry in the picker, so show a static
+    -- placeholder instead.
     lines = { "-- interactive template: prompts for input when selected" }
   else
     local err
@@ -80,16 +81,14 @@ local function boilerplate_picker(opts)
           if not entry then
             return
           end
-          -- Callback form: for is_async entries (guard-clause), M.get opens
-          -- a kit.form prompt and only delivers the result here, once the
-          -- user answers -- there is no synchronous return to check.
-          boiler.get(entry.value, nil, function(lines, err)
-            if not lines then
-              require("buffer_ctx.util.notify").error(err or "boilerplate failed")
-              return
-            end
-            require("buffer_ctx.util.cursor").insert_lines(lines)
-          end)
+          -- For an interactive entry (guard-clause) this blocks on kit.sync's
+          -- kit.form prompt before returning -- same as any other template.
+          local lines, err = boiler.get(entry.value, nil)
+          if not lines then
+            require("buffer_ctx.util.notify").error(err or "boilerplate failed")
+            return
+          end
+          require("buffer_ctx.util.cursor").insert_lines(lines)
         end)
         return true
       end,
