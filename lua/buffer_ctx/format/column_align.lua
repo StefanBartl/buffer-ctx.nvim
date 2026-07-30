@@ -27,19 +27,27 @@ local function get_char_at_pos(line, byte_pos)
   return char, #char
 end
 
+---Read the visual selection's geometry and submode.
+---
+---The submode comes from `vim.fn.visualmode()`, which is what Vim actually
+---recorded. It used to be inferred from the mark geometry instead — same line
+---means charwise, same column means blockwise, otherwise linewise — and that
+---inference was wrong for two common shapes, verified against live selections:
+---a charwise selection spanning two lines, and any blockwise selection wider
+---than one column, were both reported as linewise. Both then took the
+---single-line alignment branch instead of the block one.
+---@return boolean valid
+---@return string|nil err
+---@return { start_line: integer, end_line: integer, start_col: integer, end_col: integer, mode: string }|nil
 local function validate_selection()
   local sp = api.nvim_buf_get_mark(0, "<")
   local ep = api.nvim_buf_get_mark(0, ">")
   if not sp or not ep or sp[1] == 0 or ep[1] == 0 then
     return false, "No valid visual selection found", nil
   end
-  local mode
-  if sp[1] == ep[1] then
-    mode = "v"
-  elseif sp[2] == ep[2] then
-    mode = "\22"
-  else
-    mode = "V"
+  local mode = vim.fn.visualmode()
+  if mode ~= "v" and mode ~= "V" and mode ~= "\22" then
+    return false, "No valid visual selection found", nil
   end
   return true,
     nil,
