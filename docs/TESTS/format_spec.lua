@@ -104,15 +104,21 @@ return function(H)
   package.loaded["lib.nvim.ui.kit"] = {
     input = function(opts)
       captured_titles[#captured_titles + 1] = opts.title
-      if opts.title:find("Target column") then opts.on_submit("8") end
-      if opts.title:find("Fill character") then opts.on_submit("*") end
+      if opts.title:find("Target column") then
+        opts.on_submit("8")
+      end
+      if opts.title:find("Fill character") then
+        opts.on_submit("*")
+      end
     end,
   }
   package.loaded["buffer_ctx.format.column_align"] = nil
   column_align = require("buffer_ctx.format.column_align")
   column_align.align_interactive()
-  H.ok(#captured_titles == 2, "align_interactive: asks two kit.input prompts in sequence -> " ..
-    vim.inspect(captured_titles))
+  H.ok(
+    #captured_titles == 2,
+    "align_interactive: asks two kit.input prompts in sequence -> " .. vim.inspect(captured_titles)
+  )
   H.eq(
     vim.api.nvim_buf_get_lines(buf_col, 0, -1, false)[1],
     "y=*****5",

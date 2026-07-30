@@ -288,7 +288,9 @@ local function build_routes()
   local routes = {}
   for name, def in pairs(subcommands) do
     composer.register_type("BUFFER_CTX_FORMAT_" .. name:upper(), {
-      validate = function(raw) return true, raw, nil end,
+      validate = function(raw)
+        return true, raw, nil
+      end,
       complete = function(arg_lead)
         local ok, result = pcall(def.complete, arg_lead)
         return (ok and result) or {}
@@ -312,7 +314,8 @@ local function build_routes()
         -- ctx.range.range is 0 when no range prefix was given; only then are
         -- line1/line2 meaningless (both default to the cursor line).
         local range_ctx = (ctx.range.range and ctx.range.range > 0)
-          and { line1 = ctx.range.line1, line2 = ctx.range.line2 } or nil
+            and { line1 = ctx.range.line1, line2 = ctx.range.line2 }
+          or nil
         local ok, err = pcall(def.handler, args, range_ctx)
         if not ok then
           notify.error(string.format("[%s] %s", name, tostring(err)))

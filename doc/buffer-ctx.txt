@@ -659,6 +659,13 @@ Compat commands are registered automatically:
 Toggle the mark on the current line.  If the line is already marked the mark
 is removed; otherwise it is added.
 
+Marks are anchored to the text, not to a line number: they follow their line
+as you insert or delete lines above them, and toggling recognises a mark by
+where it sits now.  Deleting a marked line removes its mark (Neovim 0.10+;
+on 0.9 the mark moves to the following line instead).
+
+Marks are session-only and are cleared when the buffer is deleted or wiped.
+
 Default keymap: `<S-m>`
 
 ------------------------------------------------------------------------------
@@ -666,8 +673,11 @@ Default keymap: `<S-m>`
 
   :Mark yank
 
-Collect all marked lines in the current buffer (sorted by line number) and
-write them to the system clipboard (`+` register) as newline-separated text.
+Collect all marked lines in the current buffer and write them to the system
+clipboard (`+` register) as newline-separated text.
+
+Lines come out in buffer order — that is, ordered by where each mark sits at
+the time of the yank, not by the order the marks were created in.
 
 A notification reports how many lines were copied.
 

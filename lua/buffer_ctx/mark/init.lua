@@ -22,7 +22,14 @@ local clip = require("buffer_ctx.util.clip")
 
 local M = {}
 
--- Per-buffer mark state: buf → { [lnum] = true }
+-- Per-buffer mark state: buf → { [extmark_id] = true }
+--
+-- The extmark ID is the identity, NOT the line number. Neovim moves an
+-- extmark automatically when lines are inserted or deleted above it; it
+-- cannot move a plain integer table key. Keying by line number meant the
+-- visual indicator and the underlying data silently diverged after any edit
+-- above a mark, so `:Mark yank` copied whatever had since moved into that
+-- line slot. See docs/ROADMAP/anchor-stable-marks.md.
 ---@type table<number, table<number, boolean>>
 local marked = {}
 
@@ -45,6 +52,99 @@ local function use_signcolumn()
   return vim.api.nvim_get_option_value("signcolumn", { win = 0 }) ~= "no"
 end
 
+-- 0.10 brought two extmark features this module wants, so they share a gate:
+--
+--   sign_text/sign_hl_group — lets the sign-column rendering ride on the very
+--     same extmark that carries the identity, so there is exactly one
+--     tracking mechanism. On 0.9 (still the documented floor) a real sign is
+--     placed alongside, keyed by the extmark ID so the two stay addressable
+--     as one unit.
+--
+--   invalidate/undo_restore — without it an extmark whose line is deleted
+--     collapses onto the following line rather than disappearing, so deleting
+--     a marked line would silently transfer the mark to its neighbour. With
+--     `invalidate = true, undo_restore = false` the extmark is deleted
+--     outright, which is what "the marked line is gone" should mean.
+--     On 0.9 the mark still slides to the neighbouring line — much better
+--     than the old raw-line-number behaviour, but not exact.
+local function extmark_v10()
+  return vim.fn.has("nvim-0.10") == 1
+end
+
+---Place the indicator for a new mark and return its extmark ID.
+---@param bufnr number
+---@param lnum  number  1-based
+---@return integer extmark_id
+local function place_mark(bufnr, lnum)
+  local modern = extmark_v10()
+  local opts
+  if use_signcolumn() and modern then
+    opts = { sign_text = sign_opts.text, sign_hl_group = sign_opts.hl }
+  else
+    opts = {
+      virt_text = { { sign_opts.text, sign_opts.hl } },
+      virt_text_pos = "overlay",
+    }
+  end
+
+  if modern then
+    -- Delete the extmark outright when its line is deleted, rather than
+    -- letting it collapse onto the next line and silently re-mark it.
+    opts.invalidate = true
+    opts.undo_restore = false
+  end
+
+  local id = vim.api.nvim_buf_set_extmark(bufnr, VIRT_NS, lnum - 1, 0, opts)
+
+  if use_signcolumn() and not modern then
+    ensure_sign()
+    vim.fn.sign_place(id, SIGN_NAME, SIGN_NAME, bufnr, { lnum = lnum })
+  end
+
+  return id
+end
+
+---Remove a mark's indicator(s). Idempotent, and deliberately clears both
+---renderings: `signcolumn` can be toggled between placing and removing a
+---mark, so the branch that created it is not necessarily the branch running
+---now.
+---@param bufnr number
+---@param id    integer  extmark ID
+local function unplace_mark(bufnr, id)
+  pcall(vim.api.nvim_buf_del_extmark, bufnr, VIRT_NS, id)
+  pcall(vim.fn.sign_unplace, SIGN_NAME, { buffer = bufnr, id = id })
+end
+
+---Resolve an extmark ID to its current 1-based line, or nil if it is gone
+---(the line it anchored to was deleted).
+---@param bufnr number
+---@param id    integer
+---@return integer|nil lnum
+local function resolve_line(bufnr, id)
+  local pos = vim.api.nvim_buf_get_extmark_by_id(bufnr, VIRT_NS, id, {})
+  if not pos or not pos[1] then
+    return nil
+  end
+  return pos[1] + 1
+end
+
+---Find the mark currently anchored to `lnum`, if any.
+---@param bufnr number
+---@param lnum  number  1-based
+---@return integer|nil extmark_id
+local function mark_at(bufnr, lnum)
+  local ids = marked[bufnr]
+  if not ids then
+    return nil
+  end
+  for id in pairs(ids) do
+    if resolve_line(bufnr, id) == lnum then
+      return id
+    end
+  end
+  return nil
+end
+
 -- ── Core operations ───────────────────────────────────────────────────────────
 
 ---Toggle the mark on line `lnum` in `bufnr`.
@@ -56,25 +156,16 @@ function M.toggle(lnum, bufnr)
     return
   end
   marked[bufnr] = marked[bufnr] or {}
-  ensure_sign()
 
-  if marked[bufnr][lnum] then
-    marked[bufnr][lnum] = nil
-    if use_signcolumn() then
-      vim.fn.sign_unplace(SIGN_NAME, { buffer = bufnr, id = lnum })
-    else
-      vim.api.nvim_buf_clear_namespace(bufnr, VIRT_NS, lnum - 1, lnum)
-    end
+  -- Which mark (if any) sits on this line is resolved through the extmarks
+  -- themselves, so a mark that has drifted with the text is still recognised
+  -- as being on its current line.
+  local existing = mark_at(bufnr, lnum)
+  if existing then
+    marked[bufnr][existing] = nil
+    unplace_mark(bufnr, existing)
   else
-    marked[bufnr][lnum] = true
-    if use_signcolumn() then
-      vim.fn.sign_place(lnum, SIGN_NAME, SIGN_NAME, bufnr, { lnum = lnum })
-    else
-      vim.api.nvim_buf_set_extmark(bufnr, VIRT_NS, lnum - 1, 0, {
-        virt_text = { { sign_opts.text, sign_opts.hl } },
-        virt_text_pos = "overlay",
-      })
-    end
+    marked[bufnr][place_mark(bufnr, lnum)] = true
   end
 end
 
@@ -86,15 +177,24 @@ function M.yank(bufnr)
     notify.warn("Invalid buffer")
     return
   end
-  local lines = marked[bufnr]
-  if not lines then
+  local ids = marked[bufnr]
+  if not ids then
     notify.warn("No marked lines in this buffer")
     return
   end
 
+  -- Sort by the *resolved* current line, not by extmark ID: IDs are handed
+  -- out in creation order, which stops matching buffer order as soon as marks
+  -- are toggled off and on again, or lines are reordered.
   local sorted = {}
-  for lnum in pairs(lines) do
-    sorted[#sorted + 1] = lnum
+  for id in pairs(ids) do
+    local lnum = resolve_line(bufnr, id)
+    if lnum then
+      sorted[#sorted + 1] = lnum
+    else
+      -- The marked line itself was deleted; drop the now-dangling mark.
+      ids[id] = nil
+    end
   end
   table.sort(sorted)
 
@@ -132,10 +232,20 @@ function M.setup(opts)
   composer.verb(cmd_name, {
     desc = "Line-mark operations: toggle / yank",
     routes = {
-      { path = { "toggle" }, desc = "Toggle the mark on the current line",
-        run = function() M.toggle(vim.api.nvim_win_get_cursor(0)[1]) end },
-      { path = { "yank" }, desc = "Yank all marked lines to the system clipboard",
-        run = function() M.yank() end },
+      {
+        path = { "toggle" },
+        desc = "Toggle the mark on the current line",
+        run = function()
+          M.toggle(vim.api.nvim_win_get_cursor(0)[1])
+        end,
+      },
+      {
+        path = { "yank" },
+        desc = "Yank all marked lines to the system clipboard",
+        run = function()
+          M.yank()
+        end,
+      },
     },
   })
 
