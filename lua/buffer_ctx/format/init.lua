@@ -69,6 +69,10 @@ local function setup_column_align()
     end,
     nargs = "*",
     range = true,
+    -- Column alignment is about columns, so a linewise selection carries no
+    -- usable geometry for it: its marks run from column 0 to MAXCOL. Refusing
+    -- it up front beats silently aligning against those bounds.
+    visual = { "charwise", "blockwise" },
     desc = "Align selected char to column: column <N> [fill]",
   })
 end
@@ -302,6 +306,9 @@ local function build_routes()
         { name = "a1", type = "BUFFER_CTX_FORMAT_" .. name:upper(), optional = true },
       },
       range = true,
+      -- Opt-in per subcommand: a nil `visual` means "any selection", which is
+      -- what every subcommand except `column` wants.
+      visual = def.visual,
       desc = def.desc,
       run = function(ctx)
         local args = {}
