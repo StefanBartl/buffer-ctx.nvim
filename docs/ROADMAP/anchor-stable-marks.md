@@ -1,6 +1,13 @@
 # Line marks drift on edit — needs content-stable anchoring
 
-> **Status:** bug + proposal, not implemented. Surfaced while designing a
+> **Status: implemented.** The fix below shipped; `lua/buffer_ctx/mark/init.lua`
+> now keys `marked` by extmark ID, and `docs/TESTS/mark_spec.lua` carries
+> regression coverage for all three cases (insert above a mark, delete a
+> marked line, yank ordering vs. creation order). This document is kept as
+> the rationale record. Two deviations from the proposal as written are
+> noted under "As implemented" at the end.
+>
+> Originally surfaced while designing a
 > renumbering-anchor feature for `cascade.nvim`
 > ([concept doc](../../../cascade.nvim/docs/ROADMAP/renumbering_markers.md));
 > that design explicitly separates "where is a marker stored" from "what does
@@ -93,6 +100,32 @@ Two consequences to handle explicitly:
   be unified onto the same extmark-backed tracking as the other branch (with
   a sign-column *rendering* on top, rather than two independent tracking
   mechanisms for the same concept).
+
+## As implemented
+
+Two things the proposal above did not anticipate:
+
+1. **An extmark alone does not vanish when its line is deleted.** By default
+   it collapses onto the following line, so deleting a marked line silently
+   transferred the mark to its neighbour — a smaller version of the very bug
+   being fixed. The extmark is therefore created with
+   `invalidate = true, undo_restore = false` (Neovim 0.10+), which deletes it
+   outright instead. `M.yank` also drops any ID that no longer resolves, so
+   dangling entries cannot accumulate in `marked`.
+
+2. **The `sign_place` branch was unified rather than given its own lookup.**
+   The proposal offered both options; unification won. On 0.10+ the
+   sign-column rendering rides on the same extmark via
+   `sign_text`/`sign_hl_group`, so there is exactly one tracking mechanism
+   and no second identity to keep in sync. On 0.9 — still the documented
+   floor, and the reason this is version-gated at all — a real sign is placed
+   alongside, keyed by the extmark ID so the two remain addressable as a
+   unit. `unplace_mark` clears both renderings unconditionally, because
+   `signcolumn` can be toggled between placing and removing a mark.
+
+The 0.9 path keeps the old collapse-onto-neighbour behaviour for a deleted
+line (no `invalidate` there), which is still far better than the raw
+line-number keying it replaces.
 
 ## Relation to the cascade concept
 

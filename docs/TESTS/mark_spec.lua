@@ -27,6 +27,59 @@ return function(H)
   mark.yank(buf)
   H.eq(yanked(), "three", "re-toggling a marked line un-marks it")
 
+  -- Regression: marks must follow their line across edits above them.
+  --
+  -- Marks used to be keyed by raw line number, so inserting above a mark
+  -- moved the visual indicator (Neovim tracks extmarks/signs) but not the
+  -- stored key — and yank then copied whatever text had slid into the old
+  -- line slot. See docs/ROADMAP/anchor-stable-marks.md.
+  do
+    local b = H.scratch(vim.fn.getcwd() .. "/mark_drift.lua")
+    vim.api.nvim_buf_set_lines(b, 0, -1, false, { "alpha", "beta", "gamma", "delta" })
+
+    mark.toggle(3, b) -- "gamma"
+
+    -- Two new lines above the mark: "gamma" is now line 5.
+    vim.api.nvim_buf_set_lines(b, 0, 0, false, { "new1", "new2" })
+
+    vim.fn.setreg('"', "")
+    mark.yank(b)
+    H.eq(yanked(), "gamma", "a mark follows its line when text is inserted above it")
+
+    -- Toggling by the mark's *current* line must find and clear it.
+    mark.toggle(5, b)
+    vim.fn.setreg('"', "")
+    mark.yank(b)
+    H.eq(yanked(), "", "toggling the drifted line un-marks it")
+  end
+
+  -- Deleting a marked line drops the mark instead of yanking a stale line.
+  do
+    local b = H.scratch(vim.fn.getcwd() .. "/mark_deleted.lua")
+    vim.api.nvim_buf_set_lines(b, 0, -1, false, { "keep", "doomed", "tail" })
+
+    mark.toggle(1, b)
+    mark.toggle(2, b)
+    vim.api.nvim_buf_set_lines(b, 1, 2, false, {}) -- delete "doomed"
+
+    vim.fn.setreg('"', "")
+    mark.yank(b)
+    H.eq(yanked(), "keep", "a mark on a deleted line is dropped, not resolved to a neighbour")
+  end
+
+  -- Yank order follows buffer order, not the order marks were created in.
+  do
+    local b = H.scratch(vim.fn.getcwd() .. "/mark_order.lua")
+    vim.api.nvim_buf_set_lines(b, 0, -1, false, { "first", "second", "third" })
+
+    mark.toggle(3, b) -- marked first, but lives last
+    mark.toggle(1, b)
+
+    vim.fn.setreg('"', "")
+    mark.yank(b)
+    H.eq(yanked(), "first\nthird", "yank sorts by resolved line, not by mark creation order")
+  end
+
   -- invalid buffer guards do not crash
   local toggle_ok = pcall(mark.toggle, 1, 999999)
   H.ok(toggle_ok, "mark.toggle on an invalid buffer does not error")

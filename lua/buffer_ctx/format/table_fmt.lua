@@ -16,7 +16,9 @@ local M = {}
 -- nil) when lib.nvim isn't installed — formatting still runs, just silently.
 local ok_progress, progress_mod = pcall(require, "lib.nvim.progress")
 local function new_progress()
-  if not ok_progress then return nil end
+  if not ok_progress then
+    return nil
+  end
   return progress_mod.create({ title = "[buffer_ctx.table_fmt]" })
 end
 

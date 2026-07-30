@@ -35,7 +35,9 @@ function M.check()
   if pcall(require, "lib.nvim.usercmd.composer") then
     vim.health.ok("lib.nvim detected (:Insert/:Copy/:Format/:Mark command layer available)")
   else
-    vim.health.warn('lib.nvim not found — commands will fail to register; install "StefanBartl/lib.nvim"')
+    vim.health.warn(
+      'lib.nvim not found — commands will fail to register; install "StefanBartl/lib.nvim"'
+    )
   end
 
   local notify_ok, notify_mod = pcall(require, "buffer_ctx.util.notify")
