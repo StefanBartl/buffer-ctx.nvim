@@ -70,6 +70,9 @@ function M.check()
     vim.health.warn("buffer_ctx.bindings failed to load")
   end
 
+  require("lib.nvim.usercmd.composer").checkhealth("Insert")
+  require("lib.nvim.usercmd.composer").checkhealth("Copy")
+
   -- Format subsystem
   vim.health.start("buffer_ctx.format")
 
@@ -112,6 +115,8 @@ function M.check()
     end
   end
 
+  require("lib.nvim.usercmd.composer").checkhealth("Format")
+
   -- Mark subsystem
   vim.health.start("buffer_ctx.mark")
 
@@ -147,6 +152,8 @@ function M.check()
   else
     vim.health.warn("buffer_ctx.mark failed to load")
   end
+
+  require("lib.nvim.usercmd.composer").checkhealth("Mark")
 end
 
 return M
