@@ -180,7 +180,7 @@ function M.align_to_column(target_col, fill_char)
 
   local valid, err, sel = validate_selection()
   if not valid or not sel then
-    notify.error(err)
+    notify.error(err or "No valid visual selection found")
     return
   end
 
@@ -194,7 +194,7 @@ function M.align_to_column(target_col, fill_char)
   end
 
   if not success then
-    notify.error(align_err)
+    notify.error(align_err or "Failed to align selection")
     return
   end
   notify.info(string.format("Aligned to column %d with '%s'", target_col, fill_char))

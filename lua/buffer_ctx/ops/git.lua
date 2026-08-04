@@ -9,8 +9,6 @@ local M = {}
 local api = vim.api
 local fn = vim.fn
 
----@alias BufferCtx.GitMode "hash" | "short" | "branch" | "tag"
-
 ---@type table<string, string[]>
 local ARGV = {
   hash = { "rev-parse", "HEAD" },
