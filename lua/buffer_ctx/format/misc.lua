@@ -100,9 +100,9 @@ local function change_case(text, mode)
   elseif mode == "lower" then
     return text:lower()
   elseif mode == "title" then
-    return text:gsub("(%a)([%w_']*)", function(f, r)
+    return (text:gsub("(%a)([%w_']*)", function(f, r)
       return f:upper() .. r:lower()
-    end)
+    end))
   end
   return text
 end

@@ -69,7 +69,8 @@ local function read_file(path)
 end
 
 ---Collect every snippet from all configured sources.
----@return table<string, table> snippets keyed by name, string|nil err
+---@return table<string, table> snippets keyed by name
+---@return string|nil err
 function M.load()
   if #sources == 0 then
     return {}, "no snippet sources configured (set snippets = { paths = {…} })"
