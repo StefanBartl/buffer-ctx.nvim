@@ -1,6 +1,5 @@
 ---@module 'buffer_ctx.format.blank_lines'
----@brief Collapse consecutive blank lines down to at most one.
----@description
+--- Collapse consecutive blank lines down to at most one.
 --- Operates on the whole buffer by default. With an explicit command range
 --- (":'<,'>Format squeeze" or ":10,20Format squeeze") only that span is
 --- squeezed — a leading/trailing blank line just outside the range is left
@@ -11,6 +10,7 @@ local notify = require("buffer_ctx.util.notify")
 local M = {}
 local api = vim.api
 
+---@internal
 ---@param line string
 ---@return boolean
 local function is_blank(line)

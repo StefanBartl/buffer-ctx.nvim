@@ -1,6 +1,5 @@
 ---@module 'buffer_ctx.mark'
----@brief :Mark command tree — toggle per-line marks and yank them to clipboard.
----@description
+--- :Mark command tree — toggle per-line marks and yank them to clipboard.
 --- :Mark toggle   Toggle the mark on the current line (sign or extmark indicator)
 --- :Mark yank     Yank all marked lines (in buffer order) to the system clipboard
 ---
@@ -40,6 +39,7 @@ local sign_defined = false
 ---@type { text: string, hl: string }
 local sign_opts = { text = "●", hl = "ErrorMsg" }
 
+---@internal
 local function ensure_sign()
   if sign_defined then
     return
@@ -48,6 +48,8 @@ local function ensure_sign()
   sign_defined = true
 end
 
+---@internal
+---@return boolean
 local function use_signcolumn()
   return vim.api.nvim_get_option_value("signcolumn", { win = 0 }) ~= "no"
 end
@@ -67,10 +69,13 @@ end
 --     outright, which is what "the marked line is gone" should mean.
 --     On 0.9 the mark still slides to the neighbouring line — much better
 --     than the old raw-line-number behaviour, but not exact.
+---@internal
+---@return boolean
 local function extmark_v10()
   return vim.fn.has("nvim-0.10") == 1
 end
 
+---@internal
 ---Place the indicator for a new mark and return its extmark ID.
 ---@param bufnr number
 ---@param lnum  number  1-based
@@ -104,6 +109,7 @@ local function place_mark(bufnr, lnum)
   return id
 end
 
+---@internal
 ---Remove a mark's indicator(s). Idempotent, and deliberately clears both
 ---renderings: `signcolumn` can be toggled between placing and removing a
 ---mark, so the branch that created it is not necessarily the branch running
@@ -115,6 +121,7 @@ local function unplace_mark(bufnr, id)
   pcall(vim.fn.sign_unplace, SIGN_NAME, { buffer = bufnr, id = id })
 end
 
+---@internal
 ---Resolve an extmark ID to its current 1-based line, or nil if it is gone
 ---(the line it anchored to was deleted).
 ---@param bufnr number
@@ -128,6 +135,7 @@ local function resolve_line(bufnr, id)
   return pos[1] + 1
 end
 
+---@internal
 ---Find the mark currently anchored to `lnum`, if any.
 ---@param bufnr number
 ---@param lnum  number  1-based

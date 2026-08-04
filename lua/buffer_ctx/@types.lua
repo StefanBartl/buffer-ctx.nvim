@@ -1,4 +1,8 @@
+---@meta
 ---@module 'buffer_ctx.@types'
+--- Central type declarations shared across the buffer_ctx plugin.
+--- Config classes, aliases and per-domain option shapes referenced by name
+--- from every other module live here.
 
 ---@alias BufferCtx.Sink "cursor" | "clip"
 

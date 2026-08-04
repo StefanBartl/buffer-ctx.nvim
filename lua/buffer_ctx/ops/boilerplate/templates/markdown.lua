@@ -1,5 +1,5 @@
 ---@module 'buffer_ctx.ops.boilerplate.templates.markdown'
----@brief Markdown boilerplate templates.
+--- Markdown boilerplate templates.
 
 local M = {}
 

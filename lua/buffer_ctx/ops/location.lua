@@ -1,4 +1,5 @@
 ---@module 'buffer_ctx.ops.location'
+--- Current buffer location as "path:line" or "path:L1-L2".
 ---@see buffer_ctx.ops.filepath for the same path modes without the :line suffix
 
 local M = {}
@@ -38,6 +39,7 @@ function M.get(mode)
   return filepath .. ":" .. line
 end
 
+---@internal
 ---Resolve the path part of a location, without the line suffix
 ---@param mode? BufferCtx.LocationMode
 ---@return string|nil filepath, string|nil err

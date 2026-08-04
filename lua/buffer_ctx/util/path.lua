@@ -1,4 +1,7 @@
 ---@module 'buffer_ctx.util.path'
+--- Pure path helpers: module-path derivation, cwd-relative paths, separator
+--- normalization, and depth-limited segment slicing.
+
 local M = {}
 local fn = vim.fn
 

@@ -1,6 +1,5 @@
 ---@module 'buffer_ctx.bindings.which_key'
----@brief Optional, guarded which-key group label for the `<leader>cn` prefix.
----@description
+--- Optional, guarded which-key group label for the `<leader>cn` prefix.
 --- which-key is a **soft** dependency: if it is not installed this is a
 --- no-op. When present, registers a single group label so buffer-ctx's
 --- `<leader>cn*` keymaps (copy location, copy module path, copy filepath)

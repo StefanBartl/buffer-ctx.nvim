@@ -1,6 +1,5 @@
 ---@module 'buffer_ctx.format'
----@brief Unified :Format command with subcommands for buffer-ctx.nvim.
----@description
+--- Unified :Format command with subcommands for buffer-ctx.nvim.
 --- Available subcommands once enabled:
 ---   :Format column <target_col> [fill_char]
 ---   :Format table [header=ALIGN] [cell=ALIGN] [skip=COL] [scope=SCOPE]
@@ -29,6 +28,7 @@ local subcommands = {}
 -- Registry helpers
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
 ---@param name string
 ---@param def  table
 local function register_subcommand(name, def)
@@ -46,6 +46,7 @@ end
 -- Subcommand setup functions
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
 local function setup_column_align()
   local ok, ca = pcall(require, "buffer_ctx.format.column_align")
   if not ok then
@@ -77,6 +78,7 @@ local function setup_column_align()
   })
 end
 
+---@internal
 local function setup_table()
   local ok, tbl = pcall(require, "buffer_ctx.format.table_fmt")
   if not ok then
@@ -85,6 +87,7 @@ local function setup_table()
   tbl.setup(register_subcommand, notify)
 end
 
+---@internal
 local function setup_text_width()
   local ok, tw = pcall(require, "buffer_ctx.format.text_width")
   if not ok then
@@ -118,6 +121,7 @@ local function setup_text_width()
   })
 end
 
+---@internal
 local function setup_filter_lines()
   local ok, fl = pcall(require, "buffer_ctx.format.filter_lines")
   if not ok then
@@ -158,6 +162,7 @@ local function setup_filter_lines()
   })
 end
 
+---@internal
 local function setup_misc()
   local ok, misc = pcall(require, "buffer_ctx.format.misc")
   if not ok then
@@ -166,6 +171,7 @@ local function setup_misc()
   misc.register_subcommands(register_subcommand)
 end
 
+---@internal
 local function setup_blank_lines()
   local ok, bl = pcall(require, "buffer_ctx.format.blank_lines")
   if not ok then
@@ -174,6 +180,7 @@ local function setup_blank_lines()
   bl.register_subcommands(register_subcommand)
 end
 
+---@internal
 local function setup_enum_lines()
   local ok, core = pcall(require, "buffer_ctx.format.enum_lines")
   if not ok then
@@ -186,6 +193,7 @@ local function setup_enum_lines()
     STYLE_SET[s] = true
   end
 
+  ---@internal
   ---@param args string[]
   ---@return table opts, string|nil err
   local function parse_enum_args(args)
@@ -279,6 +287,7 @@ end
 -- Public entry point
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
 ---Build one composer route per registered subcommand. A single optional
 --- first-arg (`a1`) is declared, using a type whose completer delegates to
 --- the subcommand's own `def.complete(arg_lead)` — every existing completer

@@ -1,7 +1,6 @@
 ---@module 'telescope._extensions.buffer_ctx'
----@brief Optional Telescope extension: pick a boilerplate template with a live
+--- Optional Telescope extension: pick a boilerplate template with a live
 --- preview of the lines it would generate.
----@description
 --- Register with:  require("telescope").load_extension("buffer_ctx")
 --- Then:           :Telescope buffer_ctx boilerplate
 ---
@@ -23,6 +22,7 @@ local previewers = require("telescope.previewers")
 
 local boiler = require("buffer_ctx.ops.boilerplate")
 
+---@internal
 ---Render a template's lines for the preview pane.
 ---@param entry table
 ---@param bufnr integer
@@ -48,6 +48,7 @@ local function preview_template(entry, bufnr)
   vim.bo[bufnr].filetype = FILETYPE[ft] or ""
 end
 
+---@internal
 ---@param opts? table  standard Telescope picker options
 local function boilerplate_picker(opts)
   opts = opts or {}

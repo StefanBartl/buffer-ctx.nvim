@@ -1,6 +1,10 @@
 ---@module 'buffer_ctx.health'
+--- `:checkhealth buffer_ctx` report: environment, optional dependencies, and
+--- per-subsystem (core / format / mark) command registration checks.
+
 local M = {}
 
+---Run the `:checkhealth buffer_ctx` report.
 function M.check()
   vim.health.start("buffer_ctx")
 

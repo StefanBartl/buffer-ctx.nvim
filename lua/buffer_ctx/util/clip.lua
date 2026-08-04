@@ -1,4 +1,5 @@
 ---@module 'buffer_ctx.util.clip'
+--- Copies text to the system clipboard, with an unnamed-register fallback.
 ---@see buffer_ctx.util.notify for the same soft-dependency pattern
 ---@see buffer_ctx.util.cursor for the insert-at-cursor sink counterpart
 

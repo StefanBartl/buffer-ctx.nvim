@@ -1,4 +1,6 @@
 ---@module 'buffer_ctx.ops.filepath'
+--- Builds a formatted path string for the current buffer (relative, absolute,
+--- nvim-config-relative, or dotted Lua-module style).
 ---@see buffer_ctx.util.path for the pure path helpers this builds on
 ---@see buffer_ctx.ops.location for the "path:line" variant
 ---@see buffer_ctx.ops.module for the Lua-module-name variant
@@ -56,6 +58,7 @@ function M.get_path(opts)
   return M._format_segments(segments, opts.format or "unix")
 end
 
+---@internal
 ---@param segments string[]
 ---@param format BufferCtx.FilepathFormat
 ---@return string

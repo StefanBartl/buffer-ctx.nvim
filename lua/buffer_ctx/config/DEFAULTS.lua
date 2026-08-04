@@ -1,5 +1,6 @@
 ---@module 'buffer_ctx.config.DEFAULTS'
----@brief Pluginside default configuration for buffer-ctx.nvim.
+--- Plugin-side default configuration for buffer-ctx.nvim.
+---@see buffer_ctx.@types
 
 ---@type BufferCtx.Config
 return {

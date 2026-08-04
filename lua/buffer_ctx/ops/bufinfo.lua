@@ -1,6 +1,5 @@
 ---@module 'buffer_ctx.ops.bufinfo'
----@brief Current buffer metadata: line count and buffer handle.
----@description
+--- Current buffer metadata: line count and buffer handle.
 --- Both are plain buffer introspection, useful for documentation references
 --- ("see lines 1-120") and for Lua scripting/debugging against a live handle.
 ---@see buffer_ctx.ops.location for the cursor-position counterpart

@@ -1,4 +1,6 @@
 ---@module 'buffer_ctx.ops.boilerplate.templates.guard'
+--- Guard-clause boilerplate template, plain and interactive variants.
+
 local M = {}
 
 ---@param condition? string

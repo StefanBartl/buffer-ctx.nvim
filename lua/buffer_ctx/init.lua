@@ -1,4 +1,9 @@
 ---@module 'buffer_ctx'
+--- Plugin entry point: wires bindings, `:Format` and `:Mark`, and exposes
+--- thin `insert`/`copy` wrappers for scripting.
+---@see buffer_ctx.bindings
+---@see buffer_ctx.config
+
 local M = {}
 
 local _setup_done = false

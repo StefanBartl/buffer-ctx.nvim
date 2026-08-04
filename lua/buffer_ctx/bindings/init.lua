@@ -1,7 +1,6 @@
 ---@module 'buffer_ctx.bindings'
----@brief Orchestrates buffer-ctx's core bindings: the `:Insert`/`:Copy`
---- user commands, the 3 base keymaps, and which-key labels.
----@description
+--- Orchestrates buffer-ctx's core bindings: the `:Insert`/`:Copy` user
+--- commands, the 3 base keymaps, and which-key labels.
 --- `:Format` and `:Mark` are independent subsystems and wire their own
 --- commands/keymaps via `buffer_ctx.format.setup()` / `buffer_ctx.mark.setup()`
 --- respectively (see `lua/buffer_ctx/init.lua`).

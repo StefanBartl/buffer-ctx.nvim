@@ -1,6 +1,5 @@
 ---@module 'buffer_ctx.ops.git'
----@brief Current git revision info for the buffer's repository.
----@description
+--- Current git revision info for the buffer's repository.
 --- Modes: hash (full SHA), short (abbreviated SHA), branch (current branch),
 --- tag (nearest tag via describe). Queries run in the buffer's own directory,
 --- so the result is correct even when :cd points somewhere else.
@@ -20,6 +19,7 @@ local ARGV = {
   tag = { "describe", "--tags", "--always" },
 }
 
+---@internal
 ---Directory to run git in: the buffer's own directory, else cwd.
 ---@return string
 local function repo_dir()

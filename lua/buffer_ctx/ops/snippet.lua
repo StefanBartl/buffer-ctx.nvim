@@ -1,7 +1,6 @@
 ---@module 'buffer_ctx.ops.snippet'
----@brief VSCode-compatible snippet loading, as a lightweight alternative to a
+--- VSCode-compatible snippet loading, as a lightweight alternative to a
 --- full snippet engine.
----@description
 --- Reads snippet files in the VSCode format:
 ---
 ---   { "Name": { "prefix": "x", "body": ["line", "line"], "description": "…" } }
@@ -35,6 +34,7 @@ function M.get_sources()
   return vim.deepcopy(sources)
 end
 
+---@internal
 ---Strip VSCode tabstops/placeholders down to plain text.
 --- ${1:name} → name · ${1|a,b|} → a · $1 / $0 → removed
 ---@param line string
@@ -49,6 +49,7 @@ local function strip_tabstops(line)
   return line
 end
 
+---@internal
 ---Read and decode one snippet file.
 ---@param path string
 ---@return table|nil decoded, string|nil err

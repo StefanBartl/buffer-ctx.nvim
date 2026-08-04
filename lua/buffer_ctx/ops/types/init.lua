@@ -1,6 +1,6 @@
+---@meta
 ---@module 'buffer_ctx.ops.types'
----@brief Type anchor for the ops domain (including `ops/boilerplate`).
----@description
+--- Type anchor for the ops domain (including `ops/boilerplate`).
 --- Shared ops-domain types (`BufferCtx.FilepathOpts`, `BufferCtx.ModuleStyle`,
 --- `BufferCtx.TimestampFormat`, `BufferCtx.UUIDFormat`,
 --- `BufferCtx.AnnotationType`, `BufferCtx.LocationMode`,

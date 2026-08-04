@@ -1,4 +1,6 @@
 ---@module 'buffer_ctx.bindings.keymaps'
+--- Attaches the 3 base normal-mode keymaps for copying location, module
+--- path and filepath.
 ---@see buffer_ctx.util.map for the lib.nvim soft bridge these go through
 
 local M = {}

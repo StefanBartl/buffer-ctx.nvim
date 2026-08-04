@@ -1,5 +1,5 @@
 ---@module 'buffer_ctx.format.column_align'
----@brief Align visually selected character(s) to a target column.
+--- Align visually selected character(s) to a target column.
 
 local notify = require("buffer_ctx.util.notify")
 
@@ -9,6 +9,9 @@ local api = vim.api
 
 local state = { last_target_col = nil, last_fill_char = nil }
 
+---@internal
+---@param str string
+---@return integer
 local function display_width(str)
   if type(str) ~= "string" then
     return 0
@@ -17,6 +20,10 @@ local function display_width(str)
   return ok and w or #str
 end
 
+---@internal
+---@param line string
+---@param byte_pos integer
+---@return string char, integer byte_len
 local function get_char_at_pos(line, byte_pos)
   local char_idx = vim.str_utfindex(line, byte_pos)
   if not char_idx then
@@ -27,6 +34,7 @@ local function get_char_at_pos(line, byte_pos)
   return char, #char
 end
 
+---@internal
 ---Read the visual selection's geometry and submode.
 ---
 ---The submode comes from `vim.fn.visualmode()`, which is what Vim actually
@@ -60,6 +68,14 @@ local function validate_selection()
     }
 end
 
+---@internal
+---@param line_nr integer
+---@param start_col integer
+---@param end_col integer
+---@param target_col integer
+---@param fill_char string
+---@return boolean ok
+---@return string|nil err
 local function align_single_line(line_nr, start_col, end_col, target_col, fill_char)
   local lines = api.nvim_buf_get_lines(0, line_nr - 1, line_nr, false)
   local line = lines and lines[1]
@@ -96,6 +112,14 @@ local function align_single_line(line_nr, start_col, end_col, target_col, fill_c
   return true, nil
 end
 
+---@internal
+---@param start_line integer
+---@param end_line integer
+---@param col integer
+---@param target_col integer
+---@param fill_char string
+---@return boolean ok
+---@return string|nil err
 local function align_block_lines(start_line, end_line, col, target_col, fill_char)
   local lines = api.nvim_buf_get_lines(0, start_line - 1, end_line, false)
   if not lines or #lines == 0 then

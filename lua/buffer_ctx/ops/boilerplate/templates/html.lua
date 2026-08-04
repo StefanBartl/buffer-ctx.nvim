@@ -1,6 +1,10 @@
 ---@module 'buffer_ctx.ops.boilerplate.templates.html'
+--- HTML fragment boilerplate templates (figure, table, aside, …).
+
 local M = {}
 
+---@param id? string
+---@return string[]
 function M.figure(id)
   id = id or "TODO"
   return {
@@ -11,6 +15,8 @@ function M.figure(id)
   }
 end
 
+---@param id? string
+---@return string[]
 function M.code(id)
   id = id or "TODO"
   return {
@@ -23,6 +29,8 @@ function M.code(id)
   }
 end
 
+---@param id? string
+---@return string[]
 function M.quote(id)
   id = id or "TODO"
   return {
@@ -35,6 +43,8 @@ function M.quote(id)
   }
 end
 
+---@param id? string
+---@return string[]
 function M.formula_table(id)
   id = id or "TODO"
   return {
@@ -60,6 +70,8 @@ function M.formula_table(id)
   }
 end
 
+---@param id? string
+---@return string[]
 function M.aside(id)
   id = id or "TODO"
   return {
@@ -72,6 +84,8 @@ function M.aside(id)
   }
 end
 
+---@param id? string
+---@return string[]
 function M.pagination(id)
   id = id or "TODO"
   return {
@@ -82,6 +96,8 @@ function M.pagination(id)
   }
 end
 
+---@param id? string
+---@return string[]
 function M.accordion(id)
   id = id or "TODO"
   return {
@@ -99,6 +115,8 @@ function M.accordion(id)
   }
 end
 
+---@param id? string
+---@return string[]
 function M.table(id)
   id = id or "TODO"
   return {
@@ -131,6 +149,8 @@ function M.table(id)
   }
 end
 
+---@param id? string
+---@return string[]
 function M.section(id)
   id = id or "TODO"
   return {
