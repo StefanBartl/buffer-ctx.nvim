@@ -1,5 +1,5 @@
 ---@module 'buffer_ctx.format.text_width'
----@brief Reflow (word-wrap) text in a buffer or a line range.
+--- Reflow (word-wrap) text in a buffer or a line range.
 ---
 --- Exports:
 ---   M.reflow_buffer(bufnr, width)                    – reflow entire buffer
@@ -7,6 +7,12 @@
 
 local M = {}
 
+---@internal
+---@param words string[]
+---@param width integer
+---@param first_prefix string|nil
+---@param cont_prefix string|nil
+---@return string[]
 local function wrap_words(words, width, first_prefix, cont_prefix)
   local out, cur, cur_len = {}, first_prefix or "", #(first_prefix or "")
   for _, w in ipairs(words) do
@@ -40,6 +46,9 @@ local function wrap_words(words, width, first_prefix, cont_prefix)
   return out
 end
 
+---@internal
+---@param par_lines string[]
+---@return string[]
 local function paragraph_to_words(par_lines)
   local words = {}
   for _, ln in ipairs(par_lines) do
@@ -50,6 +59,9 @@ local function paragraph_to_words(par_lines)
   return words
 end
 
+---@internal
+---@param first_line string|nil
+---@return string first_prefix, string cont_prefix
 local function detect_prefixes(first_line)
   if not first_line then
     return "", ""
@@ -63,6 +75,10 @@ local function detect_prefixes(first_line)
   return indent, indent
 end
 
+---@internal
+---@param lines string[]
+---@param width integer
+---@return string[]
 local function reflow_lines_region(lines, width)
   local out = {}
   local paragraph = {}

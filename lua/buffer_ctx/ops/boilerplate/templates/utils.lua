@@ -1,4 +1,6 @@
 ---@module 'buffer_ctx.ops.boilerplate.templates.utils'
+--- Small shared helpers for the boilerplate template modules.
+
 local pu = require("buffer_ctx.util.path")
 local M = {}
 

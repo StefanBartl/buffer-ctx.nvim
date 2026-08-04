@@ -1,5 +1,5 @@
 ---@module 'buffer_ctx.format.enum_lines'
----@brief Enumerate tokens in a visual selection with configurable label styles.
+--- Enumerate tokens in a visual selection with configurable label styles.
 ---
 --- Exports:
 ---   M.enumerate(lines, opts)                            – pure function, returns Result
@@ -21,6 +21,9 @@ local api = vim.api
 -- Roman numerals
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@param n integer
+---@return string
 local function to_roman(n)
   if type(n) ~= "number" or n < 1 then
     return tostring(n)
@@ -41,6 +44,10 @@ end
 -- Label generation
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@param i integer
+---@param upper boolean
+---@return string
 local function alpha_marker(i, upper)
   local base = upper and 65 or 97
   local letters = {}
@@ -58,6 +65,11 @@ local function alpha_marker(i, upper)
   return table.concat(letters)
 end
 
+---@internal
+---@param i integer
+---@param style string
+---@param sep string
+---@return string
 local function make_label(i, style, sep)
   local marker
   if style == "decimal" then
@@ -80,6 +92,9 @@ end
 -- Token extraction
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@param lines string[]
+---@return string[] tokens, string indent
 local function extract_tokens(lines)
   local tokens = {}
   local indent = ""

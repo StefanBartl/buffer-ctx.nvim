@@ -1,5 +1,5 @@
 ---@module 'buffer_ctx.ops.uuid'
----@brief UUIDv4 generate/format. Soft dependency, matching util/notify.lua's
+--- UUIDv4 generate/format. Soft dependency, matching util/notify.lua's
 --- convention: prefer lib.nvim's lib.lua.uuid when installed, fall back to
 --- an equivalent standalone implementation otherwise.
 

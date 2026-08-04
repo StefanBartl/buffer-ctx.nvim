@@ -1,11 +1,10 @@
 ---@module 'buffer_ctx.config'
----@brief Runtime configuration store for buffer-ctx.nvim.
----@description
+--- Runtime configuration store for buffer-ctx.nvim.
 --- Deep-merges user options over `buffer_ctx.config.DEFAULTS` and exposes a
 --- single `get()` accessor so other modules never read a raw options table
 --- directly.
----@see buffer_ctx.config.DEFAULTS for the shape and default values
----@see BufferCtx.Config in buffer_ctx.@types for the type definitions
+---@see buffer_ctx.config.DEFAULTS
+---@see buffer_ctx.@types
 
 local M = {}
 

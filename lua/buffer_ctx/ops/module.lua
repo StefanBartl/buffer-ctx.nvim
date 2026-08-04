@@ -1,4 +1,6 @@
 ---@module 'buffer_ctx.ops.module'
+--- Derives the current buffer's Lua module path and formats it as a
+--- `require(...)`/`@module`/import statement.
 ---@see buffer_ctx.util.path.get_module_path for the path→module derivation
 ---@see buffer_ctx.ops.filepath for the raw-path counterpart
 

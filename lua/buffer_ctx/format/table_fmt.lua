@@ -1,6 +1,5 @@
 ---@module 'buffer_ctx.format.table_fmt'
----@brief Markdown table formatter with per-role and per-column alignment control.
----@description
+--- Markdown table formatter with per-role and per-column alignment control.
 --- Public API:
 ---   M.format_table_at_cursor(bufnr, opts)   – format the table under the cursor
 ---   M.format_tables_in_buffer(bufnr, opts)  – format every table in a buffer
@@ -15,6 +14,8 @@ local M = {}
 -- *.md file under cwd and can take a while in a large tree. No-op (returns
 -- nil) when lib.nvim isn't installed — formatting still runs, just silently.
 local ok_progress, progress_mod = pcall(require, "lib.nvim.progress")
+---@internal
+---@return table|nil
 local function new_progress()
   if not ok_progress then
     return nil
@@ -34,10 +35,17 @@ local VALID_ALIGN = { left = true, center = true, right = true }
 -- Utilities
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@param fn function
+---@param ... any
+---@return boolean, ...
 local function safe_call(fn, ...)
   return pcall(fn, ...)
 end
 
+---@internal
+---@param str string
+---@return integer
 local function display_width(str)
   if type(str) ~= "string" then
     return 0
@@ -46,6 +54,9 @@ local function display_width(str)
   return ok and w or #str
 end
 
+---@internal
+---@param str string
+---@return string
 local function trim(str)
   if type(str) ~= "string" then
     return ""
@@ -57,6 +68,11 @@ end
 -- Cell padding
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@param str string
+---@param width integer
+---@param align string
+---@return string
 local function pad_cell(str, width, align)
   local content = trim(str)
   local cw = display_width(content)
@@ -78,6 +94,11 @@ end
 -- Column-override resolution
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@param overrides table[]|nil
+---@param header_cells string[]
+---@param col_count integer
+---@return table<integer, string>
 local function resolve_overrides(overrides, header_cells, col_count)
   local map = {}
   if not overrides or #overrides == 0 then
@@ -110,6 +131,9 @@ end
 -- Table parsing helpers
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@param line string
+---@return boolean
 local function is_table_line(line)
   if type(line) ~= "string" then
     return false
@@ -117,6 +141,9 @@ local function is_table_line(line)
   return trim(line):match("^|.*|$") ~= nil
 end
 
+---@internal
+---@param line string
+---@return boolean, string|nil
 local function is_separator_line(line)
   if type(line) ~= "string" then
     return false, nil
@@ -139,6 +166,9 @@ local function is_separator_line(line)
   return true, spaced and "spaced" or "compact"
 end
 
+---@internal
+---@param line string
+---@return string[]
 local function parse_row(line)
   local cells = {}
   local trimmed = trim(line)
@@ -160,6 +190,9 @@ local function parse_row(line)
   return cells
 end
 
+---@internal
+---@param lines string[]
+---@return table[]
 local function parse_all_tables(lines)
   local tables = {}
   local i = 1
@@ -211,6 +244,10 @@ local function parse_all_tables(lines)
   return tables
 end
 
+---@internal
+---@param tables table[]
+---@param cursor_line integer
+---@return table|nil, string|nil
 local function find_table_at_cursor(tables, cursor_line)
   for _, tbl in ipairs(tables) do
     if cursor_line >= tbl.start_line and cursor_line <= tbl.end_line then
@@ -224,6 +261,10 @@ end
 -- Formatting / rendering
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@param rows string[][]
+---@param col_count integer
+---@return integer[]
 local function calc_widths(rows, col_count)
   local widths = {}
   for i = 1, col_count do
@@ -239,6 +280,10 @@ local function calc_widths(rows, col_count)
   return widths
 end
 
+---@internal
+---@param widths integer[]
+---@param style string
+---@return string
 local function gen_separator(widths, style)
   local parts = {}
   if style == "spaced" then
@@ -254,6 +299,12 @@ local function gen_separator(widths, style)
   end
 end
 
+---@internal
+---@param cells string[]
+---@param widths integer[]
+---@param default_align string
+---@param override_map table<integer, string>
+---@return string
 local function format_row(cells, widths, default_align, override_map)
   local parts = {}
   for ci, w in ipairs(widths) do
@@ -263,6 +314,12 @@ local function format_row(cells, widths, default_align, override_map)
   return "| " .. table.concat(parts, " | ") .. " |"
 end
 
+---@internal
+---@param parsed table
+---@param header_align string
+---@param entry_align string
+---@param override_map table<integer, string>
+---@return string[]
 local function render_table(parsed, header_align, entry_align, override_map)
   local widths = calc_widths(parsed.rows, parsed.col_count)
   local out = {}
@@ -278,11 +335,18 @@ end
 -- Buffer helpers
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@param bufnr integer
+---@return string[]|nil, string|nil
 local function buf_get_lines(bufnr)
   local ok, lines = safe_call(vim.api.nvim_buf_get_lines, bufnr, 0, -1, false)
   return (ok and type(lines) == "table") and lines or nil, ok and nil or "Failed to read buffer"
 end
 
+---@internal
+---@param bufnr integer
+---@param tables table[]
+---@return boolean, string|nil
 local function apply_tables_to_buf(bufnr, tables)
   table.sort(tables, function(a, b)
     return a.parsed.start_line > b.parsed.start_line
@@ -303,6 +367,11 @@ local function apply_tables_to_buf(bufnr, tables)
   return true, nil
 end
 
+---@internal
+---@param path string
+---@param header_align string
+---@param entry_align string
+---@return boolean, string|nil
 local function format_file(path, header_align, entry_align)
   local fh, err = io.open(path, "r")
   if not fh then
@@ -341,6 +410,9 @@ local function format_file(path, header_align, entry_align)
   return true, nil
 end
 
+---@internal
+---@param dir string
+---@return string[]
 local function collect_md_files(dir)
   local result = vim.fn.glob(dir:gsub("[/\\]$", "") .. "/**/*.md", false, true)
   for _, f in ipairs(vim.fn.glob(dir:gsub("[/\\]$", "") .. "/*.md", false, true)) do
@@ -353,6 +425,10 @@ end
 -- Public API
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---Format the Markdown table under the cursor.
+---@param bufnr integer|nil
+---@param opts table|nil
+---@return boolean, string|nil
 function M.format_table_at_cursor(bufnr, opts)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   opts = opts or {}
@@ -394,6 +470,10 @@ function M.format_table_at_cursor(bufnr, opts)
   return true, nil
 end
 
+---Format every Markdown table in a buffer.
+---@param bufnr integer|nil
+---@param opts table|nil
+---@return boolean, string|nil, integer
 function M.format_tables_in_buffer(bufnr, opts)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   opts = opts or {}
@@ -424,6 +504,9 @@ function M.format_tables_in_buffer(bufnr, opts)
   return ok, err, #pending
 end
 
+---Format tables in the given scope: "cursor" | "buffer" | "cwd" | a file path.
+---@param opts table|nil
+---@return boolean, string|nil
 function M.format_tables_in_scope(opts)
   opts = opts or {}
   local scope = opts.scope or "cursor"

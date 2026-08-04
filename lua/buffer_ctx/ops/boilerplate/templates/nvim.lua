@@ -1,6 +1,10 @@
 ---@module 'buffer_ctx.ops.boilerplate.templates.nvim'
+--- Neovim API boilerplate templates (autocmd group, keymap stub).
+
 local M = {}
 
+---@param group_name? string
+---@return string[]
 function M.autocmd(group_name)
   group_name = group_name or "MyGroup"
   return {
@@ -20,6 +24,7 @@ function M.autocmd(group_name)
   }
 end
 
+---@return string[]
 function M.keymap()
   return {
     'vim.keymap.set("n", "<leader>TODO", function()',

@@ -1,4 +1,7 @@
 ---@module 'buffer_ctx.ops.annotation'
+--- Generates single LuaCATS annotation lines (`@module`, `@class`, `@param`, …)
+--- for `:Insert annotation` / `:Copy annotation`.
+
 local M = {}
 local api = vim.api
 local fn = vim.fn
@@ -86,8 +89,9 @@ function M.get(ann_type, args)
   return nil, "unknown annotation type: " .. t
 end
 
+---@internal
 ---Interactive multi-line @param/@return dialog
----@return string[]|nil
+---@return string[]|nil lines, string|nil err
 function M._interactive_function()
   local desc = fn.input("Function description: ")
 

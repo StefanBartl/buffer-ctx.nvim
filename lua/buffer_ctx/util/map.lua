@@ -1,5 +1,5 @@
 ---@module 'buffer_ctx.util.map'
----@brief Keymap wrapper; upgrades to lib.nvim's map helper when lib.nvim is
+--- Keymap wrapper; upgrades to lib.nvim's map helper when lib.nvim is
 --- installed. Soft dependency only: falls back to plain vim.keymap.set when
 --- lib.nvim is absent, so the plugin stays standalone.
 ---@see buffer_ctx.util.notify for the same soft-dependency pattern

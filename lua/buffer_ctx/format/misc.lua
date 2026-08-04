@@ -1,5 +1,5 @@
 ---@module 'buffer_ctx.format.misc'
----@brief Lightweight buffer-level formatting operations.
+--- Lightweight buffer-level formatting operations.
 ---
 --- Registers: trim, sort, unique, case, indent, clear.
 
@@ -21,6 +21,8 @@ local ok_lib_case, lib_change_case = pcall(require, "lib.lua.strings.case")
 -- Implementations
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---@internal
+---@return integer modified
 local function trim_whitespace()
   local buf = api.nvim_get_current_buf()
   local lines = api.nvim_buf_get_lines(buf, 0, -1, false)
@@ -36,6 +38,12 @@ local function trim_whitespace()
   return modified
 end
 
+---@internal
+---@param lines string[]
+---@param reverse boolean
+---@param ignore_case boolean
+---@param numeric boolean
+---@return string[]
 local function sort_lines(lines, reverse, ignore_case, numeric)
   local sorted = vim.deepcopy(lines)
   table.sort(sorted, function(a, b)
@@ -53,6 +61,10 @@ local function sort_lines(lines, reverse, ignore_case, numeric)
   return sorted
 end
 
+---@internal
+---@param lines string[]
+---@param ignore_case boolean
+---@return string[] uniq, integer removed
 local function unique_lines(lines, ignore_case)
   local seen, uniq, removed = {}, {}, 0
   for _, line in ipairs(lines) do
@@ -67,6 +79,10 @@ local function unique_lines(lines, ignore_case)
   return uniq, removed
 end
 
+---@internal
+---@param text string
+---@param mode string
+---@return string
 local function change_case(text, mode)
   if mode == "sentence" then
     local r = text:lower()
@@ -91,6 +107,11 @@ local function change_case(text, mode)
   return text
 end
 
+---@internal
+---@param lines string[]
+---@param use_spaces boolean
+---@param width integer
+---@return string[]
 local function fix_indentation(lines, use_spaces, width)
   local fixed = {}
   for _, line in ipairs(lines) do

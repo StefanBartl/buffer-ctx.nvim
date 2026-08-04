@@ -1,7 +1,11 @@
 ---@module 'buffer_ctx.ops.boilerplate.templates.lua'
+--- Lua-source boilerplate templates (module, class, function, test, enum).
+
 local utils = require("buffer_ctx.ops.boilerplate.templates.utils")
 local M = {}
 
+---@param name? string
+---@return string[]
 function M.module(name)
   name = name or utils.get_module_path()
   return {
@@ -20,6 +24,8 @@ function M.module(name)
   }
 end
 
+---@param class_name? string
+---@return string[]
 function M.class(class_name)
   class_name = class_name or "MyClass"
   return {
@@ -41,6 +47,7 @@ function M.class(class_name)
   }
 end
 
+---@return string[]
 function M.func()
   return {
     "---TODO: Add description",
@@ -52,6 +59,8 @@ function M.func()
   }
 end
 
+---@param subject? string
+---@return string[]
 function M.test(subject)
   subject = subject or utils.get_module_path()
   return {
@@ -69,6 +78,8 @@ function M.test(subject)
   }
 end
 
+---@param enum_name? string
+---@return string[]
 function M.enum(enum_name)
   enum_name = enum_name or "MyEnum"
   return {

@@ -1,4 +1,7 @@
 ---@module 'buffer_ctx.util.cursor'
+--- Cursor-relative buffer insertion: inline text or whole lines.
+---@see buffer_ctx.util.clip for the clipboard sink counterpart
+
 local M = {}
 local api = vim.api
 

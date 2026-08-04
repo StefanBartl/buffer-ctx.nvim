@@ -1,8 +1,7 @@
 ---@module 'buffer_ctx.ops.boilerplate'
----@brief Template registry; sub-modules under templates/ are required lazily
+--- Template registry; sub-modules under templates/ are required lazily
 --- per key so unused templates are never loaded.
----@see buffer_ctx.ops.boilerplate.templates.lua and its siblings for the
---- template implementations REGISTRY dispatches to
+---@see buffer_ctx.ops.boilerplate.templates.lua
 
 local M = {}
 

@@ -1,8 +1,12 @@
 ---@module 'buffer_ctx.format.filter_lines'
----@brief Filter buffer lines based on AND-combined pattern conditions.
+--- Filter buffer lines based on AND-combined pattern conditions.
 
 local M = {}
 
+---@internal
+---@param line string
+---@param condition string|string[]
+---@return boolean
 local function line_matches(line, condition)
   if type(condition) == "string" then
     return string.find(line, condition, 1, true) ~= nil
@@ -17,6 +21,9 @@ local function line_matches(line, condition)
   return false
 end
 
+---@internal
+---@param arg string
+---@return string|string[]
 local function parse_filter_argument(arg)
   local trimmed = arg:match("^%s*(.-)%s*$") or arg
   if trimmed:match("^%{.*%}$") then

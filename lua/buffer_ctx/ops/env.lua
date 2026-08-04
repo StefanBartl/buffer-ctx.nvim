@@ -1,5 +1,6 @@
 ---@module 'buffer_ctx.ops.env'
----@see buffer_ctx.commands for the completion wiring that uses M.list_names
+--- Reads and lists environment variables for `:Insert env` / `:Copy env`.
+---@see buffer_ctx.commands
 local M = {}
 
 ---Get the value of an environment variable

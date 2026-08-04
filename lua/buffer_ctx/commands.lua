@@ -1,13 +1,13 @@
 ---@module 'buffer_ctx.commands'
----@brief :Insert / :Copy dispatch — resolves a subcommand to an ops/* handler
+--- :Insert / :Copy dispatch — resolves a subcommand to an ops/* handler
 --- and routes the result into a sink (cursor insert or clipboard copy). Both
 --- commands are built via lib.nvim.usercmd.composer, sharing one route
 --- factory (build_routes(sink)) since they dispatch through the exact same
 --- DISPATCH table and differ only in where the result goes.
----@see buffer_ctx.format for the sibling :Format command tree
----@see buffer_ctx.mark for the sibling :Mark command tree
----@see buffer_ctx.util.cursor insert sink
----@see buffer_ctx.util.clip copy sink
+---@see buffer_ctx.format
+---@see buffer_ctx.mark
+---@see buffer_ctx.util.cursor
+---@see buffer_ctx.util.clip
 
 local composer = require("lib.nvim.usercmd.composer")
 
@@ -28,7 +28,10 @@ local snippet = require("buffer_ctx.ops.snippet")
 local git_op = require("buffer_ctx.ops.git")
 local bufinfo = require("buffer_ctx.ops.bufinfo")
 
--- Route a result to the chosen sink
+---@internal
+--- Route a result to the chosen sink
+---@param text string
+---@param sink BufferCtx.Sink
 local function sink_text(text, sink)
   if sink == "clip" then
     clip.copy(text)
@@ -37,6 +40,9 @@ local function sink_text(text, sink)
   end
 end
 
+---@internal
+---@param lines string[]
+---@param sink BufferCtx.Sink
 local function sink_lines(lines, sink)
   if sink == "clip" then
     clip.copy(table.concat(lines, "\n"))
@@ -45,6 +51,7 @@ local function sink_lines(lines, sink)
   end
 end
 
+---@internal
 ---Read a config sub-table without hard-failing when config isn't set up yet
 ---@param key string
 ---@return table
@@ -337,6 +344,7 @@ function M._dispatch(subcmd, fargs, sink, ctx)
   handler(fargs, sink, ctx)
 end
 
+---@internal
 ---@param list string[]
 ---@param lead string
 ---@return string[]
@@ -386,6 +394,7 @@ local CUSTOM_ARG_TYPE = {
   env = "BUFFER_CTX_ENV",
 }
 
+---@internal
 ---Build the 14 `:Insert`/`:Copy` routes sharing DISPATCH, differing only in sink.
 --- Each route declares a single optional first-arg (matching the existing
 --- completion, which only ever completed the first token after the
@@ -424,6 +433,7 @@ local function build_routes(sink)
   return routes
 end
 
+---Register the `:Insert` and `:Copy` user commands via lib.nvim's composer.
 function M.register()
   composer.verb("Insert", {
     desc = "Insert context text at cursor",

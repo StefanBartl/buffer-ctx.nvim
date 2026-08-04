@@ -1,4 +1,6 @@
 ---@module 'buffer_ctx.ops.timestamp'
+--- Formats the current time as one of several timestamp styles.
+
 local M = {}
 
 local FORMATS = {
