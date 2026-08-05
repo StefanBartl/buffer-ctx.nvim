@@ -72,6 +72,8 @@ Copy or insert the current buffer's path.
 :Copy filepath nvim            → relative to stdpath("config")
 ```
 
+Compat commands: `:CopyFilepathAbsolute` → `:Copy filepath absolute`, `:CopyFilepathRelative` → `:Copy filepath relative`
+
 ### `filename [noext]`
 
 ```

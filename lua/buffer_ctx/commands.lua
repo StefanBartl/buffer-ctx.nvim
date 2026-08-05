@@ -4,12 +4,18 @@
 --- commands are built via lib.nvim.usercmd.composer, sharing one route
 --- factory (build_routes(sink)) since they dispatch through the exact same
 --- DISPATCH table and differ only in where the result goes.
+---
+--- Two single-word compat commands are registered directly (untouched by
+--- composer, same pattern as :Mark's :MarkLineToggle/:MarkLinesYank):
+---   :CopyFilepathAbsolute   →  :Copy filepath absolute
+---   :CopyFilepathRelative   →  :Copy filepath relative
 ---@see buffer_ctx.format
 ---@see buffer_ctx.mark
 ---@see buffer_ctx.util.cursor
 ---@see buffer_ctx.util.clip
 
 local composer = require("lib.nvim.usercmd.composer")
+local usercmd = require("lib.nvim.usercmd")
 
 local M = {}
 
@@ -443,6 +449,15 @@ function M.register()
     desc = "Copy context text to clipboard",
     routes = build_routes("clip"),
   })
+
+  -- Compat commands (single-word aliases for the two most-used :Copy filepath invocations)
+  usercmd.create("CopyFilepathAbsolute", function()
+    M._dispatch("filepath", { "absolute" }, "clip")
+  end, { desc = "[buffer-ctx compat] Copy absolute filepath to clipboard" })
+
+  usercmd.create("CopyFilepathRelative", function()
+    M._dispatch("filepath", { "relative" }, "clip")
+  end, { desc = "[buffer-ctx compat] Copy cwd-relative filepath to clipboard" })
 end
 
 return M
