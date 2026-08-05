@@ -46,6 +46,8 @@ See README.md → Configuration for the exact option shapes.
 | --- | --- | --- |
 | `:Insert` | `{subcmd} [args…]` | Insert context text at cursor |
 | `:Copy` | `{subcmd} [args…]` | Copy context text to clipboard |
+| `:CopyFilepathAbsolute` | — | Compat alias for `:Copy filepath absolute` |
+| `:CopyFilepathRelative` | — | Compat alias for `:Copy filepath relative` |
 | `:Format` | `{subcmd} [args…]` | Buffer/selection formatting operations |
 | `:Mark` | `{subcmd}` | Toggle per-line marks and yank them to clipboard |
 | `:MarkLineToggle` | — | Compat alias for `:Mark toggle` |

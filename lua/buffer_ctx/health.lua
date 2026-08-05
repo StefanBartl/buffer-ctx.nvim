@@ -77,6 +77,18 @@ function M.check()
   require("lib.nvim.usercmd.composer").checkhealth("Insert")
   require("lib.nvim.usercmd.composer").checkhealth("Copy")
 
+  if vim.fn.exists(":CopyFilepathAbsolute") == 2 then
+    vim.health.ok(":CopyFilepathAbsolute compat command registered")
+  else
+    vim.health.warn(":CopyFilepathAbsolute compat command not found")
+  end
+
+  if vim.fn.exists(":CopyFilepathRelative") == 2 then
+    vim.health.ok(":CopyFilepathRelative compat command registered")
+  else
+    vim.health.warn(":CopyFilepathRelative compat command not found")
+  end
+
   -- Format subsystem
   vim.health.start("buffer_ctx.format")
 

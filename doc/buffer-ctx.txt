@@ -208,6 +208,9 @@ Examples: >
   :Copy filepath 1                  → filepath.lua
   :Copy filepath nvim               → relative to nvim config dir
 <
+Compat commands are registered automatically:
+  :CopyFilepathAbsolute   →  :Copy filepath absolute
+  :CopyFilepathRelative   →  :Copy filepath relative
 
 ------------------------------------------------------------------------------
 5.2  filename                                          *:Insert-filename*
@@ -772,6 +775,7 @@ Checks:
   - lib.nvim detected? (optional — map upgrade)
   - which-key detected? (optional — <leader>cn group label)
   - `buffer_ctx.bindings` loadable
+  - `:CopyFilepathAbsolute` and `:CopyFilepathRelative` compat commands registered
   - Format subsystem: enabled flag, `:Format` registered, each sub-module loadable
   - Mark subsystem: enabled flag, `:Mark` and `:MarkLineToggle` registered
 
