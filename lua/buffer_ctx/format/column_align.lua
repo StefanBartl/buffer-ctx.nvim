@@ -1,13 +1,28 @@
 ---@module 'buffer_ctx.format.column_align'
 --- Align visually selected character(s) to a target column.
 
+local api = vim.api
+
 local notify = require("buffer_ctx.util.notify")
 
 local M = {}
 
-local api = vim.api
-
+---@type { last_target_col: integer|nil, last_fill_char: string|nil }
 local state = { last_target_col = nil, last_fill_char = nil }
+
+---@internal
+---@return integer|nil target_col, string|nil fill_char
+local function get_last()
+  return state.last_target_col, state.last_fill_char
+end
+
+---@internal
+---@param target_col integer
+---@param fill_char string
+local function set_last(target_col, fill_char)
+  state.last_target_col = target_col
+  state.last_fill_char = fill_char
+end
 
 ---@internal
 ---@param str string
@@ -175,8 +190,7 @@ function M.align_to_column(target_col, fill_char)
     return
   end
 
-  state.last_target_col = target_col
-  state.last_fill_char = fill_char
+  set_last(target_col, fill_char)
 
   local valid, err, sel = validate_selection()
   if not valid or not sel then
@@ -203,9 +217,10 @@ end
 ---Interactive alignment with prompts.
 function M.align_interactive()
   local kit = require("lib.nvim.ui.kit")
+  local last_col, last_fill = get_last()
   kit.input({
     title = "Target column: ",
-    default = tostring(state.last_target_col or ""),
+    default = tostring(last_col or ""),
     on_submit = function(target_input)
       if target_input == "" then
         return
@@ -215,7 +230,7 @@ function M.align_interactive()
         notify.error("Invalid column number")
         return
       end
-      local fill_default = state.last_fill_char or " "
+      local fill_default = last_fill or " "
       kit.input({
         title = "Fill character (default: space): ",
         default = fill_default,
@@ -230,11 +245,12 @@ end
 
 ---Repeat the last alignment.
 function M.align_repeat()
-  if not state.last_target_col then
+  local last_col, last_fill = get_last()
+  if not last_col then
     notify.warn("No previous alignment to repeat")
     return
   end
-  M.align_to_column(state.last_target_col, state.last_fill_char)
+  M.align_to_column(last_col, last_fill)
 end
 
 return M

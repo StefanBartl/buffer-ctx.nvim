@@ -36,7 +36,8 @@ function M.check()
 
   -- lib.nvim: required for the :Insert/:Copy/:Format/:Mark command layer
   -- (lib.nvim.usercmd.composer); notify/map below remain soft (cosmetic) deps.
-  if pcall(require, "lib.nvim.usercmd.composer") then
+  local composer_ok, composer_mod = pcall(require, "lib.nvim.usercmd.composer")
+  if composer_ok then
     vim.health.ok("lib.nvim detected (:Insert/:Copy/:Format/:Mark command layer available)")
   else
     vim.health.warn(
@@ -74,8 +75,10 @@ function M.check()
     vim.health.warn("buffer_ctx.bindings failed to load")
   end
 
-  require("lib.nvim.usercmd.composer").checkhealth("Insert")
-  require("lib.nvim.usercmd.composer").checkhealth("Copy")
+  if composer_ok then
+    composer_mod.checkhealth("Insert")
+    composer_mod.checkhealth("Copy")
+  end
 
   if vim.fn.exists(":CopyFilepathAbsolute") == 2 then
     vim.health.ok(":CopyFilepathAbsolute compat command registered")
@@ -131,7 +134,9 @@ function M.check()
     end
   end
 
-  require("lib.nvim.usercmd.composer").checkhealth("Format")
+  if composer_ok then
+    composer_mod.checkhealth("Format")
+  end
 
   -- Mark subsystem
   vim.health.start("buffer_ctx.mark")
@@ -169,7 +174,9 @@ function M.check()
     vim.health.warn("buffer_ctx.mark failed to load")
   end
 
-  require("lib.nvim.usercmd.composer").checkhealth("Mark")
+  if composer_ok then
+    composer_mod.checkhealth("Mark")
+  end
 end
 
 return M

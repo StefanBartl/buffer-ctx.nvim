@@ -207,9 +207,9 @@ function M.get(key, name)
       end
 
       if entry.has_id and name and name ~= "" then
-        return gen(name)
+        return gen(name), nil
       end
-      return gen()
+      return gen(), nil
     end
   end
   return nil, "unknown template: " .. tostring(key)

@@ -95,14 +95,22 @@ end
 -- ─────────────────────────────────────────────────────────────────────────────
 
 ---@internal
+--- Pure lookup: returns the resolved override map plus any warnings about
+--- unresolved column references, rather than notifying itself — this is a
+--- shared parsing helper called from three different call sites, none of
+--- which is the top-level command handler, so the decision to notify (and
+--- how to phrase/aggregate it) belongs to the caller (Refactoring..md "fail
+--- late": low-level helpers report status only).
 ---@param overrides table[]|nil
 ---@param header_cells string[]
 ---@param col_count integer
----@return table<integer, string>
+---@return table<integer, string> map
+---@return string[] warnings
 local function resolve_overrides(overrides, header_cells, col_count)
   local map = {}
+  local warnings = {}
   if not overrides or #overrides == 0 then
-    return map
+    return map, warnings
   end
   local name_to_idx = {}
   for i = 1, col_count do
@@ -121,10 +129,19 @@ local function resolve_overrides(overrides, header_cells, col_count)
     if idx and idx >= 1 and idx <= col_count then
       map[idx] = ov.align
     else
-      notify.warn(string.format("col_overrides: column %q not found (ignored)", tostring(ov.col)))
+      warnings[#warnings + 1] =
+        string.format("col_overrides: column %q not found (ignored)", tostring(ov.col))
     end
   end
-  return map
+  return map, warnings
+end
+
+---@internal
+---@param warnings string[]
+local function report_override_warnings(warnings)
+  for _, w in ipairs(warnings) do
+    notify.warn(w)
+  end
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
@@ -176,17 +193,13 @@ local function parse_row(line)
   if not inner then
     return cells
   end
-  local cur = ""
-  for i = 1, #inner do
-    local ch = inner:sub(i, i)
-    if ch == "|" then
-      cells[#cells + 1] = trim(cur)
-      cur = ""
-    else
-      cur = cur .. ch
-    end
+  -- Split on "|" via gmatch instead of a char-by-char `..` accumulator: the
+  -- latter is O(n^2) in the row length (each concat reallocates/rescans the
+  -- growing string). A trailing "|" is appended so the segment after the
+  -- last real separator is captured by the same pattern as everything else.
+  for cell in (inner .. "|"):gmatch("(.-)|") do
+    cells[#cells + 1] = trim(cell)
   end
-  cells[#cells + 1] = trim(cur)
   return cells
 end
 
@@ -454,7 +467,9 @@ function M.format_table_at_cursor(bufnr, opts)
     return false, fe
   end
 
-  local override_map = resolve_overrides(opts.col_overrides, parsed.rows[1], parsed.col_count)
+  local override_map, override_warnings =
+    resolve_overrides(opts.col_overrides, parsed.rows[1], parsed.col_count)
+  report_override_warnings(override_warnings)
   local rendered = render_table(parsed, header_align, entry_align, override_map)
   local ok_s = safe_call(
     vim.api.nvim_buf_set_lines,
@@ -495,7 +510,9 @@ function M.format_tables_in_buffer(bufnr, opts)
 
   local pending = {}
   for _, parsed in ipairs(tables) do
-    local override_map = resolve_overrides(opts.col_overrides, parsed.rows[1], parsed.col_count)
+    local override_map, override_warnings =
+      resolve_overrides(opts.col_overrides, parsed.rows[1], parsed.col_count)
+    report_override_warnings(override_warnings)
     local rendered = render_table(parsed, header_align, entry_align, override_map)
     pending[#pending + 1] = { parsed = parsed, rendered = rendered }
   end

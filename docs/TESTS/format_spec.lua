@@ -87,8 +87,12 @@ return function(H)
   -- column_align: pads selected char to target column
   local buf_col = H.scratch(vim.fn.getcwd() .. "/column_align_test.lua")
   vim.api.nvim_buf_set_lines(buf_col, 0, -1, false, { "x=5" })
-  vim.api.nvim_buf_set_mark(buf_col, "<", 1, 2, {})
-  vim.api.nvim_buf_set_mark(buf_col, ">", 1, 2, {})
+  -- Simulate a real one-char visual selection (col 2, the "5") rather than
+  -- hand-writing '< / '> marks: column_align reads vim.fn.visualmode() to
+  -- tell charwise/linewise/blockwise apart, and that is only populated by
+  -- actually entering and leaving Visual mode, not by nvim_buf_set_mark.
+  vim.api.nvim_win_set_cursor(0, { 1, 2 })
+  vim.cmd("normal! v\27")
   column_align.align_to_column(10, "-")
   H.eq(
     vim.api.nvim_buf_get_lines(buf_col, 0, -1, false)[1],
@@ -98,8 +102,8 @@ return function(H)
 
   -- align_interactive: chains two kit.input prompts (target column, fill char)
   vim.api.nvim_buf_set_lines(buf_col, 0, -1, false, { "y=5" })
-  vim.api.nvim_buf_set_mark(buf_col, "<", 1, 2, {})
-  vim.api.nvim_buf_set_mark(buf_col, ">", 1, 2, {})
+  vim.api.nvim_win_set_cursor(0, { 1, 2 })
+  vim.cmd("normal! v\27")
   local captured_titles = {}
   package.loaded["lib.nvim.ui.kit"] = {
     input = function(opts)

@@ -20,7 +20,12 @@ function M.attach(cfg)
         require("buffer_ctx.util.notify").error(err or "location failed")
         return
       end
-      require("buffer_ctx.util.clip").copy(result)
+      local copy_ok, copy_err, preview = require("buffer_ctx.util.clip").copy(result)
+      if copy_ok then
+        require("buffer_ctx.util.notify").info("copied: " .. preview)
+      else
+        require("buffer_ctx.util.notify").warn(copy_err or "copy failed")
+      end
     end, "[buffer-ctx] copy location (path:line)")
   end
 
@@ -31,7 +36,12 @@ function M.attach(cfg)
         require("buffer_ctx.util.notify").error(err or "module failed")
         return
       end
-      require("buffer_ctx.util.clip").copy(mod)
+      local copy_ok, copy_err, preview = require("buffer_ctx.util.clip").copy(mod)
+      if copy_ok then
+        require("buffer_ctx.util.notify").info("copied: " .. preview)
+      else
+        require("buffer_ctx.util.notify").warn(copy_err or "copy failed")
+      end
     end, "[buffer-ctx] copy module path")
   end
 
@@ -43,7 +53,12 @@ function M.attach(cfg)
         require("buffer_ctx.util.notify").error(err or "filepath failed")
         return
       end
-      require("buffer_ctx.util.clip").copy(result)
+      local copy_ok, copy_err, preview = require("buffer_ctx.util.clip").copy(result)
+      if copy_ok then
+        require("buffer_ctx.util.notify").info("copied: " .. preview)
+      else
+        require("buffer_ctx.util.notify").warn(copy_err or "copy failed")
+      end
     end, "[buffer-ctx] copy filepath (cwd-relative)")
   end
 end

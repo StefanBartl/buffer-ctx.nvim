@@ -14,7 +14,7 @@ function M.get_linecount()
   if not api.nvim_buf_is_valid(bufnr) then
     return nil, "no valid buffer"
   end
-  return tostring(api.nvim_buf_line_count(bufnr))
+  return tostring(api.nvim_buf_line_count(bufnr)), nil
 end
 
 ---Handle (number) of the current buffer
@@ -24,7 +24,7 @@ function M.get_bufnr()
   if not api.nvim_buf_is_valid(bufnr) then
     return nil, "no valid buffer"
   end
-  return tostring(bufnr)
+  return tostring(bufnr), nil
 end
 
 return M

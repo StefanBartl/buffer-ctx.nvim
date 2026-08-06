@@ -40,7 +40,12 @@ local bufinfo = require("buffer_ctx.ops.bufinfo")
 ---@param sink BufferCtx.Sink
 local function sink_text(text, sink)
   if sink == "clip" then
-    clip.copy(text)
+    local ok, err, preview = clip.copy(text)
+    if ok then
+      notify.info("copied: " .. preview)
+    else
+      notify.warn(err or "copy failed")
+    end
   else
     cursor.insert_text(text)
   end
@@ -51,7 +56,12 @@ end
 ---@param sink BufferCtx.Sink
 local function sink_lines(lines, sink)
   if sink == "clip" then
-    clip.copy(table.concat(lines, "\n"))
+    local ok, err, preview = clip.copy(table.concat(lines, "\n"))
+    if ok then
+      notify.info("copied: " .. preview)
+    else
+      notify.warn(err or "copy failed")
+    end
   else
     cursor.insert_lines(lines)
   end

@@ -36,7 +36,7 @@ function M.get(mode)
     filepath = pu.relative_to_cwd(abs)
   end
 
-  return filepath .. ":" .. line
+  return filepath .. ":" .. line, nil
 end
 
 ---@internal
@@ -57,11 +57,11 @@ local function resolve_path(mode)
   local abs = fn.fnamemodify(name, ":p")
   mode = (mode or "cwd"):lower()
   if mode == "abs" then
-    return pu.normalize_sep(abs)
+    return pu.normalize_sep(abs), nil
   elseif mode == "lua" then
-    return pu.get_module_path(abs) or pu.relative_to_cwd(abs)
+    return pu.get_module_path(abs) or pu.relative_to_cwd(abs), nil
   end
-  return pu.relative_to_cwd(abs)
+  return pu.relative_to_cwd(abs), nil
 end
 
 ---Get a line-range location as "path:L1-L2"
@@ -98,9 +98,9 @@ function M.get_range(mode, line1, line2)
 
   -- A single line has no range to express; "path:42" is the honest answer.
   if line1 == line2 then
-    return filepath .. ":" .. line1
+    return filepath .. ":" .. line1, nil
   end
-  return string.format("%s:L%d-L%d", filepath, line1, line2)
+  return string.format("%s:L%d-L%d", filepath, line1, line2), nil
 end
 
 ---Parse fargs for location subcommand

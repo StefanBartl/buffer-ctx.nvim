@@ -15,6 +15,9 @@ local _active = nil
 
 ---@param user_opts? BufferCtx.Config
 function M.setup(user_opts)
+  if user_opts ~= nil and type(user_opts) ~= "table" then
+    error("buffer_ctx.setup: expected table or nil, got " .. type(user_opts), 2)
+  end
   _active = vim.tbl_deep_extend("force", DEFAULTS, user_opts or {})
 end
 

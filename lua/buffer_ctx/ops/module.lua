@@ -21,7 +21,7 @@ function M.get_module_path()
   if not mod then
     return nil, "not inside a /lua/ directory"
   end
-  return mod
+  return mod, nil
 end
 
 ---Format the module path as a Lua statement or annotation
@@ -37,15 +37,15 @@ function M.get_statement(style)
   local lo = style:lower()
 
   if lo == "lua_ls" or lo == "luals" then
-    return string.format("---@module '%s'", mod)
+    return string.format("---@module '%s'", mod), nil
   elseif lo == "js" then
-    return string.format('import "%s"', mod:gsub("%.", "/"))
+    return string.format('import "%s"', (mod:gsub("%.", "/"))), nil
   elseif lo == "c" then
-    return string.format('#include "%s.h"', mod:gsub("%.", "/"))
+    return string.format('#include "%s.h"', (mod:gsub("%.", "/"))), nil
   elseif lo == "generic" then
-    return mod
+    return mod, nil
   else
-    return string.format('require("%s")', mod)
+    return string.format('require("%s")', mod), nil
   end
 end
 
