@@ -24,13 +24,13 @@ function M.get(ann_type, args)
     if not mod then
       return nil, "not inside a /lua/ directory"
     end
-    return string.format("---@module '%s'", mod)
+    return string.format("---@module '%s'", mod), nil
   elseif t == "class" then
     local class_name = args[1] or fn.input("Class name: ")
     if not class_name or class_name == "" then
       return nil, "class name required"
     end
-    return string.format("---@class %s", class_name)
+    return string.format("---@class %s", class_name), nil
   elseif t == "field" then
     local fname = args[1] or fn.input("Field name: ")
     local ftype = args[2] or fn.input("Field type: ")
@@ -38,7 +38,7 @@ function M.get(ann_type, args)
       return nil, "field name required"
     end
     ftype = (ftype ~= "") and ftype or "any"
-    return string.format("---@field %s %s", fname, ftype)
+    return string.format("---@field %s %s", fname, ftype), nil
   elseif t == "param" then
     local pname = args[1] or fn.input("Param name: ")
     local ptype = args[2] or fn.input("Param type: ")
@@ -46,11 +46,11 @@ function M.get(ann_type, args)
       return nil, "param name required"
     end
     ptype = (ptype ~= "") and ptype or "any"
-    return string.format("---@param %s %s", pname, ptype)
+    return string.format("---@param %s %s", pname, ptype), nil
   elseif t == "return" then
     local rtype = args[1] or fn.input("Return type: ")
     rtype = (rtype ~= "") and rtype or "any"
-    return string.format("---@return %s", rtype)
+    return string.format("---@return %s", rtype), nil
   elseif t == "alias" then
     local aname = args[1] or fn.input("Alias name: ")
     local atype = args[2] or fn.input("Alias type: ")
@@ -58,7 +58,7 @@ function M.get(ann_type, args)
       return nil, "alias name required"
     end
     atype = (atype ~= "") and atype or "string"
-    return string.format("---@alias %s %s", aname, atype)
+    return string.format("---@alias %s %s", aname, atype), nil
   elseif t == "overload" then
     -- Args arrive pre-split on whitespace, so rejoin them: a signature like
     -- "fun(a: string, b: number): boolean" is several fargs, not one.
@@ -69,19 +69,19 @@ function M.get(ann_type, args)
     if not sig:match("^fun%s*%(") then
       sig = "fun(" .. sig .. ")"
     end
-    return string.format("---@overload %s", sig)
+    return string.format("---@overload %s", sig), nil
   elseif t == "diagnostic" then
     local code = args[1] or fn.input("Diagnostic code: ")
     if not code or code == "" then
       return nil, "diagnostic code required"
     end
-    return string.format("---@diagnostic disable-next-line: %s", code)
+    return string.format("---@diagnostic disable-next-line: %s", code), nil
   elseif t == "deprecated" then
     local reason = (#args > 0) and table.concat(args, " ") or fn.input("Deprecation reason: ")
     if not reason or reason == "" then
       return nil, "deprecation reason required"
     end
-    return string.format("---@deprecated %s", reason)
+    return string.format("---@deprecated %s", reason), nil
   elseif t == "function" then
     return M._interactive_function()
   end
@@ -121,7 +121,7 @@ function M._interactive_function()
   if #lines == 0 then
     return nil, "no annotation generated"
   end
-  return lines
+  return lines, nil
 end
 
 return M

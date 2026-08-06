@@ -55,7 +55,7 @@ function M.get_path(opts)
     segments = { fn.fnamemodify(abs, ":t") }
   end
 
-  return M._format_segments(segments, opts.format or "unix")
+  return M._format_segments(segments, opts.format or "unix"), nil
 end
 
 ---@internal
@@ -100,7 +100,7 @@ function M.get_filename(no_ext)
   if not name or name == "" then
     return nil, "unnamed buffer"
   end
-  return fn.fnamemodify(name, no_ext and ":t:r" or ":t")
+  return fn.fnamemodify(name, no_ext and ":t:r" or ":t"), nil
 end
 
 ---Parse fargs for filepath/filename subcommands

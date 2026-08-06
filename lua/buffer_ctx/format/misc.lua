@@ -3,10 +3,11 @@
 ---
 --- Registers: trim, sort, unique, case, indent, clear.
 
+local api = vim.api
+
 local notify = require("buffer_ctx.util.notify")
 
 local M = {}
-local api = vim.api
 
 -- Soft dependency, matching util/notify.lua's convention: prefer lib.nvim's
 -- upper/lower/title case transform when installed, fall back to a local

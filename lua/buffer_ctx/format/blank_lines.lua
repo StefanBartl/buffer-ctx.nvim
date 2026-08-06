@@ -5,10 +5,11 @@
 --- squeezed — a leading/trailing blank line just outside the range is left
 --- alone, since it isn't part of what the user selected.
 
+local api = vim.api
+
 local notify = require("buffer_ctx.util.notify")
 
 local M = {}
-local api = vim.api
 
 ---@internal
 ---@param line string
@@ -57,7 +58,7 @@ function M.squeeze_buffer(bufnr, start_line, end_line)
   if removed > 0 then
     api.nvim_buf_set_lines(bufnr, s - 1, e, false, squeezed)
   end
-  return removed
+  return removed, nil
 end
 
 ---@param register_fn fun(name: string, def: table): nil

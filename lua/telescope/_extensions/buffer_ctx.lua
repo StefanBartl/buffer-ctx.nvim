@@ -27,6 +27,9 @@ local boiler = require("buffer_ctx.ops.boilerplate")
 ---@param entry table
 ---@param bufnr integer
 local function preview_template(entry, bufnr)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
   local lines
   if boiler.is_interactive(entry.value) then
     -- Interactive templates (guard-clause) prompt via kit.form -- must not

@@ -135,6 +135,9 @@ end
 ---@param width integer
 function M.reflow_buffer(bufnr, width)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
   width = tonumber(width) or 0
   if width <= 0 then
     return
@@ -151,6 +154,9 @@ end
 ---@param width      integer
 function M.reflow_range(bufnr, start_line, end_line, width)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return
+  end
   start_line = tonumber(start_line) or 1
   end_line = tonumber(end_line) or start_line
   width = tonumber(width) or 0

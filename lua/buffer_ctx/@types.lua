@@ -51,11 +51,15 @@
 ---@field keymaps? BufferCtx.MarkKeymaps | false
 ---@field sign?    BufferCtx.MarkSign  Sign column / extmark appearance
 
+---@class BufferCtx.FormatConfig
+---@field enable?  boolean   Register :Format command (default true)
+---@field command? string   Command name              (default "Format")
+
 ---@class BufferCtx.Config
 ---@field keymaps?   BufferCtx.KeymapConfig | boolean
 ---@field commands?  boolean
 ---@field timestamp? BufferCtx.TimestampConfig
 ---@field snippets?  BufferCtx.SnippetConfig
----@field format?    { enable?: boolean, command?: string } | boolean
+---@field format?    BufferCtx.FormatConfig | boolean
 ---@field mark?      BufferCtx.MarkConfig | boolean
 ---@field which_key? boolean   Label configured keymaps in which-key when installed (default true)

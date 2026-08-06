@@ -16,7 +16,7 @@ function M.get(var)
   if not val then
     return nil, "$" .. var .. " is not set"
   end
-  return val
+  return val, nil
 end
 
 ---List the names of all set environment variables, for tab completion

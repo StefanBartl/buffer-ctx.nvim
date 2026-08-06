@@ -1,9 +1,10 @@
 ---@module 'buffer_ctx.util.clip'
 --- Copies text to the system clipboard, with an unnamed-register fallback.
----@see buffer_ctx.util.notify for the same soft-dependency pattern
+--- Pure sink: returns status only, never notifies — callers decide whether
+--- and how to report success/failure (see Refactoring..md "fail late").
+---@see buffer_ctx.util.notify for the sibling soft-dependency pattern
 ---@see buffer_ctx.util.cursor for the insert-at-cursor sink counterpart
 
-local notify = require("buffer_ctx.util.notify")
 local M = {}
 
 -- Soft dependency, matching util/notify.lua's convention: prefer lib.nvim's
@@ -11,18 +12,18 @@ local M = {}
 -- plain register write fails) when installed, fall back to setreg-only.
 local ok_lib_clipboard, lib_copy_to_clipboard = pcall(require, "lib.nvim.cross.copy_to_clipboard")
 
----Copy text to the system clipboard (+ register) and notify
+---Copy text to the system clipboard (+ register). Does not notify; the
+---caller decides whether/how to report `ok`/`err` to the user.
 ---@param text string
----@param opts? { silent?: boolean }  silent suppresses only the success
---- message, so callers that report their own ("Copied N lines") do not notify
---- twice; warnings are always shown.
----@return boolean ok  false when no clipboard provider accepted the text
---- (the unnamed register is still set)
-function M.copy(text, opts)
+---@return boolean ok  false when nothing was copied or no clipboard provider
+--- accepted the text (the unnamed register is still set in the latter case)
+---@return string|nil err  human-readable reason when `ok` is false
+---@return string preview  first ~60 chars of `text`, for caller-side messages
+function M.copy(text)
   if type(text) ~= "string" or text == "" then
-    notify.warn("nothing to copy")
-    return false
+    return false, "nothing to copy", ""
   end
+
   -- Guarded: without a clipboard provider (headless CI, minimal containers,
   -- no xclip/wl-copy) a "+" write is at best a silent no-op and at worst
   -- raises. Neither should cost the user the copy — the unnamed register
@@ -40,12 +41,12 @@ function M.copy(text, opts)
 
   local preview = #text > 60 and (text:sub(1, 57) .. "...") or text
   if not clipboard_ok then
-    notify.warn("no clipboard provider — copied to the unnamed register only: " .. preview)
-  elseif not (opts and opts.silent) then
-    notify.info("copied: " .. preview)
+    return false,
+      "no clipboard provider — copied to the unnamed register only: " .. preview,
+      preview
   end
 
-  return clipboard_ok
+  return true, nil, preview
 end
 
 return M

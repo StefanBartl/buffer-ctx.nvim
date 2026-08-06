@@ -32,6 +32,40 @@ local M = {}
 ---@type table<number, table<number, boolean>>
 local marked = {}
 
+---@internal
+---Extmark IDs currently marked in `bufnr`, or nil if none.
+---@param bufnr number
+---@return table<number, boolean>|nil
+local function get_marks(bufnr)
+  return marked[bufnr]
+end
+
+---@internal
+---Record `id` as marked in `bufnr`, creating the per-buffer set if needed.
+---@param bufnr number
+---@param id integer
+local function add_mark(bufnr, id)
+  marked[bufnr] = marked[bufnr] or {}
+  marked[bufnr][id] = true
+end
+
+---@internal
+---Forget `id` in `bufnr` (no-op if `bufnr` has no marks at all).
+---@param bufnr number
+---@param id integer
+local function remove_mark(bufnr, id)
+  if marked[bufnr] then
+    marked[bufnr][id] = nil
+  end
+end
+
+---@internal
+---Drop all mark state for `bufnr` (used on BufDelete/BufWipeout).
+---@param bufnr number
+local function clear_marks(bufnr)
+  marked[bufnr] = nil
+end
+
 local SIGN_NAME = "BufferCtxMarkSign"
 local VIRT_NS = vim.api.nvim_create_namespace("BufferCtxMarkVirt")
 local sign_defined = false
@@ -141,7 +175,7 @@ end
 ---@param lnum  number  1-based
 ---@return integer|nil extmark_id
 local function mark_at(bufnr, lnum)
-  local ids = marked[bufnr]
+  local ids = get_marks(bufnr)
   if not ids then
     return nil
   end
@@ -163,17 +197,15 @@ function M.toggle(lnum, bufnr)
   if not vim.api.nvim_buf_is_valid(bufnr) then
     return
   end
-  marked[bufnr] = marked[bufnr] or {}
-
   -- Which mark (if any) sits on this line is resolved through the extmarks
   -- themselves, so a mark that has drifted with the text is still recognised
   -- as being on its current line.
   local existing = mark_at(bufnr, lnum)
   if existing then
-    marked[bufnr][existing] = nil
+    remove_mark(bufnr, existing)
     unplace_mark(bufnr, existing)
   else
-    marked[bufnr][place_mark(bufnr, lnum)] = true
+    add_mark(bufnr, place_mark(bufnr, lnum))
   end
 end
 
@@ -185,7 +217,7 @@ function M.yank(bufnr)
     notify.warn("Invalid buffer")
     return
   end
-  local ids = marked[bufnr]
+  local ids = get_marks(bufnr)
   if not ids then
     notify.warn("No marked lines in this buffer")
     return
@@ -201,7 +233,7 @@ function M.yank(bufnr)
       sorted[#sorted + 1] = lnum
     else
       -- The marked line itself was deleted; drop the now-dangling mark.
-      ids[id] = nil
+      remove_mark(bufnr, id)
     end
   end
   table.sort(sorted)
@@ -217,9 +249,14 @@ function M.yank(bufnr)
   if #text > 0 then
     -- Route through the shared clip sink rather than writing "+" directly:
     -- that is what gives mark.yank the lib.nvim fallback chain, the unnamed
-    -- register write, and the missing-provider guard.
-    clip.copy(table.concat(text, "\n"), { silent = true })
-    notify.info("Copied " .. #text .. " marked line(s) to clipboard")
+    -- register write, and the missing-provider guard. clip.copy is a pure
+    -- sink now (returns status only), so this caller owns the notification.
+    local copy_ok, copy_err = clip.copy(table.concat(text, "\n"))
+    if copy_ok then
+      notify.info("Copied " .. #text .. " marked line(s) to clipboard")
+    else
+      notify.warn(copy_err or "copy failed")
+    end
   else
     notify.warn("No marked lines to copy")
   end
@@ -269,7 +306,7 @@ function M.setup(opts)
   -- Clear mark state for buffers that get deleted/wiped out, so `marked`
   -- doesn't grow unbounded over a long session.
   autocmd.create({ "BufDelete", "BufWipeout" }, function(args)
-    marked[args.buf] = nil
+    clear_marks(args.buf)
   end, {
     group = "BufferCtxMarkCleanup",
     desc = "[buffer-ctx] clear mark state for deleted buffer",

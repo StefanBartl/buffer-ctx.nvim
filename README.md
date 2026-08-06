@@ -27,6 +27,14 @@ Four command trees:
 
 ---
 
+## Table of content
+
+- [Quickstart](#quickstart)
+- [Documentation](#documentation)
+- [Health check](#health-check)
+
+---
+
 ## Quickstart
 
 Requires Neovim **0.9+** and [lib.nvim](https://github.com/StefanBartl/lib.nvim)

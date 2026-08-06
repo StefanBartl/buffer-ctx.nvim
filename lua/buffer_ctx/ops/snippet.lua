@@ -57,7 +57,11 @@ local function read_file(path)
   if fn.filereadable(path) ~= 1 then
     return nil, "snippet file not readable: " .. path
   end
-  local content = table.concat(fn.readfile(path), "\n")
+  local read_ok, raw = pcall(fn.readfile, path)
+  if not read_ok then
+    return nil, "failed to read snippet file: " .. path
+  end
+  local content = table.concat(raw, "\n")
   if content == "" then
     return nil, "snippet file is empty: " .. path
   end
@@ -65,7 +69,7 @@ local function read_file(path)
   if not ok or type(decoded) ~= "table" then
     return nil, "invalid JSON in snippet file: " .. path
   end
-  return decoded
+  return decoded, nil
 end
 
 ---Collect every snippet from all configured sources.
@@ -92,7 +96,7 @@ function M.load()
   if vim.tbl_isempty(all) and #errors > 0 then
     return all, table.concat(errors, "; ")
   end
-  return all
+  return all, nil
 end
 
 ---List available snippet names (keys and prefixes both resolve in M.get)
@@ -149,7 +153,7 @@ function M.get(name)
   for _, line in ipairs(body) do
     lines[#lines + 1] = strip_tabstops(tostring(line))
   end
-  return lines
+  return lines, nil
 end
 
 return M

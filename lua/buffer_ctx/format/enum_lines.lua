@@ -12,10 +12,11 @@
 ---   start   = first counter value, default 1
 ---   inline  = true  → all on one line; false → one per line; auto = single-line input
 
+local api = vim.api
+
 local notify = require("buffer_ctx.util.notify")
 
 local M = {}
-local api = vim.api
 
 -- ─────────────────────────────────────────────────────────────────────────────
 -- Roman numerals
