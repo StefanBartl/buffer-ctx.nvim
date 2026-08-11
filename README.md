@@ -70,6 +70,8 @@ to customize keymaps, commands, and templates.
 - [Configuration](docs/configuration.md) — all available `setup()` options and defaults.
 - [Commands](docs/commands.md) — quick reference table and full subcommand reference for `:Insert`, `:Copy`, `:Format`, `:Mark`.
 - [Keymaps](docs/keymaps.md) — default keymaps and how to disable or reconfigure them.
+- [Features](docs/FEATURES/README.md) — what each subcommand does and why it exists, grouped by theme.
+- [Workflow](docs/WORKFLOW.md) — how the pieces combine in daily use.
 - [Lua API](docs/api.md) — the `require("buffer_ctx")` module functions.
 - [Bindings cheatsheet](docs/BINDINGS.md) — machine-readable table of every keymap, user command, and autocommand.
 - [Tests](docs/TESTS/README.md) — how to run the test suite.
