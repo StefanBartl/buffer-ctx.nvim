@@ -87,6 +87,67 @@ return function(H)
   local yank_ok = pcall(mark.yank, 999999)
   H.ok(yank_ok, "mark.yank on an invalid buffer does not error")
 
+  -- ─────────────────────────────────── range toggling, categories, clear
+
+  ---A scratch buffer with `n` lines, marks cleared.
+  ---@param n integer
+  ---@return integer bufnr
+  local function fresh(n)
+    local b = vim.api.nvim_create_buf(false, true)
+    local lines = {}
+    for i = 1, n do
+      lines[i] = "line " .. i
+    end
+    vim.api.nvim_buf_set_lines(b, 0, -1, false, lines)
+    return b
+  end
+
+  do
+    local b = fresh(5)
+
+    -- toggle_range is deliberately NOT a per-line toggle: over a partially
+    -- marked range, toggling each line leaves a checkerboard, which looks
+    -- broken rather than useful.
+    H.eq(mark.toggle_range(1, 3, b), 3, "toggle_range marks an unmarked range")
+    H.eq(mark.toggle_range(1, 3, b), 3, "...and unmarks it when every line is marked")
+
+    mark.toggle(4, b)
+    H.eq(mark.toggle_range(1, 5, b), 4, "a partially marked range marks the remaining lines")
+    H.eq(mark.toggle_range(1, 5, b), 5, "...and only then does the whole range unmark")
+
+    -- Reversed bounds are the same range: a Visual selection made upwards
+    -- hands them over in that order.
+    H.eq(mark.toggle_range(3, 1, b), 3, "reversed bounds are normalized")
+    mark.clear(b)
+
+    H.eq(mark.clear(b), 0, "clear on a buffer with no marks removes nothing")
+    mark.toggle_range(1, 4, b)
+    H.eq(mark.clear(b), 4, "clear removes every mark")
+    H.eq(mark.clear(b), 0, "...and is idempotent")
+  end
+
+  do
+    -- Categories. `default` always exists; these two come from the spec
+    -- harness's setup() call, so if that changes this is the check that says so.
+    local b = fresh(4)
+
+    mark.toggle(1, b, "default")
+    mark.toggle(2, b, "default")
+    H.eq(mark.clear(b, "nonexistent-category"), 0, "clearing an unused category removes nothing")
+    H.eq(mark.clear(b, "default"), 2, "clearing a category removes only its marks")
+
+    -- Re-marking a line in a different category must replace, not unmark:
+    -- asking for one appearance on a line that has another means you want
+    -- the new one, not nothing.
+    mark.toggle(1, b, "default")
+    mark.toggle(1, b, "default")
+    H.eq(mark.clear(b), 0, "toggling the same category twice unmarks the line")
+
+    mark.toggle(1, b)
+    mark.toggle(1, b, "default")
+    H.eq(mark.clear(b), 0, "an omitted category is the default one")
+  end
+
   -- BufDelete/BufWipeout cleanup autocmd is registered
   local autocmds = vim.api.nvim_get_autocmds({ group = "BufferCtxMarkCleanup" })
   local events = {}

@@ -31,10 +31,19 @@ return {
       toggle = "<S-m>",
       yank = "<C-p>",
     },
+    -- Appearance of the `default` category.
     sign = {
       text = "●",
       hl = "ErrorMsg",
     },
+    -- Extra named appearances, e.g.
+    --   categories = {
+    --     { name = "todo", text = "●", hl = "WarningMsg" },
+    --     { name = "done", text = "●", hl = "DiagnosticOk" },
+    --   }
+    -- `:Mark toggle todo` then marks in that category, and
+    -- `:Mark yank todo` / `:Mark clear todo` filter by it.
+    categories = {},
   },
   which_key = true,
 }

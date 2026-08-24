@@ -38,18 +38,26 @@
 ---@field filepath_copy? string   keymap to copy relative filepath (default "<leader>cnf")
 
 ---@class BufferCtx.MarkKeymaps
----@field toggle? string   keymap to toggle mark on current line (default "<S-m>")
+---@field toggle? string   keymap to toggle mark on current line, or N lines with a count (default "<S-m>")
 ---@field yank?   string   keymap to yank all marked lines       (default "<C-p>")
+---@field clear?  string   keymap to remove every mark in the buffer (unset by default)
 
 ---@class BufferCtx.MarkSign
 ---@field text? string   Sign/virt-text glyph (default "●")
 ---@field hl?   string   Highlight group      (default "ErrorMsg")
 
+---One mark category: a named appearance a mark can be placed in.
+---@class BufferCtx.MarkCategory
+---@field name  string   Category name, as typed after `:Mark toggle`
+---@field text? string   Glyph      (defaults to the `default` category's)
+---@field hl?   string   Highlight  (defaults to the `default` category's)
+
 ---@class BufferCtx.MarkConfig
 ---@field enable?  boolean            Register :Mark command (default true)
 ---@field command? string             Command name           (default "Mark")
 ---@field keymaps? BufferCtx.MarkKeymaps | false
----@field sign?    BufferCtx.MarkSign  Sign column / extmark appearance
+---@field sign?    BufferCtx.MarkSign  Appearance of the `default` category
+---@field categories? BufferCtx.MarkCategory[]  Extra named appearances beyond `default`
 
 ---@class BufferCtx.FormatConfig
 ---@field enable?  boolean   Register :Format command (default true)

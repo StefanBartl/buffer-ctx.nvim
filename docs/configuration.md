@@ -26,12 +26,21 @@ require("buffer_ctx").setup({
     enable  = true,          -- register :Mark (default true)
     command = "Mark",        -- command name
     keymaps = {
-      toggle = "<S-m>",      -- toggle mark on current line
+      toggle = "<S-m>",      -- toggle mark on current line; a count marks N lines
       yank   = "<C-p>",      -- yank all marked lines
+      -- clear = "<leader>mc",  -- remove every mark in the buffer (unset by default)
     },
+    -- Appearance of the `default` category.
     sign = {
       text = "●",            -- sign column / extmark glyph
       hl   = "ErrorMsg",     -- highlight group
+    },
+    -- Extra named appearances beyond `default`, so marks can mean different
+    -- things in the same buffer. `:Mark toggle todo` marks in that category;
+    -- `:Mark yank todo` / `:Mark clear todo` filter by it.
+    categories = {
+      -- { name = "todo", text = "●", hl = "WarningMsg" },
+      -- { name = "done", text = "●", hl = "DiagnosticOk" },
     },
   },
   -- mark = false   to disable :Mark entirely

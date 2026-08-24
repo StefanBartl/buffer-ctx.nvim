@@ -5,7 +5,7 @@
 | `<leader>cnl` | Copy `path:line` (cwd-relative) |
 | `<leader>cnm` | Copy Lua module path |
 | `<leader>cnf` | Copy filepath (cwd-relative) |
-| `<S-m>` | `:Mark toggle` (toggle mark on current line) |
+| `<S-m>` | `:Mark toggle` (toggle mark on current line; `3<S-m>` marks three lines) |
 | `<C-p>` | `:Mark yank` (yank all marked lines to clipboard) |
 
 All keymaps are configurable. Set `keymaps = false` to disable the core 3;
