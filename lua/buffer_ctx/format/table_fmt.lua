@@ -7,6 +7,7 @@
 ---   M.setup(register_fn, notify_mod)        – register the "table" :Format subcommand
 
 local notify = require("buffer_ctx.util.notify")
+local globbable = require("lib.nvim.fs.globbable")
 
 local M = {}
 
@@ -427,8 +428,12 @@ end
 ---@param dir string
 ---@return string[]
 local function collect_md_files(dir)
-  local result = vim.fn.glob(dir:gsub("[/\\]$", "") .. "/**/*.md", false, true)
-  for _, f in ipairs(vim.fn.glob(dir:gsub("[/\\]$", "") .. "/*.md", false, true)) do
+  dir = dir:gsub("[/\\]$", "")
+  -- Glob reads its argument as a pattern, so an 8.3 short root ("~1") is read
+  -- as a home-directory reference and matches nothing. See lib.nvim.fs.globbable.
+  dir = globbable(dir)
+  local result = vim.fn.glob(dir .. "/**/*.md", false, true)
+  for _, f in ipairs(vim.fn.glob(dir .. "/*.md", false, true)) do
     result[#result + 1] = f
   end
   return result
