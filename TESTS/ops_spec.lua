@@ -1,4 +1,4 @@
--- docs/TESTS/ops_spec.lua — pure-logic ops modules (module, uuid, timestamp,
+-- TESTS/ops_spec.lua — pure-logic ops modules (module, uuid, timestamp,
 -- env, location, filepath). Buffer-name-dependent ops get a scratch buffer
 -- named under the actual cwd so results are deterministic without touching disk.
 

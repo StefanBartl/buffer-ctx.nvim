@@ -1,4 +1,4 @@
--- docs/TESTS/path_spec.lua — buffer_ctx.util.path pure functions.
+-- TESTS/path_spec.lua — buffer_ctx.util.path pure functions.
 
 return function(H)
   local pu = require("buffer_ctx.util.path")

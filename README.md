@@ -74,7 +74,7 @@ to customize keymaps, commands, and templates.
 - [Workflow](docs/WORKFLOW.md) — how the pieces combine in daily use.
 - [Lua API](docs/api.md) — the `require("buffer_ctx")` module functions.
 - [Bindings cheatsheet](docs/BINDINGS.md) — machine-readable table of every keymap, user command, and autocommand.
-- [Tests](docs/TESTS/README.md) — how to run the test suite.
+- [Tests](TESTS/README.md) — how to run the test suite.
 
 ---
 

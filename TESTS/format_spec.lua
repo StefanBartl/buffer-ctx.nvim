@@ -1,4 +1,4 @@
--- docs/TESTS/format_spec.lua — buffer_ctx.format submodules.
+-- TESTS/format_spec.lua — buffer_ctx.format submodules.
 -- Requires buffer_ctx.setup() to have registered :Format for the misc.lua
 -- subcommand coverage (trim/sort/unique/case/indent); the other submodules
 -- are exercised directly via their Lua API.

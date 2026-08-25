@@ -1,4 +1,4 @@
--- docs/TESTS/features_spec.lua — the subcommands added on top of the original
+-- TESTS/features_spec.lua — the subcommands added on top of the original
 -- catalog: git, bufinfo, snippet, location range, the new annotation types and
 -- boilerplate templates, sticky-UTC config and env completion.
 

@@ -17,7 +17,7 @@ disabled entirely with `opts.mark = false`.
   `:MarkLineToggle` / `:MarkLinesYank`
 - **Config:** `opts.mark.sign.text` (default `●`), `opts.mark.sign.hl`
   (default `ErrorMsg`), `opts.mark.categories` (default `{}`)
-- **Tests:** `docs/TESTS/mark_spec.lua`
+- **Tests:** `TESTS/mark_spec.lua`
 
 `toggle` places or removes a marker (sign-column glyph on Neovim 0.10+,
 falling back to a virtual-text overlay on 0.9) on the current line.

@@ -1,4 +1,4 @@
--- docs/TESTS/mark_spec.lua — buffer_ctx.mark: toggle/yank, invalid-buffer
+-- TESTS/mark_spec.lua — buffer_ctx.mark: toggle/yank, invalid-buffer
 -- guards, and the BufDelete/BufWipeout cleanup autocmd.
 
 return function(H)

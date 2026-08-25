@@ -1,7 +1,7 @@
 # Line marks drift on edit — needs content-stable anchoring
 
 > **Status: implemented.** The fix below shipped; `lua/buffer_ctx/mark/init.lua`
-> now keys `marked` by extmark ID, and `docs/TESTS/mark_spec.lua` carries
+> now keys `marked` by extmark ID, and `TESTS/mark_spec.lua` carries
 > regression coverage for all three cases (insert above a mark, delete a
 > marked line, yank ordering vs. creation order). This document is kept as
 > the rationale record. Two deviations from the proposal as written are
