@@ -9,7 +9,8 @@
 >
 > Originally surfaced while designing a
 > renumbering-anchor feature for `cascade.nvim`
-> ([concept doc](../../../cascade.nvim/docs/ROADMAP/renumbering_markers.md));
+> (that concept has since shipped as cascade.nvim's `sequence` domain --
+> `lua/cascade/sequence/renumber.lua`; the standalone concept doc is gone);
 > that design explicitly separates "where is a marker stored" from "what does
 > a marker point at", and a cross-repo scan afterwards found this module makes
 > exactly the mistake that separation is meant to prevent.
@@ -135,6 +136,6 @@ sufficient to fix this specific bug, because `buffer-ctx` marks are
 session-only (cleared on `BufDelete`/`BufWipeout`) — there's no cross-session
 requirement here, unlike cascade's renumbering anchors which need to survive
 a closed buffer. If persistence across sessions is ever wanted for marks too,
-`lib.nvim.store.project` (proposed in
-[lib.nvim/docs/ROADMAP/project-store.md](../../../lib.nvim/docs/ROADMAP/project-store.md))
-would be the storage layer to build on rather than hand-rolling one here.
+`lib.nvim.store.project` -- proposed at the time this was written, and since
+built (`lib.nvim/lua/lib/nvim/store/project/`) -- would be the storage layer to
+build on rather than hand-rolling one here.
