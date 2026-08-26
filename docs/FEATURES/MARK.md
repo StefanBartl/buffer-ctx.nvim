@@ -27,6 +27,10 @@ the same fallback-aware sink `:Copy` uses.
 
 ## Marking a range (2026-08-24)
 
+- **Module:** `mark/init.lua` (`M.toggle_range`)
+- **Keymaps:** `3<S-m>` — a count on the toggle key
+- **Usercmds:** `:'<,'>Mark toggle [category]`
+
 `3<S-m>` marks the cursor line and the two below it, clamped to the end of
 the buffer; `:'<,'>Mark toggle` marks a Visual selection. Both close audit
 entries — a count-support one and a flag/option one that turned out to be the
@@ -40,6 +44,10 @@ already carries that category does the range unmark. Reversed bounds are
 normalized, since a selection made upwards hands them over that way.
 
 ## Categories (2026-08-24)
+
+- **Module:** `mark/init.lua`
+- **Config:** `opts.mark.categories` (default `{}`) — each entry `{ name, text, hl }`
+- **Usercmds:** `:Mark toggle <category>`, `:Mark yank <category>`, `:Mark clear <category>`
 
 `opts.mark.categories` adds named appearances beyond `default`, so marks can
 mean different things in the same buffer:
@@ -69,6 +77,10 @@ todo, not nothing.
 before categories existed keeps working untouched.
 
 ## Clearing (2026-08-24)
+
+- **Module:** `mark/init.lua` (`M.clear`)
+- **Usercmds:** `:Mark clear [category]`
+- **Keymaps:** `keymaps.clear` — unset by default
 
 `:Mark clear [category]` removes every mark in the buffer, or only one
 category's. Before this the only way to unmark was toggling each line
