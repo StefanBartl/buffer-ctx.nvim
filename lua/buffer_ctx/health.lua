@@ -61,8 +61,10 @@ function M.check()
     vim.health.info("lib.nvim not found — using plain vim.keymap.set (optional dependency)")
   end
 
-  local wk_ok, wk_mod = pcall(require, "buffer_ctx.bindings.which_key")
-  if wk_ok and wk_mod.available() then
+  -- which-key needs no registration to show these mappings: it reads the
+  -- keymaps itself and labels each from its own `desc`. Only the group label
+  -- is outside what it can infer, and the keymap spec hands it that.
+  if pcall(require, "which-key") then
     vim.health.ok("which-key detected — <leader>cn group label registered (optional dependency)")
   else
     vim.health.info(

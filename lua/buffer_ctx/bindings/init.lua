@@ -1,6 +1,7 @@
 ---@module 'buffer_ctx.bindings'
 --- Orchestrates buffer-ctx's core bindings: the `:Insert`/`:Copy` user
---- commands, the 3 base keymaps, and which-key labels.
+--- commands and the 3 base keymaps. The which-key group label is one field
+--- in the keymap spec now, applied by lib.nvim's registry.
 --- `:Format` and `:Mark` are independent subsystems and wire their own
 --- commands/keymaps via `buffer_ctx.format.setup()` / `buffer_ctx.mark.setup()`
 --- respectively (see `lua/buffer_ctx/init.lua`).
@@ -13,18 +14,12 @@ function M.setup(cfg)
     require("buffer_ctx.bindings.usrcmds").setup()
   end
 
-  local km = cfg.keymaps
-  if km ~= false then
-    if km == true or km == nil then
-      km = require("buffer_ctx.config.DEFAULTS").keymaps
-    end
-    ---@cast km BufferCtx.KeymapConfig
-    require("buffer_ctx.bindings.keymaps").attach(km)
-
-    if cfg.which_key ~= false then
-      require("buffer_ctx.bindings.which_key").setup()
-    end
-  end
+  -- Called unconditionally, `keymaps = false` included: the registry honours
+  -- that itself, and binding nothing is not the same as declaring nothing --
+  -- :checkhealth and the generated docs ask what EXISTS. Resolving `true`/nil
+  -- to the DEFAULTS table is no longer needed either; the defaults live in the
+  -- spec, which is the only place they now exist.
+  require("buffer_ctx.bindings.keymaps").attach(cfg.keymaps, cfg.which_key)
 
   require("buffer_ctx.bindings.autocmds").setup(cfg)
 end
