@@ -3,7 +3,7 @@
 The `:Format` command tree — buffer and visual-selection formatting
 operations. Independent of `:Insert`/`:Copy`: nothing here reads context
 about the buffer's identity, only its text. Registered as its own
-top-level command via `lib.nvim.usercmd.composer`, and can be disabled
+top-level command via `lib.nvim.bindings.usercmd.composer`, and can be disabled
 entirely with `opts.format = false`.
 
 ## Column alignment

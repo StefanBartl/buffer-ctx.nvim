@@ -1,7 +1,7 @@
 ---@module 'buffer_ctx.commands'
 --- :Insert / :Copy dispatch — resolves a subcommand to an ops/* handler
 --- and routes the result into a sink (cursor insert or clipboard copy). Both
---- commands are built via lib.nvim.usercmd.composer, sharing one route
+--- commands are built via lib.nvim.bindings.usercmd.composer, sharing one route
 --- factory (build_routes(sink)) since they dispatch through the exact same
 --- DISPATCH table and differ only in where the result goes.
 ---
@@ -14,8 +14,8 @@
 ---@see buffer_ctx.util.cursor
 ---@see buffer_ctx.util.clip
 
-local composer = require("lib.nvim.usercmd.composer")
-local usercmd = require("lib.nvim.usercmd")
+local composer = require("lib.nvim.bindings.usercmd.composer")
+local usercmd = require("lib.nvim.bindings.usercmd")
 
 local M = {}
 

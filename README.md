@@ -38,7 +38,7 @@ Four command trees:
 ## Quickstart
 
 Requires Neovim **0.9+** and [lib.nvim](https://github.com/StefanBartl/lib.nvim)
-(the command layer is built on `lib.nvim.usercmd.composer`). See
+(the command layer is built on `lib.nvim.bindings.usercmd.composer`). See
 [docs/installation.md](docs/installation.md) for optional integrations and
 other package managers.
 

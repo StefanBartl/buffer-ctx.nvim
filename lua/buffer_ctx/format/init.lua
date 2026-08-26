@@ -7,7 +7,7 @@
 ---   :Format filter [--remove] <pattern> ...
 ---   :Format enum [STYLE] [sep=SEP] [start=N] [inline=true|false]
 ---   :Format trim | sort [-r|-i|-n] | unique [-i] | case <mode> | indent | clear
---- Built via lib.nvim.usercmd.composer: subcommand setup (register_subcommand,
+--- Built via lib.nvim.bindings.usercmd.composer: subcommand setup (register_subcommand,
 --- the per-subcommand handler/complete/desc defs below and in the sibling
 --- table_fmt/misc/blank_lines modules) is unchanged, only the final
 --- registration step routes through composer instead of a hand-rolled
@@ -15,7 +15,7 @@
 ---@see buffer_ctx.commands for the sibling :Insert / :Copy dispatch
 ---@see buffer_ctx.format.types for the subcommand type anchors
 
-local composer = require("lib.nvim.usercmd.composer")
+local composer = require("lib.nvim.bindings.usercmd.composer")
 
 local M = {}
 

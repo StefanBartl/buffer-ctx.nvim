@@ -3,7 +3,7 @@
 --- :Mark toggle   Toggle the mark on the current line (sign or extmark indicator)
 --- :Mark yank     Yank all marked lines (in buffer order) to the system clipboard
 ---
---- Built via lib.nvim.usercmd.composer. Compat commands are registered
+--- Built via lib.nvim.bindings.usercmd.composer. Compat commands are registered
 --- directly (untouched by composer, preserving their exact standalone
 --- surface):
 ---   :MarkLineToggle   →  :Mark toggle
@@ -12,9 +12,9 @@
 ---@see buffer_ctx.util.map for the lib.nvim keymap soft bridge
 ---@see buffer_ctx.util.clip for the clipboard sink M.yank writes through
 
-local composer = require("lib.nvim.usercmd.composer")
-local usercmd = require("lib.nvim.usercmd")
-local autocmd = require("lib.nvim.autocmd")
+local composer = require("lib.nvim.bindings.usercmd.composer")
+local usercmd = require("lib.nvim.bindings.usercmd")
+local autocmd = require("lib.nvim.bindings.autocmd")
 local notify = require("buffer_ctx.util.notify")
 local map = require("buffer_ctx.util.map")
 local clip = require("buffer_ctx.util.clip")

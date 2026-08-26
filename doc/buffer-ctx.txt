@@ -62,7 +62,7 @@ out to the `git` executable. Every other subcommand is shell-free.
   - Neovim 0.9 or later
   - lib.nvim (https://github.com/StefanBartl/lib.nvim) — REQUIRED
     The `:Insert`/`:Copy`/`:Format`/`:Mark` command layer is built on
-    `lib.nvim.usercmd.composer`. `notify`/`map` remain a soft dependency on
+    `lib.nvim.bindings.usercmd.composer`. `notify`/`map` remain a soft dependency on
     top of that (nicer formatting when installed, falls back to plain
     `vim.notify`/`vim.keymap.set` otherwise).
   - (optional) which-key.nvim (https://github.com/folke/which-key.nvim)
@@ -786,7 +786,7 @@ Checks:
   - `vim.uv` / `vim.loop` available
   - `vim.fn.setreg` available
   - Plugin loaded (guard flag set)
-  - lib.nvim detected? (required — command layer, lib.nvim.usercmd.composer)
+  - lib.nvim detected? (required — command layer, lib.nvim.bindings.usercmd.composer)
   - lib.nvim detected? (optional — notify upgrade)
   - lib.nvim detected? (optional — map upgrade)
   - which-key detected? (optional — <leader>cn group label)
@@ -805,7 +805,7 @@ Checks:
       init.lua                 setup()/get() — deep-merge over DEFAULTS
       DEFAULTS.lua              Pluginside default configuration
     @types.lua                 LuaLS annotations
-    commands.lua               :Insert / :Copy (lib.nvim.usercmd.composer) + shared dispatch
+    commands.lua               :Insert / :Copy (lib.nvim.bindings.usercmd.composer) + shared dispatch
     health.lua                 checkhealth provider
     bindings/
       init.lua                  Orchestrates usrcmds + keymaps + which_key + autocmds
@@ -814,7 +814,7 @@ Checks:
       which_key.lua              Optional <leader>cn group label
       autocmds.lua               Extension point (no autocmds registered today)
     format/
-      init.lua                 :Format command (lib.nvim.usercmd.composer) + subcommand registry
+      init.lua                 :Format command (lib.nvim.bindings.usercmd.composer) + subcommand registry
       column_align.lua         Column-alignment (visual selection)
       table_fmt.lua            Markdown table formatter
       text_width.lua           Text reflow (word-wrap)
@@ -823,10 +823,10 @@ Checks:
       misc.lua                 trim, sort, unique, case, indent, clear
       blank_lines.lua          squeeze (collapse blank-line runs, range-aware)
     mark/
-      init.lua                 :Mark command (lib.nvim.usercmd.composer) + toggle/yank logic + compat cmds
+      init.lua                 :Mark command (lib.nvim.bindings.usercmd.composer) + toggle/yank logic + compat cmds
     util/
       notify.lua               "[buffer-ctx] " notify wrapper; upgrades to lib.nvim if present
-      map.lua                  keymap wrapper; upgrades to lib.nvim.map if present
+      map.lua                  keymap wrapper; upgrades to lib.nvim.bindings.keymap if present
       cursor.lua               insert_text / insert_lines at cursor position
       clip.lua                 setreg("+", …) + notify
       path.lua                 get_module_path, relative_to_cwd, pick_depth

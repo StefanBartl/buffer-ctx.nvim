@@ -6,7 +6,7 @@
 
 local M = {}
 
-local ok_lib_map, lib_map = pcall(require, "lib.nvim.map")
+local ok_lib_map, lib_map = pcall(require, "lib.nvim.bindings.keymap")
 local has_lib = ok_lib_map and type(lib_map) == "function"
 
 ---Set a keymap with buffer-ctx defaults (noremap + silent).

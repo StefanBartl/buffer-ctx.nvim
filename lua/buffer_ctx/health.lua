@@ -35,8 +35,8 @@ function M.check()
   end
 
   -- lib.nvim: required for the :Insert/:Copy/:Format/:Mark command layer
-  -- (lib.nvim.usercmd.composer); notify/map below remain soft (cosmetic) deps.
-  local composer_ok, composer_mod = pcall(require, "lib.nvim.usercmd.composer")
+  -- (lib.nvim.bindings.usercmd.composer); notify/map below remain soft (cosmetic) deps.
+  local composer_ok, composer_mod = pcall(require, "lib.nvim.bindings.usercmd.composer")
   if composer_ok then
     vim.health.ok("lib.nvim detected (:Insert/:Copy/:Format/:Mark command layer available)")
   else
@@ -54,7 +54,9 @@ function M.check()
 
   local map_ok, map_mod = pcall(require, "buffer_ctx.util.map")
   if map_ok and map_mod.using_lib() then
-    vim.health.ok("lib.nvim detected — using lib.nvim.map for keymaps (optional dependency)")
+    vim.health.ok(
+      "lib.nvim detected — using lib.nvim.bindings.keymap for keymaps (optional dependency)"
+    )
   else
     vim.health.info("lib.nvim not found — using plain vim.keymap.set (optional dependency)")
   end

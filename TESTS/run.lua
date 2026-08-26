@@ -14,7 +14,7 @@ local H = dofile(dir .. "harness.lua")
 
 -- buffer-ctx.nvim depends on lib.nvim at runtime: util/{path,clip,notify}.lua
 -- use it as a soft/cosmetic dependency, but commands.lua/format/mark now
--- `require("lib.nvim.usercmd.composer")` unconditionally at module load (the
+-- `require("lib.nvim.bindings.usercmd.composer")` unconditionally at module load (the
 -- composer migration), so it's a HARD dependency for format_spec.lua and
 -- mark_spec.lua specifically, which call buffer_ctx.setup(). The suite needs
 -- it on the runtimepath. A sibling checkout wins over the plugin-manager
@@ -44,7 +44,7 @@ end
 
 -- util/{notify,map,path,clip}.lua fall back to native equivalents when
 -- lib.nvim is absent, but format_spec.lua/mark_spec.lua call buffer_ctx.setup()
--- which now hard-requires lib.nvim.usercmd.composer (no pcall, matching every
+-- which now hard-requires lib.nvim.bindings.usercmd.composer (no pcall, matching every
 -- other composer-migrated plugin) — so those two specs WILL fail without it.
 if not add_lib_nvim() then
   print("note  lib.nvim not found — format_spec.lua/mark_spec.lua will fail.")
