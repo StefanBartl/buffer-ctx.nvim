@@ -94,9 +94,7 @@ or deleting a line above a mark shifted every line below it, but a plain
 integer table key can't move — so the visual indicator and the underlying
 mark data silently drifted apart after any edit above a mark, and `:Mark
 yank` would copy whatever text had since moved into that line slot rather
-than the line the user actually marked. See
-[`../ROADMAP/anchor-stable-marks.md`](../ROADMAP/anchor-stable-marks.md)
-for the full writeup.
+than the line the user actually marked.
 
 The fix: every mark is identified by its extmark ID, and its line number is
 always *resolved* fresh from that extmark at read time (`toggle`, `yank`,

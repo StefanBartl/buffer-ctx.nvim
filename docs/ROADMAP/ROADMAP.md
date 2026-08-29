@@ -1,4 +1,0 @@
-# buffer-ctx.nvim - Roadmap
-
----
-

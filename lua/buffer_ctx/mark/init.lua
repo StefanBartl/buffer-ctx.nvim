@@ -33,7 +33,7 @@ local M = {}
 -- cannot move a plain integer table key. Keying by line number meant the
 -- visual indicator and the underlying data silently diverged after any edit
 -- above a mark, so `:Mark yank` copied whatever had since moved into that
--- line slot. See docs/ROADMAP/anchor-stable-marks.md.
+-- line slot.
 ---@type table<number, table<number, string>>
 local marked = {}
 

@@ -32,7 +32,7 @@ return function(H)
   -- Marks used to be keyed by raw line number, so inserting above a mark
   -- moved the visual indicator (Neovim tracks extmarks/signs) but not the
   -- stored key — and yank then copied whatever text had slid into the old
-  -- line slot. See docs/ROADMAP/anchor-stable-marks.md.
+  -- line slot.
   do
     local b = H.scratch(vim.fn.getcwd() .. "/mark_drift.lua")
     vim.api.nvim_buf_set_lines(b, 0, -1, false, { "alpha", "beta", "gamma", "delta" })

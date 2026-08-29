@@ -854,11 +854,6 @@ Checks:
     buffer_ctx.lua              Optional Telescope boilerplate picker
   docs/
     BINDINGS.md                 Machine-readable keymap/command cheatsheet
-    ROADMAP/
-      ROADMAP.md                Planned features + audit status
-      Arch&Coding.md            Architecture/coding-rules audit
-      Checklist.md              Master-checklist audit
-      Zentral-Prinzipien.md     Core-principles audit
     TESTS/                      Headless spec suite (run.lua)
 
 Module load order: util → ops → commands/format/mark → bindings → init
