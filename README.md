@@ -87,3 +87,7 @@ to customize keymaps, commands, and templates.
 ```
 :checkhealth buffer_ctx
 ```
+
+## License
+
+MIT — see [LICENSE](LICENSE).
