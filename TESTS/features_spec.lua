@@ -28,6 +28,9 @@ return function(H)
     "---@deprecated use M.new instead",
     "annotation deprecated keeps the full reason"
   )
+  -- Deliberately outside the alias: returning an error rather than raising
+  -- is the property under test.
+  ---@diagnostic disable-next-line: param-type-mismatch
   local _, ann_err = ann.get("nonsense", {})
   H.ok(ann_err ~= nil, "unknown annotation type returns an error")
 
@@ -42,6 +45,8 @@ return function(H)
   local git = require("buffer_ctx.ops.git")
   H.eq(git.parse_args({}), "short", "git parse_args default")
   H.eq(git.parse_args({ "BRANCH" }), "branch", "git parse_args lowercases")
+  -- Deliberately outside the alias, same reason as `ann.get` above.
+  ---@diagnostic disable-next-line: param-type-mismatch
   local _, git_err = git.get("bogus")
   H.ok(git_err ~= nil, "unknown git mode returns an error")
   -- The suite runs inside this repo, so a real query must succeed.

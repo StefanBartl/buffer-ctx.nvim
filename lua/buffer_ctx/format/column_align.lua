@@ -36,16 +36,22 @@ local function display_width(str)
 end
 
 ---@internal
+---The character starting at `byte_pos`, and how many bytes it occupies.
+---
+---`str_utf_end` gives the distance from a byte to the last byte of the UTF-8
+---sequence it belongs to, which is exactly the question here and takes one
+---call. The pair this used before -- `str_utfindex` then `str_byteindex` --
+---needed two, and since Neovim 0.11 both take an encoding argument neither
+---call was passing; the `if not char_idx` guard was dead either way, because
+---`str_utfindex` raises on an out-of-range index rather than returning nil.
 ---@param line string
----@param byte_pos integer
+---@param byte_pos integer  0-based byte offset of the character's first byte
 ---@return string char, integer byte_len
 local function get_char_at_pos(line, byte_pos)
-  local char_idx = vim.str_utfindex(line, byte_pos)
-  if not char_idx then
-    return line:sub(byte_pos + 1, byte_pos + 1), 1
+  if byte_pos < 0 or byte_pos >= #line then
+    return "", 0
   end
-  local next_byte = vim.str_byteindex(line, char_idx + 1) or #line
-  local char = line:sub(byte_pos + 1, next_byte)
+  local char = line:sub(byte_pos + 1, byte_pos + 1 + vim.str_utf_end(line, byte_pos + 1))
   return char, #char
 end
 
