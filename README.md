@@ -72,6 +72,9 @@ to customize keymaps, commands, and templates.
 
 ## Documentation
 
+Start at [docs/README.md](docs/README.md), which says what is where and which
+question each page answers.
+
 - [Installation](docs/installation.md) — requirements, loading strategies, lazy.nvim and packer setup.
 - [Configuration](docs/configuration.md) — all available `setup()` options and defaults.
 - [Commands](docs/commands.md) — quick reference table and full subcommand reference for `:Insert`, `:Copy`, `:Format`, `:Mark`.
