@@ -31,7 +31,7 @@ function M.check()
       "plugin loaded (vim.g.loaded_buffer_ctx = " .. tostring(vim.g.loaded_buffer_ctx) .. ")"
     )
   else
-    vim.health.warn("plugin guard not set — call require('buffer_ctx').setup()")
+    vim.health.info("plugin guard not set (call require('buffer_ctx').setup())")
   end
 
   -- lib.nvim: required for the :Insert/:Copy/:Format/:Mark command layer
@@ -87,13 +87,13 @@ function M.check()
   if vim.fn.exists(":CopyFilepathAbsolute") == 2 then
     vim.health.ok(":CopyFilepathAbsolute compat command registered")
   else
-    vim.health.warn(":CopyFilepathAbsolute compat command not found")
+    vim.health.info(":CopyFilepathAbsolute compat command not found (call setup() first)")
   end
 
   if vim.fn.exists(":CopyFilepathRelative") == 2 then
     vim.health.ok(":CopyFilepathRelative compat command registered")
   else
-    vim.health.warn(":CopyFilepathRelative compat command not found")
+    vim.health.info(":CopyFilepathRelative compat command not found (call setup() first)")
   end
 
   -- Format subsystem
@@ -118,7 +118,7 @@ function M.check()
   if cmd_exists then
     vim.health.ok(":Format command registered")
   else
-    vim.health.warn(":Format command not found — call setup() first")
+    vim.health.info(":Format command not found (call setup() first)")
   end
 
   local modules = {
@@ -162,13 +162,13 @@ function M.check()
   if vim.fn.exists(":Mark") == 2 then
     vim.health.ok(":Mark command registered")
   else
-    vim.health.warn(":Mark command not found — call setup() first")
+    vim.health.info(":Mark command not found (call setup() first)")
   end
 
   if vim.fn.exists(":MarkLineToggle") == 2 then
     vim.health.ok(":MarkLineToggle compat command registered")
   else
-    vim.health.warn(":MarkLineToggle compat command not found")
+    vim.health.info(":MarkLineToggle compat command not found (call setup() first)")
   end
 
   local mark_ok = pcall(require, "buffer_ctx.mark")
