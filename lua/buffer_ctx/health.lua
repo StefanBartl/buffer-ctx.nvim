@@ -11,7 +11,7 @@ function M.check()
   if vim.fn.has("nvim-0.9") == 1 then
     vim.health.ok("Neovim >= 0.9")
   else
-    vim.health.warn("Neovim 0.9+ recommended")
+    vim.health.warn("Neovim 0.9+ recommended", { "Upgrade Neovim to 0.9+" })
   end
 
   if vim.uv or vim.loop then
@@ -40,8 +40,9 @@ function M.check()
   if composer_ok then
     vim.health.ok("lib.nvim detected (:Insert/:Copy/:Format/:Mark command layer available)")
   else
-    vim.health.warn(
-      'lib.nvim not found — commands will fail to register; install "StefanBartl/lib.nvim"'
+    vim.health.error(
+      "lib.nvim not found — commands will fail to register",
+      { 'Install "StefanBartl/lib.nvim"' }
     )
   end
 
