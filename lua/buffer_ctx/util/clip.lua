@@ -1,7 +1,7 @@
 ---@module 'buffer_ctx.util.clip'
 --- Copies text to the system clipboard, with an unnamed-register fallback.
 --- Pure sink: returns status only, never notifies — callers decide whether
---- and how to report success/failure (see Refactoring..md "fail late").
+--- and how to report success/failure.
 ---@see buffer_ctx.util.notify for the sibling soft-dependency pattern
 ---@see buffer_ctx.util.cursor for the insert-at-cursor sink counterpart
 

@@ -72,6 +72,10 @@ Copy or insert the current buffer's path.
 :Copy filepath nvim            → relative to stdpath("config")
 ```
 
+`nvim_module` is not a path format — it's an alias straight into the `module`
+subcommand (`:Copy filepath nvim_module` == `:Copy module`), kept so
+tab-completion under `filepath` still reaches it.
+
 Compat commands: `:CopyFilepathAbsolute` → `:Copy filepath absolute`, `:CopyFilepathRelative` → `:Copy filepath relative`
 
 ### `filename [noext]`
