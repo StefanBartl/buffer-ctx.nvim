@@ -83,6 +83,8 @@ question each page answers.
 - [Workflow](docs/WORKFLOW.md) — how the pieces combine in daily use.
 - [Lua API](docs/api.md) — the `require("buffer_ctx")` module functions.
 - [Bindings cheatsheet](docs/BINDINGS.md) — machine-readable table of every keymap, user command, and autocommand.
+- [Architecture](docs/architecture.md) — source tree layout and module responsibilities.
+- [Health](docs/health.md) — what `:checkhealth buffer_ctx` reports.
 - [Tests](TESTS/README.md) — how to run the test suite.
 
 ---
@@ -92,6 +94,8 @@ question each page answers.
 ```
 :checkhealth buffer_ctx
 ```
+
+See [docs/health.md](docs/health.md) for what each section reports.
 
 ## License
 

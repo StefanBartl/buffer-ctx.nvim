@@ -9,6 +9,7 @@ is the short version of all of it.
 | --- | --- |
 | [installation.md](installation.md) | What has to be there first, and a spec per plugin manager |
 | [configuration.md](configuration.md) | Every option `setup()` takes |
+| [health.md](health.md) | What `:checkhealth buffer_ctx` reports, section by section |
 
 ## Using it
 
@@ -25,3 +26,4 @@ is the short version of all of it.
 | Page | Answers |
 | --- | --- |
 | [FEATURES/](FEATURES/README.md) | One page per area — context, marks, annotations, templates, and formatting |
+| [architecture.md](architecture.md) | Which module does what |

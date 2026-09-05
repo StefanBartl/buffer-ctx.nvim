@@ -25,16 +25,14 @@ falling back to a virtual-text overlay on 0.9) on the current line.
 number, and writes them newline-joined to the system clipboard through
 the same fallback-aware sink `:Copy` uses.
 
-## Marking a range (2026-08-24)
+## Marking a range
 
 - **Module:** `mark/init.lua` (`M.toggle_range`)
 - **Keymaps:** `3<S-m>` — a count on the toggle key
 - **Usercmds:** `:'<,'>Mark toggle [category]`
 
 `3<S-m>` marks the cursor line and the two below it, clamped to the end of
-the buffer; `:'<,'>Mark toggle` marks a Visual selection. Both close audit
-entries — a count-support one and a flag/option one that turned out to be the
-same feature seen twice.
+the buffer; `:'<,'>Mark toggle` marks a Visual selection.
 
 **Deliberately not a per-line toggle.** Over a five-line selection with two
 lines already marked, toggling each line leaves a checkerboard, which looks
@@ -43,7 +41,7 @@ marked in another category), the whole range is marked; only when every line
 already carries that category does the range unmark. Reversed bounds are
 normalized, since a selection made upwards hands them over that way.
 
-## Categories (2026-08-24)
+## Categories
 
 - **Module:** `mark/init.lua`
 - **Config:** `opts.mark.categories` (default `{}`) — each entry `{ name, text, hl }`
@@ -76,7 +74,7 @@ todo, not nothing.
 `opts.mark.sign` still configures the `default` category, so a config written
 before categories existed keeps working untouched.
 
-## Clearing (2026-08-24)
+## Clearing
 
 - **Module:** `mark/init.lua` (`M.clear`)
 - **Usercmds:** `:Mark clear [category]`
