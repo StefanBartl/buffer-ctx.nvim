@@ -39,7 +39,7 @@ Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Ma
 
 | Subcommand | Args | Action |
 |---|---|---|
-| `column <N> [fill]` | target column, fill char | Align visual selection to column |
+| `column <N> [fill]` | target column, fill char | Align visual selection to column — charwise/blockwise only, refused with a message on a linewise (`V`) selection, whose marks span column 0 to `MAXCOL` and give column alignment nothing to work with |
 | `table [ALIGN] [opts]` | `header=`, `cell=`, `skip=`, `scope=` | Format Markdown table(s) |
 | `textwidth <N\|max>` | number or `max` (window width) | Set `textwidth` and reflow text |
 | `filter [--remove] <pat>` | pattern(s) | Keep or remove matching lines |
