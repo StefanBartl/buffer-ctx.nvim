@@ -17,7 +17,7 @@ function M.check()
   if vim.uv or vim.loop then
     vim.health.ok("libuv available (" .. (vim.uv and "vim.uv" or "vim.loop") .. ")")
   else
-    vim.health.warn("libuv not found")
+    vim.health.error("libuv not found -- file I/O will fail")
   end
 
   if type(vim.fn.setreg) == "function" then
