@@ -119,7 +119,7 @@ Two 0.10 extmark features are used when available, gated behind one
 
 ### Mark state doesn't outlive the buffer
 
-Mark state is stored per-buffer (`buf → { [extmark_id] = true }`) and is
+Mark state is stored per-buffer (`buf → { [extmark_id] = category }`) and is
 cleared automatically on `BufDelete`/`BufWipeout` via the
 `BufferCtxMarkCleanup` autocommand group, so a long Neovim session doesn't
 accumulate mark state for buffers that no longer exist.

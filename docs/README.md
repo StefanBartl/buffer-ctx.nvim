@@ -17,7 +17,7 @@ is the short version of all of it.
 | --- | --- |
 | [commands.md](commands.md) | Four command trees, subcommand by subcommand — the longest page here and the reference for everything you can ask for |
 | [keymaps.md](keymaps.md) | The keys, on one screen |
-| [BINDINGS.md](BINDINGS.md) | The same ground as one machine-readable overview of every keymap, user command and autocommand |
+| [BINDINGS.md](BINDINGS.md) | The same ground as one overview of every keymap, user command and autocommand |
 | [api.md](api.md) | The Lua surface a config or another plugin can call |
 | [WORKFLOW.md](WORKFLOW.md) | The different question: not what each subcommand does, but how marking, annotating and formatting combine into a way of working |
 

@@ -128,6 +128,7 @@ function M.check()
     { name = "text_width", mod = "buffer_ctx.format.text_width" },
     { name = "filter_lines", mod = "buffer_ctx.format.filter_lines" },
     { name = "enum_lines", mod = "buffer_ctx.format.enum_lines" },
+    { name = "blank_lines", mod = "buffer_ctx.format.blank_lines" },
     { name = "misc", mod = "buffer_ctx.format.misc" },
   }
   for _, entry in ipairs(modules) do

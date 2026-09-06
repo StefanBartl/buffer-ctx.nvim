@@ -73,7 +73,7 @@ only when every line already carries that category does the range unmark.
 | `:Insert` | `filepath`, `filename`, `module`, `timestamp`, `date`, `uuid`, `annotation`, `boilerplate`, `snippet`, `location`, `env`, `git`, `linecount`, `bufnr` |
 | `:Copy` | same catalog as `:Insert` |
 | `:Format` | `column`, `table`, `textwidth`, `filter`, `enum`, `trim`, `sort`, `unique`, `case`, `indent`, `clear`, `squeeze` |
-| `:Mark` | `toggle`, `yank` |
+| `:Mark` | `toggle`, `clear`, `yank` |
 
 `filepath` also accepts `nvim_module` as an alias for the `module` subcommand.
 `location` and `Format squeeze` accept a command range (`:'<,'>` / `:L1,L2`);

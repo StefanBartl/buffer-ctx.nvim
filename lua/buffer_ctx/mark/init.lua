@@ -1,6 +1,7 @@
 ---@module 'buffer_ctx.mark'
---- :Mark command tree — toggle per-line marks and yank them to clipboard.
+--- :Mark command tree — toggle per-line marks, clear them, and yank them to clipboard.
 --- :Mark toggle   Toggle the mark on the current line (sign or extmark indicator)
+--- :Mark clear    Remove every mark in the buffer (optionally one category only)
 --- :Mark yank     Yank all marked lines (in buffer order) to the system clipboard
 ---
 --- Built via lib.nvim.bindings.usercmd.composer. Compat commands are registered

@@ -35,6 +35,7 @@ CONTENTS                                               *buffer-ctx-contents*
   7. Mark command .............. |buffer-ctx-mark|
      7.1  toggle ................ |:Mark-toggle|
      7.2  yank .................. |:Mark-yank|
+     7.3  clear ................. |:Mark-clear|
   8. Keymaps ................... |buffer-ctx-keymaps|
   9. Lua API ................... |buffer-ctx-api|
  10. Tab completion ............ |buffer-ctx-completion|
@@ -160,12 +161,17 @@ mark ~
       command = "Mark",
       keymaps = { toggle = "<S-m>", yank = "<C-p>" },
       sign    = { text = "●", hl = "ErrorMsg" },
+      categories = {},
     }
 <
   `enable`   boolean  Register `:Mark`. Default: `true`.
   `command`  string   Command name. Default: `"Mark"`.
-  `keymaps`  table    Normal-mode keymaps, or `false` to disable.
-  `sign`     table    Sign column / extmark glyph + highlight group.
+  `keymaps`  table    Normal-mode keymaps, or `false` to disable. Keys:
+                      `toggle`, `yank`, `clear` (`clear` unset by default).
+  `sign`     table    Appearance of the `default` category: glyph + highlight.
+  `categories` array  Extra named appearances, each `{ name, text?, hl? }`.
+                      `:Mark toggle <name>` marks in that category; `yank`
+                      and `clear` take a `<name>` to filter by it.
   Set `mark = false` to disable the entire `:Mark` tree.
 
 ==============================================================================
@@ -655,16 +661,19 @@ Examples: >
 ==============================================================================
 7. MARK COMMAND                                        *buffer-ctx-mark*
 
-  :Mark {subcmd}
+  :Mark {subcmd} [category]
 
-Toggle per-line marks and collect them to the system clipboard.  Marks are
-stored per buffer and survive buffer switches (until Neovim exits).
+Toggle per-line marks, clear them, and collect them to the system clipboard.
+Marks are stored per buffer and survive buffer switches (until Neovim exits).
 
 A marked line is indicated by a `●` character:
   • In the sign column when `signcolumn` ≠ "no"
   • As a left-column extmark otherwise
 
-Tab completion is supported for the subcommand argument.
+`toggle`, `yank` and `clear` each take an optional category name (configured
+via `mark.categories`, see |buffer-ctx-config|); `yank`/`clear` then act only
+on marks in that category. Tab completion is supported for the subcommand and
+the category argument.
 
 Compat commands are registered automatically:
   :MarkLineToggle   →  :Mark toggle
@@ -701,6 +710,18 @@ the time of the yank, not by the order the marks were created in.
 A notification reports how many lines were copied.
 
 Default keymap: `<C-p>`
+
+------------------------------------------------------------------------------
+7.3  clear                                                    *:Mark-clear*
+
+  :Mark clear [category]
+
+Remove every mark in the current buffer, or — with a category name — only the
+marks in that category. Before this the only way to unmark was toggling each
+line one at a time.
+
+No keymap by default. Bind one with `mark.keymaps.clear`, see
+|buffer-ctx-config|.
 
 ==============================================================================
 8. KEYMAPS                                          *buffer-ctx-keymaps*
@@ -803,15 +824,15 @@ Checks:
     init.lua                   Public API, setup()
     config/
       init.lua                 setup()/get() — deep-merge over DEFAULTS
-      DEFAULTS.lua              Pluginside default configuration
+      DEFAULTS.lua              Plugin-side default configuration
     @types.lua                 LuaLS annotations
     commands.lua               :Insert / :Copy (lib.nvim.bindings.usercmd.composer) + shared dispatch
     health.lua                 checkhealth provider
     bindings/
-      init.lua                  Orchestrates usrcmds + keymaps + which_key + autocmds
+      init.lua                  Orchestrates usrcmds + keymaps + autocmds
       usrcmds.lua                Registers :Insert / :Copy
-      keymaps.lua                The 3 core copy keymaps
-      which_key.lua              Optional <leader>cn group label
+      keymaps.lua                The 3 core copy keymaps (+ the <leader>cn
+                                 which-key group label, carried in the spec)
       autocmds.lua               Extension point (no autocmds registered today)
     format/
       init.lua                 :Format command (lib.nvim.bindings.usercmd.composer) + subcommand registry
@@ -823,7 +844,7 @@ Checks:
       misc.lua                 trim, sort, unique, case, indent, clear
       blank_lines.lua          squeeze (collapse blank-line runs, range-aware)
     mark/
-      init.lua                 :Mark command (lib.nvim.bindings.usercmd.composer) + toggle/yank logic + compat cmds
+      init.lua                 :Mark command (lib.nvim.bindings.usercmd.composer) + toggle/clear/yank logic + compat cmds
     util/
       notify.lua               "[buffer-ctx] " notify wrapper; upgrades to lib.nvim if present
       map.lua                  keymap wrapper; upgrades to lib.nvim.bindings.keymap if present
@@ -853,8 +874,8 @@ Checks:
   lua/telescope/_extensions/
     buffer_ctx.lua              Optional Telescope boilerplate picker
   docs/
-    BINDINGS.md                 Machine-readable keymap/command cheatsheet
-    TESTS/                      Headless spec suite (run.lua)
+    BINDINGS.md                 Keymap / command / autocommand cheatsheet
+  TESTS/                        Headless spec suite (run.lua)
 
 Module load order: util → ops → commands/format/mark → bindings → init
 

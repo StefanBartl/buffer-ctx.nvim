@@ -68,9 +68,9 @@ collapses back to `path:line` since there's no span to express.
 
 ## Timestamp & date
 
-Formats the current time in one of eight formats (ISO, unix, human,
-short, log, filename-safe, or date-/time-only). `date` is a shorthand for
-`timestamp iso-date`. A per-buffer `--utc` flag or the sticky
+Formats the current time in one of 13 named styles (ISO variants, unix
+epoch, human, short, log, filename-safe, weekday, long, 12-hour, RFC 2822,
+date- and time-only). `date` is a shorthand for `timestamp iso-date`. A per-buffer `--utc` flag or the sticky
 `timestamp.utc` config option both force UTC; the flag always wins over
 config.
 
