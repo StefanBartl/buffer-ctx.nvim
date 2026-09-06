@@ -5,7 +5,7 @@ Four command trees:
 - **`:Insert {subcmd} [args…]`** — writes text at cursor position
 - **`:Copy   {subcmd} [args…]`** — copies text to the system clipboard
 - **`:Format {subcmd} [args…]`** — buffer/selection formatting operations
-- **`:Mark   {subcmd}`**         — toggle per-line marks and yank them to clipboard
+- **`:Mark   {subcmd}`**         — toggle per-line marks, clear them, and yank them to clipboard
 
 ## Quick reference
 
@@ -30,8 +30,12 @@ Four command trees:
 
 | Subcommand | Action |
 |---|---|
-| `toggle` | Toggle mark on current line (`●` in sign column or as extmark) |
-| `yank` | Yank all marked lines (buffer order) to system clipboard |
+| `toggle [category]` | Toggle mark on current line (`●` in sign column or as extmark); range-capable (`:'<,'>Mark toggle`) |
+| `yank [category]` | Yank all marked lines (buffer order) to system clipboard |
+| `clear [category]` | Remove every mark in the buffer, or only one category's |
+
+`toggle`/`yank`/`clear` take an optional category name (from `mark.categories`);
+`yank`/`clear` then act only on that category.
 
 Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Mark yank`
 

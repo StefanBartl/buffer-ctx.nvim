@@ -29,7 +29,7 @@ Four command trees:
 - **`:Insert {subcmd} [args…]`** — writes text at cursor position
 - **`:Copy   {subcmd} [args…]`** — copies text to the system clipboard
 - **`:Format {subcmd} [args…]`** — buffer/selection formatting operations
-- **`:Mark   {subcmd}`**         — toggle per-line marks and yank them to clipboard
+- **`:Mark   {subcmd}`**         — toggle per-line marks, clear them, and yank them to clipboard
 
 ---
 
@@ -82,7 +82,7 @@ question each page answers.
 - [Features](docs/FEATURES/README.md) — what each subcommand does and why it exists, grouped by theme.
 - [Workflow](docs/WORKFLOW.md) — how the pieces combine in daily use.
 - [Lua API](docs/api.md) — the `require("buffer_ctx")` module functions.
-- [Bindings cheatsheet](docs/BINDINGS.md) — machine-readable table of every keymap, user command, and autocommand.
+- [Bindings cheatsheet](docs/BINDINGS.md) — table of every keymap, user command, and autocommand.
 - [Architecture](docs/architecture.md) — source tree layout and module responsibilities.
 - [Health](docs/health.md) — what `:checkhealth buffer_ctx` reports.
 - [Tests](TESTS/README.md) — how to run the test suite.

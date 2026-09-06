@@ -42,7 +42,8 @@ lua/buffer_ctx/
       init.lua             template registry; each key required lazily on first use
       templates/
         guard.lua          guard-clause template (interactive)
-        html.lua           html-* templates (figure/code/quote/table/aside/pagination/…)
+        html.lua           html-* templates (figure/code/quote/formula-table/
+                           aside/pagination/accordion/table/section)
         lua.lua            lua-* templates (module/class/function/enum/test)
         markdown.lua       md-frontmatter template
         nvim.lua           nvim-autocmd / nvim-keymap templates

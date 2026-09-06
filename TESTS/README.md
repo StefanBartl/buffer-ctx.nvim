@@ -10,11 +10,12 @@ on scratch buffers created per-test.
 From the repo root:
 
 ```sh
-nvim --headless -u NONE -c "set rtp+=." -c "luafile TESTS/run.lua" -c "qa!"
+nvim --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
 ```
 
 The runner prints one line per spec and exits non-zero on the first failure
-(`BUFFER_CTX_TESTS_OK` on success).
+(`BUFFER_CTX_TESTS_OK` on success). `lib.nvim` is resolved from a sibling
+checkout (`../lib.nvim`), `$LIB_NVIM_PATH`, or the lazy.nvim bootstrap copy.
 
 ## Layout
 
@@ -25,6 +26,7 @@ The runner prints one line per spec and exits non-zero on the first failure
 | `ops_spec.lua`    | `ops/module.lua`, `ops/uuid.lua`, `ops/timestamp.lua`, `ops/env.lua`, `ops/location.lua`, `ops/filepath.lua`. |
 | `format_spec.lua` | `format/filter_lines.lua`, `format/enum_lines.lua`, `format/table_fmt.lua`, `format/column_align.lua`, `format/text_width.lua`, and `format/misc.lua` via `:Format` subcommands. |
 | `mark_spec.lua`   | `mark/init.lua`: toggle/yank flow, invalid-buffer guards, `BufDelete`/`BufWipeout` cleanup autocmd. |
+| `features_spec.lua` | `git`, `bufinfo`, `snippet`, `location range`, the extra annotation types and boilerplate templates, sticky-UTC config, env completion. |
 | `run.lua`         | Runner: loads every `*_spec.lua`, reports results, sets exit code.       |
 
 ## Adding a spec

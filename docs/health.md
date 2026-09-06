@@ -36,7 +36,7 @@ Skipped (with a single `info` line) when `opts.format = false` or
 | Check | ok | warn |
 |---|---|---|
 | `:Format` command | registered | not found — call `setup()` first |
-| Each of `column_align`, `table_fmt`, `text_width`, `filter_lines`, `enum_lines`, `misc` | module loaded | failed to load, with the module path |
+| Each of `column_align`, `table_fmt`, `text_width`, `filter_lines`, `enum_lines`, `blank_lines`, `misc` | module loaded | failed to load, with the module path |
 | `:Format` route health | delegated to `composer.checkhealth("Format")` | — |
 
 ## `buffer_ctx.mark`

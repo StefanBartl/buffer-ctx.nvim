@@ -15,7 +15,7 @@ drift apart the way a hand-typed `---@module` comment and a copy-pasted
 skeleton sometimes do. Scaffold a new module in one motion:
 
 ```
-:Insert boilerplate lua-module    " full module skeleton, already has --@module
+:Insert boilerplate lua-module    " full module skeleton, already has ---@module
 ```
 
 or, if the file already has content and only needs the header:

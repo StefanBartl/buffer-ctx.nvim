@@ -16,5 +16,5 @@ the `<leader>cn` prefix is automatically labeled "buffer-ctx: copy context".
 Set `which_key = false` to disable this.
 
 See [Configuration](configuration.md) for the exact option shapes, and
-[docs/BINDINGS.md](BINDINGS.md) for a machine-readable cheatsheet of every
-keymap, user command, and autocommand.
+[docs/BINDINGS.md](BINDINGS.md) for a cheatsheet of every keymap, user
+command, and autocommand.
