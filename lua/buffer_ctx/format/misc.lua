@@ -54,10 +54,16 @@ local function sort_lines(lines, reverse, ignore_case, numeric)
       local na = tonumber(va:match("^%s*(%d+)"))
       local nb = tonumber(vb:match("^%s*(%d+)"))
       if na and nb then
-        return reverse and na > nb or na < nb
+        if reverse then
+          return na > nb
+        end
+        return na < nb
       end
     end
-    return reverse and va > vb or va < vb
+    if reverse then
+      return va > vb
+    end
+    return va < vb
   end)
   return sorted
 end

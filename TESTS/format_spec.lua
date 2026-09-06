@@ -158,6 +158,24 @@ return function(H)
     "misc: sort orders lines"
   )
 
+  -- regression: `reverse and na > nb or na < nb` mis-sorted whenever na < nb
+  -- (ERR-60 and/or-ternary trap — the middle term can itself be falsy)
+  vim.api.nvim_buf_set_lines(buf_misc, 0, -1, false, { "a", "b", "c" })
+  vim.cmd("Format sort -r")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "c|b|a",
+    "misc: sort -r orders lines descending"
+  )
+
+  vim.api.nvim_buf_set_lines(buf_misc, 0, -1, false, { "1", "3", "2" })
+  vim.cmd("Format sort -r -n")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "3|2|1",
+    "misc: sort -r -n orders numeric lines descending"
+  )
+
   vim.api.nvim_buf_set_lines(buf_misc, 0, -1, false, { "b", "a", "b", "A" })
   vim.cmd("Format unique -i")
   H.eq(
