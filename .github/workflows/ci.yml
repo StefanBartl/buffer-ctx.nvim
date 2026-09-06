@@ -11,7 +11,7 @@ jobs:
     name: stylua + luacheck
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       # Pinned (not "latest"): stylua's own rule changes between releases
       # would otherwise make this gate fail without any local diff to blame.
@@ -19,14 +19,14 @@ jobs:
         uses: JohnnyMorganz/stylua-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: 2.5.2
+          version: v2.5.2
           args: --check lua/ TESTS/
 
       - name: Install luacheck
         run: |
           sudo apt-get update
           sudo apt-get install -y lua5.1 luarocks
-          sudo luarocks install luacheck
+          sudo luarocks install luacheck 1.2.0
 
       - name: luacheck
         run: luacheck lua/ TESTS/ plugin/
@@ -39,7 +39,7 @@ jobs:
       matrix:
         nvim: [stable, nightly]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: buffer-ctx.nvim
 
@@ -48,7 +48,7 @@ jobs:
       # module load, not just lazily) as of the composer migration -- checked
       # out as a sibling so `rtp+=../lib.nvim` matches TESTS/run.lua's own
       # sibling-checkout lookup.
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: StefanBartl/lib.nvim
           path: lib.nvim
@@ -66,11 +66,11 @@ jobs:
     name: checkhealth loads
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           path: buffer-ctx.nvim
 
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         with:
           repository: StefanBartl/lib.nvim
           path: lib.nvim
