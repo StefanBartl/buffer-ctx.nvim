@@ -1,6 +1,6 @@
 # buffer-ctx.nvim — Binding Cheatsheet
 
-Machine-readable overview of every keymap, user command, and autocommand defined by `buffer-ctx.nvim`. This file is documentation only and mirrors the source of truth in `lua/buffer_ctx/bindings/` (base keymaps + `:Insert`/`:Copy`) and the two self-contained subsystems `lua/buffer_ctx/format/` and `lua/buffer_ctx/mark/` (which own their own commands/keymaps). Any change there must be reflected here.
+Every keymap, user command, and autocommand `buffer-ctx.nvim` defines. Kept in sync with `lua/buffer_ctx/bindings/` (base keymaps + `:Insert`/`:Copy`) and the self-contained `lua/buffer_ctx/format/` and `lua/buffer_ctx/mark/` subsystems (which own their own commands/keymaps).
 
 All keymaps are individually configurable (or fully disabled) via
 `require("buffer_ctx").setup({ keymaps = ..., mark = { keymaps = ... } })`.
