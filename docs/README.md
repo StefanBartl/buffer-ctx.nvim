@@ -27,3 +27,9 @@ is the short version of all of it.
 | --- | --- |
 | [FEATURES/](FEATURES/README.md) | One page per area — context, marks, annotations, templates, and formatting |
 | [architecture.md](architecture.md) | Which module does what |
+
+## Working on it
+
+| Page | Answers |
+| --- | --- |
+| [CONTRIBUTING.md](CONTRIBUTING.md) | Ground rules, project layout, and how to add an operation |
