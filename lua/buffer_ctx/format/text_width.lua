@@ -14,34 +14,37 @@ local M = {}
 ---@param cont_prefix string|nil
 ---@return string[]
 local function wrap_words(words, width, first_prefix, cont_prefix)
-  local out, cur, cur_len = {}, first_prefix or "", #(first_prefix or "")
+  local out = {}
+  local cur_parts = (first_prefix and first_prefix ~= "") and { first_prefix } or {}
+  local cur_len = #(first_prefix or "")
   for _, w in ipairs(words) do
     local wlen = #w
     if cur_len == 0 then
       if wlen > width then
         table.insert(out, w)
       else
-        cur = w
+        cur_parts = { w }
         cur_len = wlen
       end
     else
       if cur_len + 1 + wlen <= width then
-        cur = cur .. " " .. w
+        cur_parts[#cur_parts + 1] = " "
+        cur_parts[#cur_parts + 1] = w
         cur_len = cur_len + 1 + wlen
       else
-        table.insert(out, cur)
-        cur = cont_prefix .. w
-        cur_len = #cur
+        table.insert(out, table.concat(cur_parts))
+        cur_parts = { cont_prefix, w }
+        cur_len = #cont_prefix + wlen
         if cur_len > width then
-          table.insert(out, cur)
-          cur = ""
+          table.insert(out, table.concat(cur_parts))
+          cur_parts = {}
           cur_len = 0
         end
       end
     end
   end
-  if cur ~= "" then
-    table.insert(out, cur)
+  if #cur_parts > 0 then
+    table.insert(out, table.concat(cur_parts))
   end
   return out
 end
