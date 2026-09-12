@@ -4,7 +4,7 @@ Every keymap, user command, and autocommand `buffer-ctx.nvim` defines. Kept in s
 
 All keymaps are individually configurable (or fully disabled) via
 `require("buffer_ctx").setup({ keymaps = ..., mark = { keymaps = ... } })`.
-See README.md → Configuration for the exact option shapes.
+See [configuration.md](configuration.md) for the exact option shapes.
 
 ## Table of content
 

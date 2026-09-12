@@ -5,7 +5,7 @@
 - Neovim **0.9+**
 - [lib.nvim](https://github.com/StefanBartl/lib.nvim) — **required**: the `:Insert`/`:Copy`/`:Format`/`:Mark` command layer is built on `lib.nvim.bindings.usercmd.composer`. `notify`/`map` remain a soft dependency on top of that (nicer formatting when installed, falls back to plain `vim.notify`/`vim.keymap.set` otherwise)
 - *(optional)* [which-key.nvim](https://github.com/folke/which-key.nvim) — labels the `<leader>cn` keymap group when installed
-- *(optional)* [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) — enables `:Telescope buffer_ctx boilerplate` with a live preview
+- *(optional)* [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) — enables `:Telescope buffer_ctx boilerplate`, a picker over the boilerplate templates with a live preview of what each one inserts. Without it, `:Insert boilerplate` falls back to `vim.ui.select`, so nothing is lost.
 - *(optional)* `git` in `PATH` — only for the `git` subcommand
 
 ## Choosing a loading strategy
