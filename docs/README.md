@@ -7,7 +7,8 @@ is the short version of all of it.
 
 | Page | Answers |
 | --- | --- |
-| [installation.md](installation.md) | What has to be there first, and a spec per plugin manager |
+| [installation.md](installation.md) | What has to be there first (requirements), and a spec per plugin manager |
+| [quickstart.md](quickstart.md) | The first commands to run after installing |
 | [configuration.md](configuration.md) | Every option `setup()` takes |
 | [health.md](health.md) | What `:checkhealth buffer_ctx` reports, section by section |
 
@@ -27,6 +28,7 @@ is the short version of all of it.
 | --- | --- |
 | [FEATURES/](FEATURES/README.md) | One page per area — context, marks, annotations, templates, and formatting |
 | [architecture.md](architecture.md) | Which module does what |
+| [around-it.md](around-it.md) | How this plugin's scope differs from its siblings in the collection |
 
 ## Working on it
 
