@@ -175,7 +175,7 @@ local DISPATCH = {
         notify.error("no snippets configured (snippets = { paths = {…} })")
         return
       end
-      require("lib.nvim.ui.kit").select({
+      require("ui.kit").select({
         items = keys,
         title = "Snippet:",
         on_select = function(choice)
@@ -253,7 +253,7 @@ local DISPATCH = {
       for i, item in ipairs(keys) do
         display[i] = string.format("%-22s %s", item, descs[item] or "")
       end
-      require("lib.nvim.ui.kit").select({
+      require("ui.kit").select({
         items = display,
         title = "Boilerplate template:",
         on_select = function(_, idx)

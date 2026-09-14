@@ -105,7 +105,7 @@ return function(H)
   vim.api.nvim_win_set_cursor(0, { 1, 2 })
   vim.cmd("normal! v\27")
   local captured_titles = {}
-  package.loaded["lib.nvim.ui.kit"] = {
+  package.loaded["ui.kit"] = {
     input = function(opts)
       captured_titles[#captured_titles + 1] = opts.title
       if opts.title:find("Target column") then
@@ -128,7 +128,7 @@ return function(H)
     "y=*****5",
     "align_interactive: uses the submitted column/fill-char"
   )
-  package.loaded["lib.nvim.ui.kit"] = nil
+  package.loaded["ui.kit"] = nil
   package.loaded["buffer_ctx.format.column_align"] = nil
 
   -- text_width: reflows long line into width-bounded chunks (regression: used to crash)

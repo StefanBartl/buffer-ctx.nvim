@@ -222,7 +222,7 @@ end
 
 ---Interactive alignment with prompts.
 function M.align_interactive()
-  local kit = require("lib.nvim.ui.kit")
+  local kit = require("ui.kit")
   local last_col, last_fill = get_last()
   kit.input({
     title = "Target column: ",
