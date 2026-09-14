@@ -7,6 +7,7 @@
 - *(optional)* [which-key.nvim](https://github.com/folke/which-key.nvim) — labels the `<leader>cn` keymap group when installed
 - *(optional)* [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) — enables `:Telescope buffer_ctx boilerplate`, a picker over the boilerplate templates with a live preview of what each one inserts. Without it, `:Insert boilerplate` falls back to `vim.ui.select`, so nothing is lost.
 - *(optional)* `git` in `PATH` — only for the `git` subcommand
+- *(optional)* [ui.nvim](https://github.com/StefanBartl/ui.nvim) — `ui.kit`'s `select`/`input`/`form` back the snippet/boilerplate picker prompts and the interactive column-align/guard-clause templates; lazily required, so nothing loads it until one of those runs
 
 ## Choosing a loading strategy
 

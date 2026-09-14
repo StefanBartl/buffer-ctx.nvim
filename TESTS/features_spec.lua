@@ -141,9 +141,9 @@ return function(H)
   do
     -- Stub kit.form (resolves synchronously, as if the user answered
     -- instantly) and kit.sync with a lightweight equivalent of the real
-    -- lib.nvim.ui.kit.sync.open contract (wraps on_submit/on_cancel, returns
+    -- ui.kit.sync.open contract (wraps on_submit/on_cancel, returns
     -- the result) -- guard.lua calls kit.sync(kit.form, {...}) directly.
-    package.loaded["lib.nvim.ui.kit"] = {
+    package.loaded["ui.kit"] = {
       form = function(opts)
         opts.on_submit({ condition = "ready", negation = "y" })
       end,
@@ -167,7 +167,7 @@ return function(H)
       lines ~= nil and lines[1] == "if not ready then",
       "guard-clause: negation applied, condition substituted"
     )
-    package.loaded["lib.nvim.ui.kit"] = nil
+    package.loaded["ui.kit"] = nil
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
   end
 
