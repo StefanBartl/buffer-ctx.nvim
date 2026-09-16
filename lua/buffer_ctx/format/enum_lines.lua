@@ -52,11 +52,12 @@ end
 local function alpha_marker(i, upper)
   local base = upper and 65 or 97
   local letters = {}
-  local n = i - 1
-  repeat
+  local n = i
+  while n > 0 do
+    n = n - 1
     letters[#letters + 1] = string.char(base + (n % 26))
-    n = math.floor(n / 26) - 1
-  until n < -1
+    n = math.floor(n / 26)
+  end
   local lo, hi = 1, #letters
   while lo < hi do
     letters[lo], letters[hi] = letters[hi], letters[lo]

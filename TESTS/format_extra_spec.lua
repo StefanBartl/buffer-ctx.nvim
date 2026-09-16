@@ -212,27 +212,24 @@ return function(H)
   H.eq(invalid_range.ok, false, "enum_range on an invalid buffer reports ok=false")
   H.eq(invalid_range.err, "Invalid buffer", "enum_range invalid-buffer error message")
 
-  -- Known bug, pinned rather than silently worked around: alpha_marker()'s
-  -- digit-generation loop always runs one extra iteration (its `until n < -1`
-  -- exit check is off by one against the `n % 26` it just consumed), so
-  -- every "alpha"/"ALPHA" label comes out prefixed with a spurious leading
-  -- "z"/"Z" — label 1 is "za", not "a". See the final test-coverage report.
+  -- alpha_marker() generates bijective base-26 labels: 1 -> "a", ..., 26 ->
+  -- "z", 27 -> "aa", etc. (spreadsheet-column style numeration).
   local buf_enum = H.scratch(cwd .. "/format_extra_enum.lua")
   vim.api.nvim_buf_set_lines(buf_enum, 0, -1, false, { "alpha beta gamma" })
   local alpha_result = enum_lines.enum_range(buf_enum, 1, 1, { style = "alpha", inline = true })
   H.eq(alpha_result.ok, true, "enum_range with style=alpha succeeds")
   H.eq(
     alpha_result.lines[1],
-    "za. alpha zb. beta zc. gamma",
-    "BUG: alpha labels carry a spurious leading 'z'"
+    "a. alpha b. beta c. gamma",
+    "enum_range with style=alpha labels tokens a., b., c., ..."
   )
 
   vim.api.nvim_buf_set_lines(buf_enum, 0, -1, false, { "alpha beta gamma" })
   local upper_result = enum_lines.enum_range(buf_enum, 1, 1, { style = "ALPHA", inline = true })
   H.eq(
     upper_result.lines[1],
-    "ZA. alpha ZB. beta ZC. gamma",
-    "BUG: ALPHA labels carry a spurious leading 'Z'"
+    "A. alpha B. beta C. gamma",
+    "enum_range with style=ALPHA labels tokens A., B., C., ..."
   )
 
   -- Real visual selection through enum_selection (not just the pure enumerate()
