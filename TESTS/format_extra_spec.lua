@@ -164,16 +164,10 @@ return function(H)
     "reflow_buffer with width<=0 is a no-op"
   )
 
-  -- Known bug, pinned rather than silently worked around: detect_prefixes()
-  -- extracts the bullet marker into `first_prefix` for wrap_words, but flush()
-  -- only strips leading *whitespace* from each source line before tokenising
-  -- — the bullet text itself ("- ") is never removed, so it is re-emitted
-  -- both as `first_prefix` and as an ordinary token, duplicating the marker
-  -- on the first wrapped line. See the final test-coverage report.
   vim.api.nvim_buf_set_lines(buf_tw, 0, -1, false, { "- one two three four five six" })
   text_width.reflow_range(buf_tw, 1, 1, 12)
   local bullet_lines = vim.api.nvim_buf_get_lines(buf_tw, 0, -1, false)
-  H.eq(bullet_lines[1], "-  - one two", "BUG: the bullet marker is duplicated on the first line")
+  H.eq(bullet_lines[1], "- one two", "the bullet marker is emitted exactly once on the first line")
   H.eq(
     bullet_lines[2]:sub(1, 2),
     "  ",
