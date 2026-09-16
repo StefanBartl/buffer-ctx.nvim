@@ -48,8 +48,8 @@ soft-dependency (lib.nvim present/absent) fallback branches shared by
 `util/notify.lua` and `util/map.lua`, config's deep-merge semantics, and
 `:checkhealth buffer_ctx`'s enabled and disabled-subsystem report paths.
 
-Two real bugs surfaced while writing this pass and are pinned as regression
-tests (with a `BUG:`-prefixed assertion message) rather than worked around,
+One real bug surfaced while writing this pass and is pinned as a regression
+test (with a `BUG:`-prefixed assertion message) rather than worked around,
 so a future fix shows up as an intentional, obvious test change:
 
 - **`format/text_width.lua`'s bulleted-list reflow duplicates the bullet.**
@@ -59,12 +59,11 @@ so a future fix shows up as an intentional, obvious test change:
   bullet text itself is never removed, so it is re-emitted both as the
   prefix and as an ordinary token. Reflowing `"- one two three four five
   six"` at width 12 yields `"-  - one two"` instead of `"- one two"`.
-- **`format/enum_lines.lua`'s `alpha`/`ALPHA` enum styles carry a spurious
-  leading letter.** `alpha_marker()`'s digit-generation loop runs one
-  iteration too many — its `until n < -1` exit check is off by one against
-  the `n % 26` digit it just consumed — so every label gets an extra
-  leading `z`/`Z`: enumerating three tokens with `style=alpha` produces
-  `za.`, `zb.`, `zc.` instead of `a.`, `b.`, `c.`.
+
+A previously pinned bug in `format/enum_lines.lua`'s `alpha`/`ALPHA` enum
+styles (a spurious leading letter from an off-by-one in `alpha_marker()`'s
+digit-generation loop) has since been fixed; `format_extra_spec.lua` now
+asserts the correct `a.`, `b.`, `c.` output.
 
 A third issue was found but isn't a test bug at all: **`util/map.lua`'s
 lib.nvim detection is always false.** It gates on
