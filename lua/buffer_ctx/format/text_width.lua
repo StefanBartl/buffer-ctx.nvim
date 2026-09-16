@@ -27,10 +27,18 @@ local function wrap_words(words, width, first_prefix, cont_prefix)
         cur_len = wlen
       end
     else
-      if cur_len + 1 + wlen <= width then
-        cur_parts[#cur_parts + 1] = " "
+      -- The very first word placed right after `first_prefix` attaches
+      -- directly (the prefix already carries its own trailing space, if
+      -- any) -- same as how a wrapped continuation line attaches its
+      -- first word straight onto `cont_prefix` below, with no separator.
+      local at_prefix_start = #cur_parts == 1 and cur_parts[1] == first_prefix
+      local sep = at_prefix_start and 0 or 1
+      if cur_len + sep + wlen <= width then
+        if not at_prefix_start then
+          cur_parts[#cur_parts + 1] = " "
+        end
         cur_parts[#cur_parts + 1] = w
-        cur_len = cur_len + 1 + wlen
+        cur_len = cur_len + sep + wlen
       else
         table.insert(out, table.concat(cur_parts))
         cur_parts = { cont_prefix, w }
@@ -93,8 +101,16 @@ local function reflow_lines_region(lines, width)
     end
     local fp, cp = detect_prefixes(para_first)
     local stripped = {}
-    for _, l in ipairs(paragraph) do
-      table.insert(stripped, (l:gsub("^%s*", "", 1)))
+    for idx, l in ipairs(paragraph) do
+      if idx == 1 and fp ~= "" then
+        -- The first line's leading marker (indent + bullet, if any) is
+        -- already carried as `fp` and re-added by wrap_words, so it must be
+        -- cut off here rather than just the whitespace, or it gets emitted
+        -- twice: once as `fp`, once as an ordinary token.
+        table.insert(stripped, l:sub(#fp + 1))
+      else
+        table.insert(stripped, (l:gsub("^%s*", "", 1)))
+      end
     end
     local words = paragraph_to_words(stripped)
     if #words == 0 then
