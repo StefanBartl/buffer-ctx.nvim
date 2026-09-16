@@ -51,13 +51,23 @@ if not add_lib_nvim() then
   print("      Set $LIB_NVIM_PATH or check it out next to this repo.")
 end
 
--- Ordered so failures point at the smallest layer first.
+-- Ordered so failures point at the smallest layer first. config_spec.lua
+-- runs last: it calls buffer_ctx.config.setup() directly (bypassing
+-- buffer_ctx's own idempotent setup() guard) to exercise the deep-merge and
+-- the health-report's disabled-subsystem branches, and restores the
+-- defaults afterwards — nothing later in the suite may depend on them.
 local specs = {
   "path_spec.lua",
   "ops_spec.lua",
+  "ops_edge_spec.lua",
   "format_spec.lua",
+  "format_extra_spec.lua",
   "mark_spec.lua",
   "features_spec.lua",
+  "boilerplate_spec.lua",
+  "bindings_spec.lua",
+  "util_spec.lua",
+  "config_spec.lua",
 }
 
 local failed = 0
