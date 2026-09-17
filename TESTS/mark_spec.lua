@@ -157,6 +157,34 @@ return function(H)
   H.ok(events["BufDelete"], "BufferCtxMarkCleanup handles BufDelete")
   H.ok(events["BufWipeout"], "BufferCtxMarkCleanup handles BufWipeout")
 
+  -- Known bug, pinned rather than silently worked around: M.setup() passes
+  -- the augroup as the *string* "BufferCtxMarkCleanup" to
+  -- lib.nvim.bindings.autocmd.create(), which resolves it through
+  -- autocmd.group(name) -- and that only clears an already-existing group
+  -- when called with `clear = true`, which M.setup() never requests. A
+  -- second M.setup() call (a plugin reload, or any direct second call to
+  -- this module bypassing buffer_ctx.init's own `_setup_done` guard) is thus
+  -- not idempotent: it adds a second BufDelete/BufWipeout pair to the same
+  -- group instead of replacing the first. Harmless today (clear_marks() is
+  -- itself idempotent), but the group grows without bound across repeated
+  -- setup() calls. A real fix would resolve the group once via
+  -- `autocmd.group(name, true)` and pass the numeric id, mirroring the
+  -- pdfport.nvim bindings/autocmds.lua fix from an earlier campaign round.
+  mark.setup({})
+  local autocmds_after_resetup = vim.api.nvim_get_autocmds({ group = "BufferCtxMarkCleanup" })
+  local bufdelete_count = 0
+  for _, ac in ipairs(autocmds_after_resetup) do
+    if ac.event == "BufDelete" then
+      bufdelete_count = bufdelete_count + 1
+    end
+  end
+  H.eq(
+    bufdelete_count,
+    2,
+    "BUG: a second mark.setup() call doubles the BufDelete cleanup autocmd"
+      .. " instead of replacing it (string augroup resolved without clear=true)"
+  )
+
   -- after wipeout, the buffer is invalid and yank must not crash
   local buf2 = vim.api.nvim_create_buf(false, true)
   vim.api.nvim_buf_set_lines(buf2, 0, -1, false, { "line one" })

@@ -100,6 +100,38 @@ return function(H)
     "column_align pads to target column"
   )
 
+  -- Known bug, pinned rather than silently worked around: align_single_line's
+  -- `current_col = start_col + 1` is a *byte* column, but `target_col` is a
+  -- *display* column (align_to_column validates fill_char by
+  -- vim.fn.strdisplaywidth, so the whole feature is display-column based).
+  -- A multibyte character sitting before the selection makes the byte column
+  -- overcount the display column, so the fill is one (or more) short and the
+  -- selected char lands to the LEFT of the requested target column.
+  -- "ä" is 2 bytes / 1 display cell; selecting the "5" in "xä5" and asking
+  -- for column 10 should put "5" at display column 10 ("xä-------5", 7 "-"),
+  -- but it lands at display column 9 instead ("xä------5", only 6 "-").
+  local buf_mb = H.scratch(vim.fn.getcwd() .. "/column_align_multibyte.lua")
+  vim.api.nvim_buf_set_lines(buf_mb, 0, -1, false, { "xä5" })
+  -- byte offset of "5": "x" (1 byte) + "ä" (2 bytes) = 3
+  vim.api.nvim_win_set_cursor(0, { 1, 3 })
+  vim.cmd("normal! v\27")
+  column_align.align_to_column(10, "-")
+  local mb_result = vim.api.nvim_buf_get_lines(buf_mb, 0, -1, false)[1]
+  H.eq(
+    mb_result,
+    "xä------5",
+    "BUG: a multibyte char before the selection makes align_to_column land"
+      .. " one display column short of the requested target"
+  )
+  H.eq(
+    vim.fn.strdisplaywidth(mb_result:sub(1, mb_result:find("5") - 1)) + 1,
+    9,
+    "BUG: '5' lands at display column 9, not the requested 10"
+  )
+  -- Restore buf_col as the current buffer: the align_interactive steps below
+  -- rely on it (via window 0) staying current, same as before this block.
+  vim.api.nvim_set_current_buf(buf_col)
+
   -- align_interactive: chains two kit.input prompts (target column, fill char)
   vim.api.nvim_buf_set_lines(buf_col, 0, -1, false, { "y=5" })
   vim.api.nvim_win_set_cursor(0, { 1, 2 })
