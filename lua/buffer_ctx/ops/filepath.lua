@@ -40,6 +40,13 @@ function M.get_path(opts)
     base = pu.relative_to_cwd(abs)
   end
 
+  -- A Unix-style root ("/home/...") has no segment of its own to carry that
+  -- leading "/" through `gmatch("[^/]+")` -- it is consumed as a separator,
+  -- not captured. Rejoining the segments then silently drops it, so
+  -- mode="abs" came back relative on Linux. Invisible on Windows, where the
+  -- drive-letter segment ("C:") still anchors the join.
+  local is_unix_root = not opts.depth and base:gsub("\\", "/"):sub(1, 1) == "/"
+
   local segments
   if opts.depth then
     segments = pu.pick_depth(base, opts.depth + 1)
@@ -55,7 +62,16 @@ function M.get_path(opts)
     segments = { fn.fnamemodify(abs, ":t") }
   end
 
-  return M._format_segments(segments, opts.format or "unix"), nil
+  local format = opts.format or "unix"
+  local formatted = M._format_segments(segments, format)
+
+  local rejoins_with_slash = format == "unix"
+    or (format == "system" and package.config:sub(1, 1) == "/")
+  if opts.mode == "abs" and is_unix_root and rejoins_with_slash then
+    formatted = "/" .. formatted
+  end
+
+  return formatted, nil
 end
 
 ---@internal
