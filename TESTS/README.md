@@ -25,9 +25,9 @@ checkout (`../lib.nvim`), `$LIB_NVIM_PATH`, or the lazy.nvim bootstrap copy.
 | `path_spec.lua`          | `util/path.lua`: module path derivation, sep normalization, depth, cwd-relative, nvim-config detection.    |
 | `ops_spec.lua`           | `ops/module.lua`, `ops/uuid.lua`, `ops/timestamp.lua`, `ops/env.lua`, `ops/location.lua`, `ops/filepath.lua` happy paths. |
 | `ops_edge_spec.lua`      | `ops/annotation.lua` (every type, incl. the `fn.input` fallbacks), `ops/git.lua` (every mode, real temp repos), and the unnamed-buffer / outside-`/lua/` / malformed-input error paths of `filepath`, `location`, `module` and `snippet`. |
-| `format_spec.lua`        | `format/filter_lines.lua`, `format/enum_lines.lua`, `format/table_fmt.lua`, `format/column_align.lua`, `format/text_width.lua`, and `format/misc.lua` via `:Format` subcommands (happy paths). |
+| `format_spec.lua`        | `format/filter_lines.lua`, `format/enum_lines.lua`, `format/table_fmt.lua`, `format/column_align.lua`, `format/text_width.lua`, and `format/misc.lua` via `:Format` subcommands (happy paths), plus a pinned multibyte-column regression in `column_align` (see Coverage below). |
 | `format_extra_spec.lua`  | `format/init.lua`'s `cfg.command`/`cfg.enable` gates and its subcommands' invalid-argument handling (driven through a real `:Format2` command); the rest of `format/misc.lua` (indent, case sentence/invalid, clear, sort/unique without every flag); and the error/edge branches of `column_align`, `text_width`, `enum_lines`, `filter_lines`, `blank_lines` and `table_fmt`. |
-| `mark_spec.lua`          | `mark/init.lua`: toggle/yank flow, invalid-buffer guards, `BufDelete`/`BufWipeout` cleanup autocmd, ranges, categories. |
+| `mark_spec.lua`          | `mark/init.lua`: toggle/yank flow, invalid-buffer guards, `BufDelete`/`BufWipeout` cleanup autocmd, ranges, categories, plus a pinned `setup()`-idempotency regression (see Coverage below). |
 | `features_spec.lua`      | `git`, `bufinfo`, `snippet`, `location range`, the extra annotation types and boilerplate templates, sticky-UTC config, env completion. |
 | `boilerplate_spec.lua`   | `ops/boilerplate/*`: every registered template renders, the has-id/no-id and default-fallback branches of each template module (`lua`, `html`, `nvim`, `markdown`, `utils`), the plain (non-interactive) half of `guard.lua`, and the registry's unknown-key error. |
 | `bindings_spec.lua`      | `bindings/keymaps.lua` (attach with defaults/overrides/`false`, driving the bound action end to end via clipboard), `bindings/usrcmds.lua`, `bindings/autocmds.lua`, and `bindings/init.lua`'s `cfg.commands` gate (via stubbed sub-registrars). |
@@ -48,24 +48,64 @@ soft-dependency (lib.nvim present/absent) fallback branches shared by
 `util/notify.lua` and `util/map.lua`, config's deep-merge semantics, and
 `:checkhealth buffer_ctx`'s enabled and disabled-subsystem report paths.
 
-One real bug surfaced while writing this pass and is pinned as a regression
-test (with a `BUG:`-prefixed assertion message) rather than worked around,
-so a future fix shows up as an intentional, obvious test change:
+Both bugs originally pinned in this pass (round 5 of the fleet-wide
+test-coverage campaign) have since been fixed in follow-up commits, and the
+regression assertions that pinned them were updated in the same commits to
+assert the *correct* output instead of carrying a `BUG:` message forever:
 
-- **`format/text_width.lua`'s bulleted-list reflow duplicates the bullet.**
+- **`format/enum_lines.lua`'s `alpha`/`ALPHA` enum styles carried a spurious
+  leading letter** (an off-by-one in `alpha_marker()`'s digit-generation
+  loop — enumerating three tokens with `style=alpha` produced `za.`, `zb.`,
+  `zc.` instead of `a.`, `b.`, `c.`). Fixed (commit `79893f9`);
+  `format_extra_spec.lua` now asserts the correct `a.`, `b.`, `c.` output.
+- **`format/text_width.lua`'s bulleted-list reflow duplicated the bullet.**
   `detect_prefixes()` extracts a line's leading bullet/number marker (e.g.
-  `"- "`) into `first_prefix` for `wrap_words()`, but `flush()` only strips
-  leading *whitespace* from the source line before tokenising it — the
-  bullet text itself is never removed, so it is re-emitted both as the
-  prefix and as an ordinary token. Reflowing `"- one two three four five
-  six"` at width 12 yields `"-  - one two"` instead of `"- one two"`.
+  `"- "`) into `first_prefix` for `wrap_words()`, but `flush()` only stripped
+  leading *whitespace* from the source line before tokenising it, so the
+  bullet text itself was re-emitted both as the prefix and as an ordinary
+  token (`"- one two three four five six"` at width 12 came out as
+  `"-  - one two"` instead of `"- one two"`). Fixed (commit `3c99c3c`), which
+  also caught a related bug the first fix exposed: `wrap_words()` always
+  inserted a separator space before the first word after a prefix, even
+  though a bullet prefix already carries its own trailing space.
+  `format_extra_spec.lua` now asserts the correct, non-duplicated output.
 
-A previously pinned bug in `format/enum_lines.lua`'s `alpha`/`ALPHA` enum
-styles (a spurious leading letter from an off-by-one in `alpha_marker()`'s
-digit-generation loop) has since been fixed; `format_extra_spec.lua` now
-asserts the correct `a.`, `b.`, `c.` output.
+Re-auditing this repo (round 5 revisit) for a *third* bug of the same
+byte-vs-character shape, now that the two above are fixed, turned up one —
+in a format module the original pass hadn't scrutinized for this — plus an
+unrelated idempotency bug, both pinned rather than fixed for the same reason
+the original two were: neither is a trivial, unambiguous blocker, and a real
+fix changes externally-visible behaviour that deserves its own commit.
 
-A third issue was found but isn't a test bug at all: **`util/map.lua`'s
+- **`format/column_align.lua`'s `align_to_column` misplaces the target by
+  one column whenever a multibyte character precedes the selection.**
+  `align_single_line`/`align_block_lines` compute `current_col = start_col +
+  1` from the selection's *byte* offset, but `target_col` is a *display*
+  column (the same function validates `fill_char` by
+  `vim.fn.strdisplaywidth`, so the whole feature is display-column based).
+  A multibyte character before the selection makes the byte column
+  overcount the display column by its extra byte(s), so the fill comes up
+  short and the selected character lands to the left of the requested
+  column. Selecting the "5" in `"xä5"` ("ä" is 2 bytes / 1 display cell) and
+  asking for column 10 should land "5" at display column 10; it lands at
+  display column 9 instead. Pinned in `format_spec.lua`.
+- **`mark/init.lua`'s `M.setup()` is not idempotent: a second call doubles
+  its `BufDelete`/`BufWipeout` cleanup autocmd.** `M.setup()` passes the
+  augroup as the *string* `"BufferCtxMarkCleanup"` to
+  `lib.nvim.bindings.autocmd.create()`, which resolves it through
+  `autocmd.group(name)` — and that only clears an already-existing group
+  when called with `clear = true`, which `M.setup()` never requests. Calling
+  `mark.setup()` a second time (a plugin reload, or any direct second call
+  bypassing `buffer_ctx.init`'s own `_setup_done` guard) therefore adds a
+  second `BufDelete`/`BufWipeout` pair to the same group instead of
+  replacing the first. Harmless today (`clear_marks()` is itself
+  idempotent), but the group grows without bound across repeated `setup()`
+  calls — the same shape of bug as pdfport.nvim's `bindings/autocmds.lua`
+  from an earlier campaign round, whose fix (resolve the group once via
+  `autocmd.group(name, true)` and pass the numeric id, not the string) would
+  apply here too. Pinned in `mark_spec.lua`.
+
+One more issue was found but isn't a test bug at all: **`util/map.lua`'s
 lib.nvim detection is always false.** It gates on
 `type(lib_map) == "function"`, but `require("lib.nvim.bindings.keymap")`
 returns a *table* that is merely made callable via `__call` (documented in
@@ -75,7 +115,7 @@ helper, even when lib.nvim is installed and `util/notify.lua`'s equivalent
 check (which compares against a table, correctly) is finding it. This one
 has no user-visible effect (the plain `vim.keymap.set` fallback works
 identically) beyond the health report's optional-dependency line always
-saying "not found".
+saying "not found". Still present, still not a bug worth fixing on its own.
 
 ### Deliberately left untested
 
