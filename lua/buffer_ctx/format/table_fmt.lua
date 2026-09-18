@@ -15,6 +15,7 @@
 local notify = require("buffer_ctx.util.notify")
 local globbable = require("lib.nvim.fs.globbable")
 local lib_table = require("lib.nvim.markdown.table")
+local expand_path = require("lib.nvim.cross.fs.expand_path")
 
 local M = {}
 
@@ -101,7 +102,8 @@ function M.format_tables_in_buffer(bufnr, opts)
 end
 
 ---Format tables in the given scope: "cursor" | "buffer" | "cwd" | a file path.
----@param opts table|nil
+---@param opts table|nil  `opts.confirm = false` skips the "cwd" scope's
+--- one-time confirmation prompt (for scripted/non-interactive callers)
 ---@return boolean, string|nil
 function M.format_tables_in_scope(opts)
   opts = opts or {}
@@ -129,6 +131,20 @@ function M.format_tables_in_scope(opts)
     if #files == 0 then
       notify.info("No *.md files found under " .. cwd)
       return true, nil
+    end
+    -- Bulk/destructive: rewrites every matching file on disk, no buffer
+    -- undo. One confirmation for the whole batch, not per file. `opts.confirm
+    -- = false` lets a script/test opt out explicitly.
+    if opts.confirm ~= false then
+      local choice = vim.fn.confirm(
+        string.format("Format Markdown tables in %d file(s) under %q?", #files, cwd),
+        "&Yes\n&No",
+        2
+      )
+      if choice ~= 1 then
+        notify.info("[table] cwd formatting cancelled")
+        return true, nil
+      end
     end
     local prog = new_progress()
     local errors, cnt = {}, 0
@@ -162,7 +178,10 @@ function M.format_tables_in_scope(opts)
     end
     return #errors == 0, #errors > 0 and table.concat(errors, "; ") or nil
   else
-    local path = vim.fn.expand(scope)
+    -- Pure ~/env expansion only -- no shell, no globbing, no Vim specials
+    -- (%, #, <cfile>, <cword>), unlike vim.fn.expand() on this same
+    -- user-typed scope=<...> token.
+    local path = expand_path(scope)
     if vim.fn.filereadable(path) == 0 then
       return false, string.format("File not readable: %q", path)
     end
