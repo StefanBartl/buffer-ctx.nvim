@@ -298,8 +298,11 @@ return function(H)
     "location.get_range with no args and no marks falls back to the cursor line"
   )
 
-  -- get_range falls back to the last visual selection when line1/line2 agree
-  -- (both nil, or an explicit single-line "range").
+  -- get_range falls back to the last visual selection only when no explicit
+  -- range was given at all (both nil) -- an explicit single-line range
+  -- (line1 == line2, both non-nil) must be honoured as-is, not overridden by
+  -- a stale visual selection elsewhere in the buffer (ERR-10: "no argument"
+  -- and "argument given" must not collapse onto the same result).
   vim.api.nvim_buf_set_lines(0, 0, -1, false, { "a", "b", "c", "d", "e" })
   vim.api.nvim_win_set_cursor(0, { 2, 0 })
   vim.cmd("normal! Vjj\27") -- visually select lines 2-4, then leave visual mode
@@ -307,6 +310,11 @@ return function(H)
     location.get_range("cwd", nil, nil),
     "lua/loc3/mod.lua:L2-L4",
     "location.get_range falls back to the last visual selection ('<,'>) when unset"
+  )
+  H.eq(
+    location.get_range("cwd", 42, 42),
+    "lua/loc3/mod.lua:42",
+    "location.get_range with an explicit single-line range ignores the stale visual selection"
   )
 
   -- ── module: unnamed buffer / outside /lua/ error paths ────────────────────
@@ -367,6 +375,41 @@ return function(H)
     H.ok(vim.tbl_contains(prefix_keys, "Full Name"), "snippet.list_keys includes the entry name")
     H.ok(vim.tbl_contains(prefix_keys, "fnp"), "snippet.list_keys also includes its prefix")
     vim.fn.delete(prefix_path)
+
+    -- ERR-11: one healthy source must not swallow another source's error --
+    -- "empty, but ok" and "non-empty, but something else broke" are not the
+    -- same outcome.
+    local ok_path = vim.fn.tempname() .. ".json"
+    vim.fn.writefile({ '{ "Healthy": { "prefix": "hp", "body": "ok" } }' }, ok_path)
+    local broken_path = vim.fn.tempname() .. ".json"
+    vim.fn.writefile({ "{ not valid json" }, broken_path)
+    snippet.set_sources({ ok_path, broken_path })
+    local partial_snippets, partial_err = snippet.load()
+    H.ok(
+      not vim.tbl_isempty(partial_snippets),
+      "snippet.load: the healthy source's snippets still load"
+    )
+    H.match(
+      partial_err,
+      "invalid JSON",
+      "snippet.load: a sibling source's error is reported even though the result is non-empty"
+    )
+    vim.fn.delete(ok_path)
+    vim.fn.delete(broken_path)
+
+    -- LUA-16: JSON null in a body array decodes to vim.NIL (userdata, not
+    -- Lua nil); a nested object/array is likewise not a plain text line.
+    -- Both must sanitize to "", not stringify into buffer garbage.
+    local nil_body_path = vim.fn.tempname() .. ".json"
+    vim.fn.writefile({
+      '{ "Nully": { "prefix": "nl", "body": ["keep", null, ["nested"]] } }',
+    }, nil_body_path)
+    snippet.set_sources({ nil_body_path })
+    local nil_lines = snippet.get("Nully")
+    H.eq(nil_lines[1], "keep", "snippet.get: a normal body line passes through untouched")
+    H.eq(nil_lines[2], "", "snippet.get: a JSON null body line sanitizes to an empty string")
+    H.eq(nil_lines[3], "", "snippet.get: a non-string (nested array) body line sanitizes to empty")
+    vim.fn.delete(nil_body_path)
   end
 
   snippet.set_sources({})
