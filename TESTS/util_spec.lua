@@ -8,10 +8,25 @@ return function(H)
   -- ── clip.copy: pure sink, no notification side effects ────────────────────
   local clip = require("buffer_ctx.util.clip")
 
+  -- Whether the "+" write can succeed at all depends on the machine: it
+  -- needs a real clipboard provider or one of pbcopy/wl-copy/xclip/xsel/
+  -- clip.exe on PATH, neither of which a bare CI runner has. Probed with
+  -- its own marker so the real assertion below knows which outcome to
+  -- expect, rather than assuming the happy path -- the unnamed register
+  -- is unconditional either way, so that assertion always runs.
+  vim.fn.setreg("+", "")
+  local clipboard_works = clip.copy("util_spec_probe")
+  vim.fn.setreg("+", "")
+
   vim.fn.setreg('"', "")
   local ok1, err1, preview1 = clip.copy("hello world")
-  H.ok(ok1, "clip.copy succeeds for a normal string")
-  H.eq(err1, nil, "clip.copy has no error on success")
+  if clipboard_works then
+    H.ok(ok1, "clip.copy succeeds for a normal string")
+    H.eq(err1, nil, "clip.copy has no error on success")
+  else
+    H.eq(ok1, false, "clip.copy reports failure when no provider accepted it")
+    H.match(err1, "no clipboard provider", "clip.copy names the reason")
+  end
   H.eq(preview1, "hello world", "clip.copy preview is the text itself when short")
   H.eq(vim.fn.getreg('"'), "hello world", "clip.copy always sets the unnamed register")
 

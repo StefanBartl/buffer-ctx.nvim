@@ -28,11 +28,25 @@ function M.copy(text)
   -- no xclip/wl-copy) a "+" write is at best a silent no-op and at worst
   -- raises. Neither should cost the user the copy — the unnamed register
   -- below still carries the text.
+  --
+  -- `pcall(lib_copy_to_clipboard, text)` used to be the whole check here,
+  -- which is wrong regardless of what lib.nvim's own function does:
+  -- `pcall(f, ...)` returns whether the CALL raised, as its first value,
+  -- with `f`'s own result only in the (discarded) second one. Since
+  -- `lib_copy_to_clipboard` never raises, that pcall was always `true` --
+  -- silently defeating the verified round-trip lib.nvim's fix added,
+  -- from the one caller still checking the wrong return slot.
   local clipboard_ok
   if ok_lib_clipboard then
-    clipboard_ok = pcall(lib_copy_to_clipboard, text)
+    clipboard_ok = lib_copy_to_clipboard(text)
   else
-    clipboard_ok = pcall(vim.fn.setreg, "+", text)
+    -- No lib.nvim: the same round-trip check it does internally, since a
+    -- bare `setreg` succeeding proves nothing without a provider either.
+    clipboard_ok = false
+    if pcall(vim.fn.setreg, "+", text) then
+      local get_ok, got = pcall(vim.fn.getreg, "+")
+      clipboard_ok = get_ok and got == text
+    end
   end
 
   -- The unnamed register is always set directly: it's Vim's own register
