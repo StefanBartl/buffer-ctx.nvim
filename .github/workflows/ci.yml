@@ -32,12 +32,27 @@ jobs:
         run: luacheck lua/ TESTS/ plugin/
 
   test:
-    name: headless specs (Neovim ${{ matrix.nvim }})
-    runs-on: ubuntu-latest
+    name: headless specs (${{ matrix.os }}, Neovim ${{ matrix.nvim }})
+    runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
+      # Three platforms on stable, plus nightly on Linux only -- deliberately
+      # not the full 3x2 cross product. What nightly catches is Neovim API
+      # drift, which is the same on every platform; what the os axis catches
+      # is platform assumptions, which do not depend on the Neovim version.
+      # Running both axes fully would double the jobs to re-answer questions
+      # the four below already answer.
       matrix:
-        nvim: [stable, nightly]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        nvim: [stable]
+        include:
+          - os: ubuntu-latest
+            nvim: nightly
+    defaults:
+      run:
+        # Windows runners default to PowerShell; one shell on all three keeps
+        # the run step itself from being what differs between platforms.
+        shell: bash
     steps:
       - uses: actions/checkout@v5
         with:
