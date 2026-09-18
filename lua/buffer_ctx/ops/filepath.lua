@@ -121,9 +121,12 @@ end
 
 ---Parse fargs for filepath/filename subcommands
 ---@param args string[]
----@return BufferCtx.FilepathOpts
+---@return BufferCtx.FilepathOpts opts
+---@return string|nil err  set when a token matched none of the known values
+--- (a typo must not silently behave like "no argument given")
 function M.parse_args(args)
   local opts = { mode = "cwd", format = "unix", depth = nil }
+  local unknown = {}
   for _, arg in ipairs(args) do
     local lo = arg:lower()
     if lo == "abs" or lo == "absolute" then
@@ -142,9 +145,14 @@ function M.parse_args(args)
       opts.format = "unix"
     elseif tonumber(arg) then
       opts.depth = tonumber(arg)
+    else
+      unknown[#unknown + 1] = arg
     end
   end
-  return opts
+  if #unknown > 0 then
+    return opts, string.format("unknown argument(s): %s", table.concat(unknown, ", "))
+  end
+  return opts, nil
 end
 
 return M

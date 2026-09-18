@@ -87,9 +87,11 @@ local function boilerplate_picker(opts)
           end
           -- For an interactive entry (guard-clause) this blocks on kit.sync's
           -- kit.form prompt before returning -- same as any other template.
-          local lines, err = boiler.get(entry.value, nil)
+          local lines, err, cancelled = boiler.get(entry.value, nil)
           if not lines then
-            require("buffer_ctx.util.notify").error(err or "boilerplate failed")
+            if not cancelled then
+              require("buffer_ctx.util.notify").error(err or "boilerplate failed")
+            end
             return
           end
           require("buffer_ctx.util.cursor").insert_lines(lines)

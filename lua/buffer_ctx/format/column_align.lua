@@ -220,14 +220,33 @@ function M.align_to_column(target_col, fill_char)
   notify.info(string.format("Aligned to column %d with '%s'", target_col, fill_char))
 end
 
+---@internal
+---Soft dependency, matching util/notify.lua's convention: ui.nvim's ui.kit
+---backs the prompt when installed, falls back to vim.ui.input otherwise
+---(docs/installation.md documents ui.nvim as optional). Re-checked on every
+---call rather than cached at module load, same as the rest of this module's
+---interactive path.
+---@param prompt_opts { title: string, default: string }
+---@param on_submit fun(value: string)
+local function prompt_input(prompt_opts, on_submit)
+  local ok_kit, kit = pcall(require, "ui.kit")
+  if ok_kit then
+    kit.input({ title = prompt_opts.title, default = prompt_opts.default, on_submit = on_submit })
+  else
+    vim.ui.input({ prompt = prompt_opts.title, default = prompt_opts.default }, function(value)
+      -- vim.ui.input calls back with nil on <Esc>; kit.input's on_submit
+      -- only ever saw "" for that case, so normalize here too.
+      on_submit(value or "")
+    end)
+  end
+end
+
 ---Interactive alignment with prompts.
 function M.align_interactive()
-  local kit = require("ui.kit")
   local last_col, last_fill = get_last()
-  kit.input({
-    title = "Target column: ",
-    default = tostring(last_col or ""),
-    on_submit = function(target_input)
+  prompt_input(
+    { title = "Target column: ", default = tostring(last_col or "") },
+    function(target_input)
       if target_input == "" then
         return
       end
@@ -237,16 +256,15 @@ function M.align_interactive()
         return
       end
       local fill_default = last_fill or " "
-      kit.input({
-        title = "Fill character (default: space): ",
-        default = fill_default,
-        on_submit = function(fill_input)
+      prompt_input(
+        { title = "Fill character (default: space): ", default = fill_default },
+        function(fill_input)
           local fill_char = (fill_input == "") and " " or fill_input
           M.align_to_column(target_col, fill_char)
-        end,
-      })
-    end,
-  })
+        end
+      )
+    end
+  )
 end
 
 ---Repeat the last alignment.

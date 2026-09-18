@@ -26,23 +26,39 @@ end
 ---`required`, so a cancelled kit.sync (<Esc> on a field) can only happen if
 ---the whole form is dismissed some other way -- kit.form's own cancel value
 ---then falls through to the `not values` check below.
+---
+---Soft dependency on ui.nvim's ui.kit, matching util/notify.lua's convention
+---(docs/installation.md documents ui.nvim as optional): without it, the two
+---fields are collected synchronously via vim.fn.input instead, guarded by
+---pcall so CTRL-C during either prompt cancels cleanly rather than raising.
 ---@return string[]|nil
 function M.guard_interactive()
-  local kit = require("ui.kit")
-  local values, cancelled = kit.sync(kit.form, {
-    fields = {
-      {
-        name = "condition",
-        label = "Condition to check (empty for 'condition'): ",
-        default = "condition",
+  local ok_kit, kit = pcall(require, "ui.kit")
+  local values, cancelled
+  if ok_kit then
+    values, cancelled = kit.sync(kit.form, {
+      fields = {
+        {
+          name = "condition",
+          label = "Condition to check (empty for 'condition'): ",
+          default = "condition",
+        },
+        {
+          name = "negation",
+          label = "Use 'not' prefix? (y/n): ",
+          default = "n",
+        },
       },
-      {
-        name = "negation",
-        label = "Use 'not' prefix? (y/n): ",
-        default = "n",
-      },
-    },
-  })
+    })
+  else
+    local ok_condition, condition =
+      pcall(vim.fn.input, "Condition to check (empty for 'condition'): ", "condition")
+    local ok_negation, negation = pcall(vim.fn.input, "Use 'not' prefix? (y/n): ", "n")
+    if not ok_condition or not ok_negation then
+      return nil
+    end
+    values, cancelled = { condition = condition, negation = negation }, false
+  end
   if cancelled or not values then
     return nil
   end

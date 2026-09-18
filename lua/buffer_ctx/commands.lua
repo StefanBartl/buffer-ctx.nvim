@@ -35,6 +35,18 @@ local git_op = require("buffer_ctx.ops.git")
 local bufinfo = require("buffer_ctx.ops.bufinfo")
 
 ---@internal
+---Soft dependency, matching util/notify.lua's convention: ui.nvim's ui.kit
+---backs the snippet/boilerplate pickers when installed, falls back to plain
+---vim.ui.select otherwise -- docs/installation.md documents ui.nvim as
+---optional, so the picker prompts must actually degrade rather than error.
+---Re-checked on every call (not cached at module load) so tests can swap
+---`package.loaded["ui.kit"]` in and out around a single dispatch call.
+---@return boolean ok_kit, table|nil kit
+local function resolve_kit()
+  return pcall(require, "ui.kit")
+end
+
+---@internal
 --- Route a result to the chosen sink
 ---@param text string
 ---@param sink BufferCtx.Sink
@@ -96,7 +108,11 @@ local DISPATCH = {
       sink_text(result, sink)
       return
     end
-    local opts = filepath.parse_args(fargs)
+    local opts, parse_err = filepath.parse_args(fargs)
+    if parse_err then
+      notify.error("[filepath] " .. parse_err)
+      return
+    end
     local result, err = filepath.get_path(opts)
     if not result then
       notify.error(err or "filepath failed")
@@ -175,18 +191,23 @@ local DISPATCH = {
         notify.error("no snippets configured (snippets = { paths = {…} })")
         return
       end
-      require("ui.kit").select({
-        items = keys,
-        title = "Snippet:",
-        on_select = function(choice)
-          local lines, err = snippet.get(choice)
-          if not lines then
-            notify.error(err or "snippet failed")
-            return
-          end
-          sink_lines(lines, sink)
-        end,
-      })
+      local function on_choice(choice)
+        if not choice then
+          return
+        end
+        local lines, err = snippet.get(choice)
+        if not lines then
+          notify.error(err or "snippet failed")
+          return
+        end
+        sink_lines(lines, sink)
+      end
+      local ok_kit, kit = resolve_kit()
+      if ok_kit then
+        kit.select({ items = keys, title = "Snippet:", on_select = on_choice })
+      else
+        vim.ui.select(keys, { prompt = "Snippet:" }, on_choice)
+      end
       return
     end
     local lines, err = snippet.get(name)
@@ -253,27 +274,33 @@ local DISPATCH = {
       for i, item in ipairs(keys) do
         display[i] = string.format("%-22s %s", item, descs[item] or "")
       end
-      require("ui.kit").select({
-        items = display,
-        title = "Boilerplate template:",
-        on_select = function(_, idx)
-          local choice = keys[idx]
-          if not choice then
-            return
-          end
-          local lines, err = boiler.get(choice, nil)
-          if not lines then
+      local function on_choice(_, idx)
+        local choice = keys[idx]
+        if not choice then
+          return
+        end
+        local lines, err, cancelled = boiler.get(choice, nil)
+        if not lines then
+          if not cancelled then
             notify.error(err or "boilerplate failed")
-            return
           end
-          sink_lines(lines, sink)
-        end,
-      })
+          return
+        end
+        sink_lines(lines, sink)
+      end
+      local ok_kit, kit = resolve_kit()
+      if ok_kit then
+        kit.select({ items = display, title = "Boilerplate template:", on_select = on_choice })
+      else
+        vim.ui.select(display, { prompt = "Boilerplate template:" }, on_choice)
+      end
       return
     end
-    local lines, err = boiler.get(key, name)
+    local lines, err, cancelled = boiler.get(key, name)
     if not lines then
-      notify.error(err or "boilerplate failed")
+      if not cancelled then
+        notify.error(err or "boilerplate failed")
+      end
       return
     end
     sink_lines(lines, sink)
