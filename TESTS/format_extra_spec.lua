@@ -238,6 +238,46 @@ return function(H)
     "enum_selection enumerates the real visual selection"
   )
 
+  -- ── ERR-10: an explicit command range must act on that range, not the
+  -- whole buffer -- end-to-end through the real :Format2 command, the same
+  -- path a user hits with ":10,20Format sort".
+  local buf_range = H.scratch(cwd .. "/format_extra_range.lua")
+  vim.api.nvim_buf_set_lines(buf_range, 0, -1, false, { "c", "b", "a" })
+  vim.cmd("2,3Format2 sort")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_range, 0, -1, false), "|"),
+    "c|a|b",
+    "Format sort with an explicit range only sorts that range, line 1 untouched"
+  )
+
+  vim.api.nvim_buf_set_lines(buf_range, 0, -1, false, { "keep", "un deux" })
+  vim.cmd("2,2Format2 enum")
+  H.eq(
+    vim.api.nvim_buf_get_lines(buf_range, 0, -1, false)[1],
+    "keep",
+    "Format enum with an explicit range leaves lines outside it untouched"
+  )
+  H.eq(
+    vim.api.nvim_buf_get_lines(buf_range, 0, -1, false)[2],
+    "1. un 2. deux",
+    "Format enum with an explicit range enumerates that range's tokens"
+  )
+
+  vim.bo[buf_range].textwidth = 0
+  vim.api.nvim_buf_set_lines(
+    buf_range,
+    0,
+    -1,
+    false,
+    { "unrelated long line untouched here", "a b c" }
+  )
+  vim.cmd("2,2Format2 textwidth 3")
+  H.eq(
+    vim.api.nvim_buf_get_lines(buf_range, 0, -1, false)[1],
+    "unrelated long line untouched here",
+    "Format textwidth with an explicit range leaves lines outside it untouched"
+  )
+
   -- ── filter_lines: OR-conditions and the "would remove everything" guard ──
   local filter_lines = require("buffer_ctx.format.filter_lines")
 
@@ -311,4 +351,47 @@ return function(H)
   local multi_table_result = vim.api.nvim_buf_get_lines(buf_multi_table, 0, -1, false)
   H.eq(multi_table_result[1], "| a | bb |", "scope=buffer formats the first table")
   H.eq(multi_table_result[4], "| c | d |", "scope=buffer also formats the second table")
+
+  -- ── UI-01: scope=cwd is a bulk/destructive action (rewrites *.md files on
+  -- disk) and must be confirmed once before it runs. Isolated in its own cwd
+  -- so it can't pick up this repo's own *.md files, and restored afterwards
+  -- regardless of outcome since every later spec depends on the real cwd.
+  do
+    local table_fmt = require("buffer_ctx.format.table_fmt")
+    local scope_dir = vim.fn.tempname()
+    vim.fn.mkdir(scope_dir, "p")
+    local scope_md = scope_dir .. "/t.md"
+    -- Ragged columns ("ccc" vs "a") so a successful format visibly widens
+    -- the header, same fixture shape as format_spec.lua's table_fmt test.
+    vim.fn.writefile({ "| a | b |", "|---|---|", "| ccc | d |" }, scope_md)
+    local orig_cwd = vim.fn.chdir(scope_dir)
+
+    local test_ok, test_err = pcall(function()
+      -- Headless Neovim's vim.fn.confirm() has no UI to block on: it answers
+      -- its own default choice immediately, which format_tables_in_scope
+      -- sets to "No" (index 2) -- so an unconfirmed bulk format must be a
+      -- no-op, not a silent rewrite.
+      local declined_ok = table_fmt.format_tables_in_scope({ scope = "cwd" })
+      H.ok(declined_ok, "format_tables_in_scope(cwd) reports ok even when declined")
+      H.eq(
+        vim.fn.readfile(scope_md)[1],
+        "| a | b |",
+        "UI-01: cwd-scope bulk format does not touch disk before confirmation"
+      )
+
+      local confirmed_ok = table_fmt.format_tables_in_scope({ scope = "cwd", confirm = false })
+      H.ok(confirmed_ok, "format_tables_in_scope(cwd, confirm=false) succeeds")
+      H.eq(
+        vim.fn.readfile(scope_md)[1],
+        "|  a  | b |",
+        "UI-01: confirm=false performs the bulk format, same as before this fix"
+      )
+    end)
+
+    vim.fn.chdir(orig_cwd)
+    vim.fn.delete(scope_dir, "rf")
+    if not test_ok then
+      error(test_err, 0)
+    end
+  end
 end

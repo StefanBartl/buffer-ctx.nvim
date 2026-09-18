@@ -95,7 +95,7 @@ local function setup_text_width()
     return
   end
   register_subcommand("textwidth", {
-    handler = function(args)
+    handler = function(args, ctx)
       if #args == 0 then
         notify.error("[textwidth] Usage: textwidth <N|max>")
         return
@@ -111,13 +111,29 @@ local function setup_text_width()
         end
       end
       vim.bo.textwidth = width
-      tw.reflow_buffer(0, width)
-      notify.info(string.format("Set textwidth=%d and reflowed buffer", width))
+      local reflow_ok, err
+      if ctx then
+        reflow_ok, err = tw.reflow_range(0, ctx.line1, ctx.line2, width)
+      else
+        reflow_ok, err = tw.reflow_buffer(0, width)
+      end
+      if not reflow_ok then
+        notify.error(string.format("[textwidth] %s", err or "reflow failed"))
+        return
+      end
+      if ctx then
+        notify.info(
+          string.format("Set textwidth=%d and reflowed lines %d-%d", width, ctx.line1, ctx.line2)
+        )
+      else
+        notify.info(string.format("Set textwidth=%d and reflowed buffer", width))
+      end
     end,
     complete = function()
       return { "max", "80", "120" }
     end,
     nargs = "1",
+    range = true,
     desc = "Reflow text to width: textwidth <N|max>",
   })
 end
@@ -243,13 +259,22 @@ local function setup_enum_lines()
   end
 
   register_subcommand("enum", {
-    handler = function(args)
+    handler = function(args, ctx)
       local opts, err = parse_enum_args(args)
       if err then
         notify.error(string.format("[enum] %s", err))
         return
       end
-      core.enum_selection(opts)
+      if ctx then
+        local result = core.enum_range(vim.api.nvim_get_current_buf(), ctx.line1, ctx.line2, opts)
+        if not result.ok then
+          notify.error(result.err or "Enumeration failed")
+          return
+        end
+        notify.info(string.format("Enumerated %d token(s)", result.count))
+      else
+        core.enum_selection(opts)
+      end
     end,
     complete = function(arg_lead)
       local candidates = {

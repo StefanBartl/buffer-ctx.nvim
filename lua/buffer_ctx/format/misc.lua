@@ -1,5 +1,7 @@
 ---@module 'buffer_ctx.format.misc'
---- Lightweight buffer-level formatting operations.
+--- Lightweight buffer-level formatting operations. Each operates on the
+--- whole buffer by default, or only the given command range when one is
+--- supplied (":10,20Format sort" sorts lines 10-20, not the whole buffer).
 ---
 --- Registers: trim, sort, unique, case, indent, clear.
 
@@ -23,10 +25,12 @@ local ok_lib_case, lib_change_case = pcall(require, "lib.lua.strings.case")
 -- ─────────────────────────────────────────────────────────────────────────────
 
 ---@internal
+---@param bufnr integer
+---@param s integer  1-based, inclusive
+---@param e integer  1-based, inclusive
 ---@return integer modified
-local function trim_whitespace()
-  local buf = api.nvim_get_current_buf()
-  local lines = api.nvim_buf_get_lines(buf, 0, -1, false)
+local function trim_whitespace(bufnr, s, e)
+  local lines = api.nvim_buf_get_lines(bufnr, s - 1, e, false)
   local new_lines, modified = {}, 0
   for _, line in ipairs(lines) do
     local trimmed = line:gsub("%s+$", "")
@@ -35,7 +39,7 @@ local function trim_whitespace()
       modified = modified + 1
     end
   end
-  api.nvim_buf_set_lines(buf, 0, -1, false, new_lines)
+  api.nvim_buf_set_lines(bufnr, s - 1, e, false, new_lines)
   return modified
 end
 
@@ -147,41 +151,72 @@ end
 -- Subcommand registration
 -- ─────────────────────────────────────────────────────────────────────────────
 
+---A command range must not be silently discarded in favor of the whole
+---buffer -- an explicit `:10,20Format sort` selects lines 10-20, not
+---everything. Mirrors blank_lines.lua's M.squeeze_buffer range resolution.
+---@internal
+---@param bufnr integer
+---@param ctx { line1: integer, line2: integer }|nil
+---@return integer s, integer e  1-based, inclusive
+local function resolve_range(bufnr, ctx)
+  local s = (ctx and ctx.line1) or 1
+  local e = (ctx and ctx.line2) or api.nvim_buf_line_count(bufnr)
+  if s > e then
+    s, e = e, s
+  end
+  return s, e
+end
+
 ---@param register_fn fun(name: string, def: table): nil
 function M.register_subcommands(register_fn)
   register_fn("clear", {
-    handler = function()
-      api.nvim_buf_set_lines(api.nvim_get_current_buf(), 0, -1, false, {})
-      notify.info("Buffer cleared")
+    handler = function(_, ctx)
+      local buf = api.nvim_get_current_buf()
+      local s, e = resolve_range(buf, ctx)
+      api.nvim_buf_set_lines(buf, s - 1, e, false, {})
+      if ctx then
+        notify.info(string.format("Cleared lines %d-%d", s, e))
+      else
+        notify.info("Buffer cleared")
+      end
     end,
     complete = function()
       return {}
     end,
     nargs = "0",
+    range = true,
     desc = "Clear buffer content",
   })
 
   register_fn("trim", {
-    handler = function()
-      local count = trim_whitespace()
+    handler = function(_, ctx)
+      local buf = api.nvim_get_current_buf()
+      local s, e = resolve_range(buf, ctx)
+      local count = trim_whitespace(buf, s, e)
       notify.info(string.format("Trimmed trailing whitespace on %d line(s)", count))
     end,
     complete = function()
       return {}
     end,
     nargs = "0",
+    range = true,
     desc = "Remove trailing whitespace from buffer",
   })
 
   register_fn("sort", {
-    handler = function(args)
+    handler = function(args, ctx)
       local reverse = vim.tbl_contains(args, "-r") or vim.tbl_contains(args, "--reverse")
       local ignore_case = vim.tbl_contains(args, "-i") or vim.tbl_contains(args, "--ignore-case")
       local numeric = vim.tbl_contains(args, "-n") or vim.tbl_contains(args, "--numeric")
       local buf = api.nvim_get_current_buf()
-      local lines = api.nvim_buf_get_lines(buf, 0, -1, false)
-      api.nvim_buf_set_lines(buf, 0, -1, false, sort_lines(lines, reverse, ignore_case, numeric))
-      notify.info("Buffer sorted")
+      local s, e = resolve_range(buf, ctx)
+      local lines = api.nvim_buf_get_lines(buf, s - 1, e, false)
+      api.nvim_buf_set_lines(buf, s - 1, e, false, sort_lines(lines, reverse, ignore_case, numeric))
+      if ctx then
+        notify.info(string.format("Sorted lines %d-%d", s, e))
+      else
+        notify.info("Buffer sorted")
+      end
     end,
     complete = function(arg_lead)
       local opts = { "-r", "--reverse", "-i", "--ignore-case", "-n", "--numeric" }
@@ -194,16 +229,18 @@ function M.register_subcommands(register_fn)
       return out
     end,
     nargs = "*",
+    range = true,
     desc = "Sort buffer lines: sort [-r] [-i] [-n]",
   })
 
   register_fn("unique", {
-    handler = function(args)
+    handler = function(args, ctx)
       local ignore_case = vim.tbl_contains(args, "-i") or vim.tbl_contains(args, "--ignore-case")
       local buf = api.nvim_get_current_buf()
-      local lines = api.nvim_buf_get_lines(buf, 0, -1, false)
+      local s, e = resolve_range(buf, ctx)
+      local lines = api.nvim_buf_get_lines(buf, s - 1, e, false)
       local uniq, removed = unique_lines(lines, ignore_case)
-      api.nvim_buf_set_lines(buf, 0, -1, false, uniq)
+      api.nvim_buf_set_lines(buf, s - 1, e, false, uniq)
       notify.info(string.format("Removed %d duplicate line(s)", removed))
     end,
     complete = function(arg_lead)
@@ -216,11 +253,12 @@ function M.register_subcommands(register_fn)
       return {}
     end,
     nargs = "*",
+    range = true,
     desc = "Remove duplicate buffer lines: unique [-i]",
   })
 
   register_fn("case", {
-    handler = function(args)
+    handler = function(args, ctx)
       if #args == 0 then
         notify.error("[case] Usage: case <upper|lower|title|sentence>")
         return
@@ -232,23 +270,25 @@ function M.register_subcommands(register_fn)
         return
       end
       local buf = api.nvim_get_current_buf()
-      local lines = api.nvim_buf_get_lines(buf, 0, -1, false)
+      local s, e = resolve_range(buf, ctx)
+      local lines = api.nvim_buf_get_lines(buf, s - 1, e, false)
       local new_lines = {}
       for _, line in ipairs(lines) do
         new_lines[#new_lines + 1] = change_case(line, mode)
       end
-      api.nvim_buf_set_lines(buf, 0, -1, false, new_lines)
+      api.nvim_buf_set_lines(buf, s - 1, e, false, new_lines)
       notify.info(string.format("Changed to %s case", mode))
     end,
     complete = function()
       return { "upper", "lower", "title", "sentence" }
     end,
     nargs = "1",
+    range = true,
     desc = "Change case: case <upper|lower|title|sentence>",
   })
 
   register_fn("indent", {
-    handler = function(args)
+    handler = function(args, ctx)
       local use_spaces = vim.bo.expandtab
       local width = vim.bo.shiftwidth > 0 and vim.bo.shiftwidth or vim.bo.tabstop
       if vim.tbl_contains(args, "--spaces") then
@@ -264,8 +304,9 @@ function M.register_subcommands(register_fn)
         end
       end
       local buf = api.nvim_get_current_buf()
-      local lines = api.nvim_buf_get_lines(buf, 0, -1, false)
-      api.nvim_buf_set_lines(buf, 0, -1, false, fix_indentation(lines, use_spaces, width))
+      local s, e = resolve_range(buf, ctx)
+      local lines = api.nvim_buf_get_lines(buf, s - 1, e, false)
+      api.nvim_buf_set_lines(buf, s - 1, e, false, fix_indentation(lines, use_spaces, width))
       notify.info(
         string.format("Fixed indentation (%s, width=%d)", use_spaces and "spaces" or "tabs", width)
       )
@@ -281,6 +322,7 @@ function M.register_subcommands(register_fn)
       return out
     end,
     nargs = "*",
+    range = true,
     desc = "Fix indentation: indent [--spaces|--tabs] [width]",
   })
 end
