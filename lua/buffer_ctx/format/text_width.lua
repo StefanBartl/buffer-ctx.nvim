@@ -152,18 +152,20 @@ end
 ---Reflow the whole buffer to `width`.
 ---@param bufnr integer|nil
 ---@param width integer
+---@return boolean ok, string|nil err
 function M.reflow_buffer(bufnr, width)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   if not vim.api.nvim_buf_is_valid(bufnr) then
-    return
+    return false, "invalid buffer"
   end
   width = tonumber(width) or 0
   if width <= 0 then
-    return
+    return false, "width must be a positive integer"
   end
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local new_lines = reflow_lines_region(lines, width)
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, new_lines)
+  return true, nil
 end
 
 ---Reflow only the range [start_line, end_line] (1-based, inclusive).
@@ -171,20 +173,25 @@ end
 ---@param start_line integer
 ---@param end_line   integer
 ---@param width      integer
+---@return boolean ok, string|nil err
 function M.reflow_range(bufnr, start_line, end_line, width)
   bufnr = bufnr or vim.api.nvim_get_current_buf()
   if not vim.api.nvim_buf_is_valid(bufnr) then
-    return
+    return false, "invalid buffer"
   end
   start_line = tonumber(start_line) or 1
   end_line = tonumber(end_line) or start_line
   width = tonumber(width) or 0
-  if width <= 0 or start_line < 1 or end_line < start_line then
-    return
+  if width <= 0 then
+    return false, "width must be a positive integer"
+  end
+  if start_line < 1 or end_line < start_line then
+    return false, "invalid range"
   end
   local region = vim.api.nvim_buf_get_lines(bufnr, start_line - 1, end_line, false)
   local new_region = reflow_lines_region(region, width)
   vim.api.nvim_buf_set_lines(bufnr, start_line - 1, end_line, false, new_region)
+  return true, nil
 end
 
 return M

@@ -44,17 +44,21 @@ Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Ma
 | Subcommand | Args | Action |
 |---|---|---|
 | `column <N> [fill]` | target column, fill char | Align visual selection to column — charwise/blockwise only, refused with a message on a linewise (`V`) selection, whose marks span column 0 to `MAXCOL` and give column alignment nothing to work with |
-| `table [ALIGN] [opts]` | `header=`, `cell=`, `skip=`, `scope=` | Format Markdown table(s) |
-| `textwidth <N\|max>` | number or `max` (window width) | Set `textwidth` and reflow text |
+| `table [ALIGN] [opts]` | `header=`, `cell=`, `skip=`, `scope=` | Format Markdown table(s). `scope=cwd` asks for confirmation once before rewriting every `*.md` file under cwd on disk |
+| `textwidth <N\|max>` | number or `max` (window width) | Set `textwidth` and reflow text (range-aware) |
 | `filter [--remove] <pat>` | pattern(s) | Keep or remove matching lines |
-| `enum [STYLE] [opts]` | `decimal`/`alpha`/`roman`, `sep=`, `start=`, `inline=` | Enumerate visual selection tokens |
-| `trim` | — | Remove trailing whitespace |
-| `sort [-r] [-i] [-n]` | flags | Sort lines |
-| `unique [-i]` | flag | Remove duplicate lines |
-| `case <mode>` | `upper`/`lower`/`title`/`sentence` | Change case |
-| `indent [--spaces\|--tabs] [N]` | flags, width | Fix indentation |
-| `clear` | — | Clear buffer |
+| `enum [STYLE] [opts]` | `decimal`/`alpha`/`roman`, `sep=`, `start=`, `inline=` | Enumerate a given range, or the visual selection (range-aware) |
+| `trim` | — (range-aware) | Remove trailing whitespace |
+| `sort [-r] [-i] [-n]` | flags (range-aware) | Sort lines |
+| `unique [-i]` | flag (range-aware) | Remove duplicate lines |
+| `case <mode>` | `upper`/`lower`/`title`/`sentence` (range-aware) | Change case |
+| `indent [--spaces\|--tabs] [N]` | flags, width (range-aware) | Fix indentation |
+| `clear` | — (range-aware) | Clear buffer |
 | `squeeze` | — (range-aware) | Collapse consecutive blank lines to at most one |
+
+`trim`/`sort`/`unique`/`case`/`indent`/`clear`/`textwidth`/`enum` act on the
+whole buffer by default, or only the given command range when one is
+explicit (e.g. `:10,20Format sort` sorts lines 10-20, not the whole buffer).
 
 ## Subcommand reference
 
