@@ -40,6 +40,31 @@ return function(H)
     "config.setup error names the expected shape"
   )
 
+  -- ERR-50: an unknown/mistyped key is rejected before the merge, not
+  -- deep-merged in as a dead field with the default silently still in force.
+  config.setup({ snipets = { paths = { "x" } }, mark = { command = "Mark3" } })
+  local sanitized = config.get()
+  H.eq(sanitized.snipets, nil, "config.setup: an unknown top-level key never reaches the merge")
+  H.eq(sanitized.mark.command, "Mark3", "config.setup: the sibling known key still applies")
+  local issues = config.issues()
+  H.eq(#issues, 1, "config.issues(): exactly the one unknown key is reported")
+  H.match(issues[1], "snipets", "config.issues(): the issue names the misspelled key")
+  H.match(issues[1], "did you mean 'snippets'", "config.issues(): a close known key is suggested")
+
+  config.setup({ mark = { keymap = { toggle = "<S-m>" } } })
+  local nested_issues = config.issues()
+  H.eq(#nested_issues, 1, "config.issues(): a misspelled nested key is reported too")
+  H.match(nested_issues[1], "mark%.keymap", "config.issues(): the issue is prefixed by its parent")
+
+  -- keymaps/format/mark also accept a plain boolean override (not just a
+  -- table), which is not itself an unknown-key/wrong-type issue.
+  config.setup({ keymaps = false, format = false })
+  H.eq(#config.issues(), 0, "config.issues(): a documented boolean override reports no issue")
+  H.eq(config.get().keymaps, false, "config.setup: boolean override on a table-shaped key applies")
+
+  config.setup(nil)
+  H.eq(#config.issues(), 0, "config.issues(): a clean setup() call reports nothing")
+
   -- ── health: default config, everything enabled ────────────────────────────
   config.setup(nil)
   local health_ok = pcall(require("buffer_ctx.health").check)

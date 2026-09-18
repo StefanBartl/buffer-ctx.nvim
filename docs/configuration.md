@@ -48,3 +48,9 @@ require("buffer_ctx").setup({
 ```
 
 See [Keymaps & commands cheatsheet](BINDINGS.md) for how these options map to the keymaps and user commands they control.
+
+An unknown or misspelled option (e.g. `snipets` or `mark.keymap`) is dropped
+before the merge rather than silently deep-merged in as a dead key — a
+warning names it, with a "did you mean …" hint when a nearby known option
+exists. `:checkhealth buffer_ctx` reports the same issues from the last
+`setup()` call.
