@@ -79,7 +79,10 @@ function M.get_range(mode, line1, line2)
     return nil, err
   end
 
-  if not line1 or not line2 or line1 == line2 then
+  -- commands.lua passes nil/nil for "no range given"; a non-nil line1 ==
+  -- line2 is an explicit single-line range from the caller and must not be
+  -- overridden by a stale visual selection elsewhere in the buffer.
+  if not line1 or not line2 then
     local vstart, vend = fn.line("'<"), fn.line("'>")
     if vstart and vend and vstart > 0 and vend > 0 and vstart ~= vend then
       line1, line2 = vstart, vend
