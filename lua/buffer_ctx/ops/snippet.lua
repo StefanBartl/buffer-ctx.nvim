@@ -13,6 +13,7 @@
 
 local M = {}
 local fn = vim.fn
+local expand_path = require("lib.nvim.cross.fs.expand_path")
 
 ---Snippet source files, newest configuration wins.
 ---@type string[]
@@ -24,7 +25,10 @@ function M.set_sources(paths)
   sources = {}
   for _, p in ipairs(paths or {}) do
     if type(p) == "string" and p ~= "" then
-      sources[#sources + 1] = fn.expand(p)
+      -- Pure ~/env expansion only -- no shell, no globbing, no Vim specials,
+      -- unlike vim.fn.expand() on a path that can contain glob metacharacters
+      -- or a backtick span.
+      sources[#sources + 1] = expand_path(p)
     end
   end
 end
@@ -93,7 +97,7 @@ function M.load()
       errors[#errors + 1] = err
     end
   end
-  if vim.tbl_isempty(all) and #errors > 0 then
+  if #errors > 0 then
     return all, table.concat(errors, "; ")
   end
   return all, nil
@@ -137,6 +141,13 @@ function M.get(name)
     end
   end
   if not entry then
+    -- A snippet missing by that name/prefix might just be a typo -- but it
+    -- might also be sitting in a source file that failed to load (see
+    -- M.load's partial-failure `err`), which is worth surfacing here rather
+    -- than dropping now that a healthy source exists too.
+    if err then
+      return nil, string.format("unknown snippet: %s (%s)", name, err)
+    end
     return nil, "unknown snippet: " .. name
   end
 
@@ -151,7 +162,14 @@ function M.get(name)
 
   local lines = {}
   for _, line in ipairs(body) do
-    lines[#lines + 1] = strip_tabstops(tostring(line))
+    -- JSON null decodes to vim.NIL (userdata, not Lua nil); a nested
+    -- object/array or number is likewise not something a plain text line
+    -- should ever silently stringify to.
+    local v = line
+    if v == vim.NIL or type(v) ~= "string" then
+      v = ""
+    end
+    lines[#lines + 1] = strip_tabstops(v)
   end
   return lines, nil
 end
