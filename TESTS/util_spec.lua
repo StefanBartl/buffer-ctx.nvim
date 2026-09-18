@@ -86,14 +86,11 @@ return function(H)
   local map = require("buffer_ctx.util.map")
   H.eq(notify.using_lib(), true, "notify.using_lib() is true with lib.nvim on the runtimepath")
 
-  -- BUG, pinned rather than silently worked around: util/map.lua detects
-  -- lib.nvim with `type(lib_map) == "function"`, but
-  -- require("lib.nvim.bindings.keymap") returns a *table* that is merely
-  -- made callable via `__call` (documented in that module's own header) —
-  -- `type()` reports "table" regardless of `__call`, so this check is always
-  -- false and buffer_ctx.util.map never actually uses lib.nvim's keymap
-  -- helper, even when it is installed. See the final test-coverage report.
-  H.eq(map.using_lib(), false, "BUG: map.using_lib() is always false, even with lib.nvim present")
+  -- require("lib.nvim.bindings.keymap") returns a *table* made callable via
+  -- `__call` (documented in that module's own header), not a function --
+  -- util/map.lua's has_lib guard checks `type(lib_map) == "table"` to match,
+  -- same as the sibling check in util/notify.lua.
+  H.eq(map.using_lib(), true, "map.using_lib() is true with lib.nvim on the runtimepath")
 
   -- ── notify: fallback path when lib.nvim.notify is unavailable ─────────────
   -- Module-level: `resolve()` runs once at require time, so the fallback is
