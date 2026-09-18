@@ -7,6 +7,19 @@ local api = vim.api
 local fn = vim.fn
 local pu = require("buffer_ctx.util.path")
 
+---@internal
+---`vim.fn.input` raises `Vim:Interrupt` on CTRL-C at the prompt, and nothing
+---above this module's callers (composer's route dispatch) catches it --
+---pcall it so a cancelled prompt reads as empty input (the same outcome as
+---pressing Enter on an empty prompt) instead of a raw error traceback.
+---@param prompt string
+---@param default? string
+---@return string
+local function safe_input(prompt, default)
+  local ok, result = pcall(fn.input, prompt, default or "")
+  return ok and result or ""
+end
+
 ---Get a single-line annotation string
 ---Returns nil for "function" (interactive, returns lines[])
 ---@param ann_type BufferCtx.AnnotationType
@@ -26,34 +39,34 @@ function M.get(ann_type, args)
     end
     return string.format("---@module '%s'", mod), nil
   elseif t == "class" then
-    local class_name = args[1] or fn.input("Class name: ")
+    local class_name = args[1] or safe_input("Class name: ")
     if not class_name or class_name == "" then
       return nil, "class name required"
     end
     return string.format("---@class %s", class_name), nil
   elseif t == "field" then
-    local fname = args[1] or fn.input("Field name: ")
-    local ftype = args[2] or fn.input("Field type: ")
+    local fname = args[1] or safe_input("Field name: ")
+    local ftype = args[2] or safe_input("Field type: ")
     if not fname or fname == "" then
       return nil, "field name required"
     end
     ftype = (ftype ~= "") and ftype or "any"
     return string.format("---@field %s %s", fname, ftype), nil
   elseif t == "param" then
-    local pname = args[1] or fn.input("Param name: ")
-    local ptype = args[2] or fn.input("Param type: ")
+    local pname = args[1] or safe_input("Param name: ")
+    local ptype = args[2] or safe_input("Param type: ")
     if not pname or pname == "" then
       return nil, "param name required"
     end
     ptype = (ptype ~= "") and ptype or "any"
     return string.format("---@param %s %s", pname, ptype), nil
   elseif t == "return" then
-    local rtype = args[1] or fn.input("Return type: ")
+    local rtype = args[1] or safe_input("Return type: ")
     rtype = (rtype ~= "") and rtype or "any"
     return string.format("---@return %s", rtype), nil
   elseif t == "alias" then
-    local aname = args[1] or fn.input("Alias name: ")
-    local atype = args[2] or fn.input("Alias type: ")
+    local aname = args[1] or safe_input("Alias name: ")
+    local atype = args[2] or safe_input("Alias type: ")
     if not aname or aname == "" then
       return nil, "alias name required"
     end
@@ -62,7 +75,7 @@ function M.get(ann_type, args)
   elseif t == "overload" then
     -- Args arrive pre-split on whitespace, so rejoin them: a signature like
     -- "fun(a: string, b: number): boolean" is several fargs, not one.
-    local sig = (#args > 0) and table.concat(args, " ") or fn.input("Overload signature: ")
+    local sig = (#args > 0) and table.concat(args, " ") or safe_input("Overload signature: ")
     if not sig or sig == "" then
       return nil, "overload signature required"
     end
@@ -71,13 +84,13 @@ function M.get(ann_type, args)
     end
     return string.format("---@overload %s", sig), nil
   elseif t == "diagnostic" then
-    local code = args[1] or fn.input("Diagnostic code: ")
+    local code = args[1] or safe_input("Diagnostic code: ")
     if not code or code == "" then
       return nil, "diagnostic code required"
     end
     return string.format("---@diagnostic disable-next-line: %s", code), nil
   elseif t == "deprecated" then
-    local reason = (#args > 0) and table.concat(args, " ") or fn.input("Deprecation reason: ")
+    local reason = (#args > 0) and table.concat(args, " ") or safe_input("Deprecation reason: ")
     if not reason or reason == "" then
       return nil, "deprecation reason required"
     end
@@ -93,19 +106,19 @@ end
 ---Interactive multi-line @param/@return dialog
 ---@return string[]|nil lines, string|nil err
 function M._interactive_function()
-  local desc = fn.input("Function description: ")
+  local desc = safe_input("Function description: ")
 
   local params = {}
   while true do
-    local pname = fn.input("Param name (empty to stop): ")
+    local pname = safe_input("Param name (empty to stop): ")
     if pname == "" then
       break
     end
-    local ptype = fn.input("  " .. pname .. " type: ")
+    local ptype = safe_input("  " .. pname .. " type: ")
     params[#params + 1] = { name = pname, type = ptype ~= "" and ptype or "any" }
   end
 
-  local ret_type = fn.input("Return type (empty to skip): ")
+  local ret_type = safe_input("Return type (empty to skip): ")
 
   local lines = {}
   if desc ~= "" then
