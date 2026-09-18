@@ -7,7 +7,10 @@
 local M = {}
 
 local ok_lib_map, lib_map = pcall(require, "lib.nvim.bindings.keymap")
-local has_lib = ok_lib_map and type(lib_map) == "function"
+-- lib.nvim.bindings.keymap is a table made callable via a `__call`
+-- metamethod (see its init.lua), so `type()` reports "table", not
+-- "function" -- matching util/notify.lua's sibling check against "table".
+local has_lib = ok_lib_map and type(lib_map) == "table"
 
 ---Set a keymap with buffer-ctx defaults (noremap + silent).
 ---@param modes string|string[]
