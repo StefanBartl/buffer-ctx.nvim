@@ -193,6 +193,8 @@ end
 ---@param key string
 ---@param name? string  optional id/name arg passed to the generator
 ---@return string[]|nil lines, string|nil err
+---@return boolean|nil cancelled  true when an interactive generator returned
+--- nil because the user cancelled the prompt, not because generation failed
 function M.get(key, name)
   for _, entry in ipairs(REGISTRY) do
     if entry.key == key then
@@ -206,10 +208,16 @@ function M.get(key, name)
         return nil, "template function not found: " .. entry.fn
       end
 
+      local lines
       if entry.has_id and name and name ~= "" then
-        return gen(name), nil
+        lines = gen(name)
+      else
+        lines = gen()
       end
-      return gen(), nil
+      if lines == nil and entry.is_interactive then
+        return nil, nil, true
+      end
+      return lines, nil
     end
   end
   return nil, "unknown template: " .. tostring(key)

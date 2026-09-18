@@ -171,6 +171,37 @@ return function(H)
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
   end
 
+  do
+    -- ERR-11: a cancelled interactive prompt (<Esc> on the form) is not the
+    -- same outcome as generation actually failing -- boiler.get's third
+    -- return value must let a caller tell the two apart instead of both
+    -- collapsing onto "nil, some-error".
+    package.loaded["ui.kit"] = {
+      form = function(opts)
+        opts.on_cancel()
+      end,
+      sync = function(open_fn, sync_opts)
+        local result, cancelled
+        open_fn(vim.tbl_extend("force", sync_opts, {
+          on_submit = function(v)
+            result = v
+          end,
+          on_cancel = function()
+            cancelled = true
+          end,
+        }))
+        return result, cancelled or false, false
+      end,
+    }
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+    local cancel_lines, cancel_err, cancelled = boiler.get("guard-clause", nil)
+    H.eq(cancel_lines, nil, "guard-clause cancel: no lines produced")
+    H.eq(cancel_err, nil, "guard-clause cancel: no error object -- a cancel is not a failure")
+    H.eq(cancelled, true, "guard-clause cancel: the cancelled flag distinguishes it from a failure")
+    package.loaded["ui.kit"] = nil
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+  end
+
   -- ── env completion ───────────────────────────────────────────────────────
   local env_op = require("buffer_ctx.ops.env")
   vim.fn.setenv("BUFFER_CTX_SPEC_VAR", "1")

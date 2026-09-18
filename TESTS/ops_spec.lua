@@ -101,6 +101,15 @@ return function(H)
   H.eq(filepath_op.parse_args({ "relative" }).mode, "cwd", "filepath parse_args relative alias")
   H.eq(filepath_op.parse_args({ "rel" }).mode, "cwd", "filepath parse_args rel alias")
 
+  -- ERR-10: a typo'd token must not silently behave like "no argument" --
+  -- it has to come back as a distinct error, not fall through unreported.
+  local _, no_err = filepath_op.parse_args({ "abs" })
+  H.eq(no_err, nil, "filepath parse_args: a valid token reports no error")
+  local opts3, typo_err = filepath_op.parse_args({ "absolut" })
+  H.eq(opts3.mode, "cwd", "filepath parse_args: an unrecognised token leaves mode at its default")
+  H.ok(typo_err ~= nil, "filepath parse_args: an unrecognised token reports an error")
+  H.match(typo_err, "absolut", "filepath parse_args: the error names the offending token")
+
   H.scratch(cwd .. "/lua/foo/qux.lua")
   H.eq(
     filepath_op.get_path({ mode = "cwd", format = "unix" }),
