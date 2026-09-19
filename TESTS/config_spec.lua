@@ -65,6 +65,56 @@ return function(H)
   config.setup(nil)
   H.eq(#config.issues(), 0, "config.issues(): a clean setup() call reports nothing")
 
+  -- ERR-22: a known key with a wrong-typed VALUE (not an unknown key) must
+  -- degrade to its default rather than being merged in as-is -- a non-string
+  -- `format.command` used to reach lib.nvim's composer.verb() unvalidated
+  -- and error the whole setup() call.
+  local err22_ok = pcall(config.setup, { format = { command = 42 } })
+  H.ok(err22_ok, "config.setup: an invalid leaf value no longer errors setup()")
+  H.eq(
+    config.get().format.command,
+    "Format",
+    "config.setup: invalid format.command degrades to its default"
+  )
+  local err22_issues = config.issues()
+  H.eq(#err22_issues, 1, "config.issues(): the invalid leaf value is reported")
+  H.match(err22_issues[1], "format%.command", "config.issues(): the issue names the offending path")
+  H.match(
+    err22_issues[1],
+    "must be string, got number",
+    "config.issues(): the issue names expected/actual type"
+  )
+
+  -- A wrong-typed leaf inside `mark` (already guarded ad-hoc by
+  -- buffer_ctx.mark itself, but previously invisible to :checkhealth).
+  config.setup({
+    mark = { command = 7 },
+    commands = "yes",
+    which_key = 1,
+    timestamp = { utc = "x" },
+  })
+  local merged_after_err22 = config.get()
+  H.eq(
+    merged_after_err22.mark.command,
+    "Mark",
+    "config.setup: invalid mark.command degrades to its default"
+  )
+  H.eq(merged_after_err22.commands, true, "config.setup: invalid commands degrades to its default")
+  H.eq(
+    merged_after_err22.which_key,
+    true,
+    "config.setup: invalid which_key degrades to its default"
+  )
+  H.eq(
+    merged_after_err22.timestamp.utc,
+    false,
+    "config.setup: invalid timestamp.utc degrades to its default"
+  )
+  H.eq(#config.issues(), 4, "config.issues(): every invalid leaf in the call is reported")
+
+  config.setup(nil)
+  H.eq(#config.issues(), 0, "config.issues(): a clean setup() call reports nothing (post ERR-22)")
+
   -- ── health: default config, everything enabled ────────────────────────────
   config.setup(nil)
   local health_ok = pcall(require("buffer_ctx.health").check)
