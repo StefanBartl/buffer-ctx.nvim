@@ -19,26 +19,44 @@ local _issues = {}
 
 ---Keys `setup()` accepts and, for the option tables among them, their keys.
 ---A nested table's keys are validated one level deep; deeper structures
----(`mark.keymaps`, `mark.sign`, `mark.categories`) are accepted opaquely --
----their own shapes are documented in @types.lua and validated by the
----consumers that read them.
+---(`mark.sign`, `mark.categories`) are accepted opaquely -- their own shapes
+---are documented in @types.lua and validated by the consumers that read
+---them.
 ---
 ---A leaf's value is `true` when any value is accepted opaquely (validated
----downstream, e.g. by lib.nvim's keymap registry, or -- for `mark.keymaps` /
----`mark.sign` / `mark.categories` -- by `buffer_ctx.mark` itself), or a Lua
----`type()` name (`"boolean"`, `"string"`) when the field has exactly one
----valid type (ERR-22): a value of any other type is dropped here rather than
----merged in, so `vim.tbl_deep_extend` falls through to the default instead of
----using the bad value as-is or letting it reach code that assumes the right
----type (e.g. a non-string `format.command` reaching `composer.verb`).
+---downstream, e.g. by lib.nvim's keymap registry, or -- for `mark.sign` /
+---`mark.categories` -- by `buffer_ctx.mark` itself); a Lua `type()` name
+---(`"boolean"`, `"string"`) when the field has exactly one valid type
+---(ERR-22); or one of the sentinel spec names below for a constraint a bare
+---`type()` name can't express. In every case a value that fails the check is
+---dropped here rather than merged in, so `vim.tbl_deep_extend` falls through
+---to the default instead of using the bad value as-is or letting it reach
+---code that assumes more than the right Lua type -- e.g. an empty-string
+---`format.command`/`mark.command` reaching `composer.verb`'s
+---non-empty-string assert, or a non-table, non-`false` `mark.keymaps`
+---reaching `mark.init`'s unguarded `km.toggle` index (ERR-22 follow-up,
+---adversarial review of 6018519).
+---
+---Sentinel spec names:
+---  "nonempty_string" -- a `string` that is not `""` (command-name-shaped
+---                        fields fed straight to `composer.verb`/`register`,
+---                        which assert `name ~= ""`)
+---  "table_or_false"  -- a `table`, or the literal `false` (fields whose
+---                        @types union is `SomeTable | false`)
 ---@type table<string, true|string|table<string, true|string>>
 local KNOWN = {
   keymaps = { location_copy = true, module_copy = true, filepath_copy = true },
   commands = "boolean",
   timestamp = { utc = "boolean" },
   snippets = { paths = true },
-  format = { enable = "boolean", command = "string" },
-  mark = { enable = "boolean", command = "string", keymaps = true, sign = true, categories = true },
+  format = { enable = "boolean", command = "nonempty_string" },
+  mark = {
+    enable = "boolean",
+    command = "nonempty_string",
+    keymaps = "table_or_false",
+    sign = true,
+    categories = true,
+  },
   which_key = "boolean",
 }
 
@@ -72,12 +90,33 @@ end
 
 ---@internal
 ---Whether `value` satisfies leaf spec `spec` (`true` = any value accepted
----opaquely, a `type()` name = exactly that type).
+---opaquely, a `type()` name = exactly that type, or one of the
+---"nonempty_string" / "table_or_false" sentinels -- see `KNOWN`).
 ---@param spec true|string
 ---@param value any
 ---@return boolean
 local function leaf_ok(spec, value)
+  if spec == "nonempty_string" then
+    return type(value) == "string" and value ~= ""
+  end
+  if spec == "table_or_false" then
+    return value == false or type(value) == "table"
+  end
   return spec == true or type(value) == spec
+end
+
+---@internal
+---Human-readable description of leaf spec `spec`, for `describe_invalid`.
+---@param spec string
+---@return string
+local function describe_spec(spec)
+  if spec == "nonempty_string" then
+    return "a non-empty string"
+  end
+  if spec == "table_or_false" then
+    return "a table or false"
+  end
+  return spec
 end
 
 ---@internal
@@ -90,7 +129,7 @@ local function describe_invalid(path, expected, value)
   return string.format(
     "option '%s' must be %s, got %s -- using the default",
     path,
-    expected,
+    describe_spec(expected),
     type(value)
   )
 end
