@@ -81,7 +81,7 @@ return function(H)
   H.match(err22_issues[1], "format%.command", "config.issues(): the issue names the offending path")
   H.match(
     err22_issues[1],
-    "must be string, got number",
+    "must be a non%-empty string, got number",
     "config.issues(): the issue names expected/actual type"
   )
 
@@ -114,6 +114,80 @@ return function(H)
 
   config.setup(nil)
   H.eq(#config.issues(), 0, "config.issues(): a clean setup() call reports nothing (post ERR-22)")
+
+  -- ERR-22 follow-up (adversarial review of 6018519): an empty string is a
+  -- `type() == "string"` value, so the plain type check from 6018519 let it
+  -- through, and `format.command`/`mark.command` reach lib.nvim's
+  -- composer.verb()/register() unvalidated, which assert a *non-empty*
+  -- string name and error the whole setup() call. Both command-name-shaped
+  -- fields must reject "" too and degrade to their default.
+  local err22b_ok = pcall(config.setup, { format = { command = "" } })
+  H.ok(err22b_ok, "config.setup: an empty format.command no longer errors setup()")
+  H.eq(
+    config.get().format.command,
+    "Format",
+    "config.setup: empty format.command degrades to its default"
+  )
+  local err22b_issues = config.issues()
+  H.eq(#err22b_issues, 1, "config.issues(): the empty format.command is reported")
+  H.match(
+    err22b_issues[1],
+    "must be a non%-empty string",
+    "config.issues(): the issue says a non-empty string is expected"
+  )
+
+  local err22c_ok = pcall(config.setup, { mark = { command = "" } })
+  H.ok(err22c_ok, "config.setup: an empty mark.command no longer errors setup()")
+  H.eq(
+    config.get().mark.command,
+    "Mark",
+    "config.setup: empty mark.command degrades to its default"
+  )
+  H.match(
+    config.issues()[1],
+    "mark%.command",
+    "config.issues(): the empty mark.command issue names the offending path"
+  )
+
+  -- ERR-22 follow-up: `mark.keymaps` used to be accepted opaquely (spec
+  -- `true`), on the claim that buffer_ctx.mark validated it itself -- it
+  -- does not: a non-table, non-`false` value (e.g. a bare number) reaches
+  -- an unguarded `km.toggle` index in mark/init.lua and errors setup().
+  -- config.setup() must catch the wrong type at the validation boundary,
+  -- before it ever reaches mark/init.lua.
+  local err22d_ok = pcall(config.setup, { mark = { keymaps = 42 } })
+  H.ok(err22d_ok, "config.setup: a non-table, non-false mark.keymaps no longer errors setup()")
+  H.eq(
+    type(config.get().mark.keymaps),
+    "table",
+    "config.setup: invalid mark.keymaps degrades to its default table"
+  )
+  H.eq(
+    config.get().mark.keymaps.toggle,
+    "<S-m>",
+    "config.setup: the default mark.keymaps.toggle is restored"
+  )
+  local err22d_issues = config.issues()
+  H.eq(#err22d_issues, 1, "config.issues(): the invalid mark.keymaps is reported")
+  H.match(err22d_issues[1], "mark%.keymaps", "config.issues(): the issue names mark.keymaps")
+  H.match(
+    err22d_issues[1],
+    "must be a table or false",
+    "config.issues(): the issue describes the table%-or%-false constraint"
+  )
+
+  -- `mark.keymaps = false` (the documented boolean override) must still be
+  -- accepted as-is, not treated as an invalid leaf.
+  config.setup({ mark = { keymaps = false } })
+  H.eq(#config.issues(), 0, "config.issues(): mark.keymaps = false reports no issue")
+  H.eq(config.get().mark.keymaps, false, "config.setup: mark.keymaps = false applies as-is")
+
+  config.setup(nil)
+  H.eq(
+    #config.issues(),
+    0,
+    "config.issues(): a clean setup() call reports nothing (post ERR-22 follow-up)"
+  )
 
   -- ── health: default config, everything enabled ────────────────────────────
   config.setup(nil)
