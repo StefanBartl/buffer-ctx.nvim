@@ -53,8 +53,14 @@ function M.guard_interactive()
   else
     local ok_condition, condition =
       pcall(vim.fn.input, "Condition to check (empty for 'condition'): ", "condition")
+    -- Cancel the whole form on the first prompt, like kit.form does: without
+    -- this, CTRL-C here still fell through to the second vim.fn.input call
+    -- instead of returning immediately.
+    if not ok_condition then
+      return nil
+    end
     local ok_negation, negation = pcall(vim.fn.input, "Use 'not' prefix? (y/n): ", "n")
-    if not ok_condition or not ok_negation then
+    if not ok_negation then
       return nil
     end
     values, cancelled = { condition = condition, negation = negation }, false

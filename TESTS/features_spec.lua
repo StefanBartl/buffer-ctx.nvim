@@ -202,6 +202,35 @@ return function(H)
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
   end
 
+  do
+    -- LLS-31: the vim.fn.input fallback (ui.kit absent) used to run its
+    -- second prompt unconditionally, even when the first was cancelled with
+    -- CTRL-C -- a cancel must short-circuit the whole form, matching
+    -- kit.form's cancel semantics above, not surface a second, unwanted
+    -- prompt before finally returning nil.
+    package.loaded["ui.kit"] = nil -- no stub: require("ui.kit") fails for real here
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+
+    local orig_input = vim.fn.input
+    local input_calls = {}
+    vim.fn.input = function(prompt, default)
+      input_calls[#input_calls + 1] = prompt
+      if prompt:find("Condition to check", 1, true) then
+        error("CTRL-C") -- simulates the user cancelling the first prompt
+      end
+      return default
+    end
+
+    local guard = require("buffer_ctx.ops.boilerplate.templates.guard")
+    local result = guard.guard_interactive()
+
+    vim.fn.input = orig_input
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+
+    H.eq(result, nil, "guard-clause fallback cancel: returns nil")
+    H.eq(#input_calls, 1, "guard-clause fallback cancel: the second prompt never fires")
+  end
+
   -- ── env completion ───────────────────────────────────────────────────────
   local env_op = require("buffer_ctx.ops.env")
   vim.fn.setenv("BUFFER_CTX_SPEC_VAR", "1")
