@@ -31,13 +31,13 @@ an annotation, a boilerplate header.
 Start at [docs/README.md](docs/README.md) — what's where, and which question
 each page answers.
 
-**The Basics**
+### The Basics
 
 - [Requirements](docs/installation.md#requirements) — Neovim version, required and optional plugins.
 - [Installation](docs/installation.md) — plugin managers and load-trigger variants.
 - [Quickstart](docs/quickstart.md) — the first commands to run after installing.
 
-**Using it**
+### Using it
 
 - [Configuration](docs/configuration.md) — every `setup()` option and its default.
 - [Commands](docs/commands.md) — the four command trees, subcommand by subcommand.
@@ -47,7 +47,7 @@ each page answers.
 - [Workflow](docs/WORKFLOW.md) — not what each subcommand does, but how they combine into a way of working.
 - [Lua API](docs/api.md) — the `require("buffer_ctx")` surface a config or another plugin may call.
 
-**The Rest**
+### The Rest
 
 - [Around it](docs/around-it.md) — how this plugin's scope differs from its siblings in the collection.
 - [Architecture](docs/architecture.md) — source tree layout and module responsibilities.
