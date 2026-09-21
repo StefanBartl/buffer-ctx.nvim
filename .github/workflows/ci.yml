@@ -10,6 +10,7 @@ jobs:
   lint:
     name: stylua + luacheck
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -29,11 +30,20 @@ jobs:
           sudo luarocks install luacheck 1.2.0
 
       - name: luacheck
-        run: luacheck lua/ TESTS/ plugin/
+        run: |
+          exec > >(tee -a "$RUNNER_TEMP/test-output.log") 2>&1
+          luacheck lua/ TESTS/ plugin/
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-output-lint
+          path: ${{ runner.temp }}/test-output.log
+          if-no-files-found: ignore
 
   test:
     name: headless specs (${{ matrix.os }}, Neovim ${{ matrix.nvim }})
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
     strategy:
       fail-fast: false
       # Three platforms on stable, plus nightly on Linux only -- deliberately
@@ -76,11 +86,20 @@ jobs:
 
       - name: Run TESTS/run.lua
         working-directory: buffer-ctx.nvim
-        run: nvim --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
+        run: |
+          exec > >(tee -a "$RUNNER_TEMP/test-output.log") 2>&1
+          nvim -n -i NONE --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-output-test-${{ matrix.os }}
+          path: ${{ runner.temp }}/test-output.log
+          if-no-files-found: ignore
 
   health:
     name: checkhealth loads
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
         with:
@@ -100,8 +119,15 @@ jobs:
       - name: setup() + :checkhealth buffer_ctx
         working-directory: buffer-ctx.nvim
         run: |
-          nvim --headless -u NONE \
+          exec > >(tee -a "$RUNNER_TEMP/test-output.log") 2>&1
+          nvim -n -i NONE --headless -u NONE \
             -c "set rtp+=.,../lib.nvim" \
             -c "lua require('buffer_ctx').setup({})" \
             -c "checkhealth buffer_ctx" \
             -c "qa!"
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-output-health
+          path: ${{ runner.temp }}/test-output.log
+          if-no-files-found: ignore
