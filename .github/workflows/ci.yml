@@ -17,7 +17,7 @@ jobs:
       # Pinned (not "latest"): stylua's own rule changes between releases
       # would otherwise make this gate fail without any local diff to blame.
       - name: stylua (check only)
-        uses: JohnnyMorganz/stylua-action@v4
+        uses: JohnnyMorganz/stylua-action@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: v2.5.2
