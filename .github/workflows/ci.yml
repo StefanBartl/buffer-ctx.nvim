@@ -33,12 +33,13 @@ jobs:
         run: |
           exec > >(tee -a "$RUNNER_TEMP/test-output.log") 2>&1
           luacheck lua/ TESTS/ plugin/
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: test-output-lint
           path: ${{ runner.temp }}/test-output.log
           if-no-files-found: ignore
+          retention-days: 14
 
   test:
     name: headless specs (${{ matrix.os }}, Neovim ${{ matrix.nvim }})
@@ -89,12 +90,13 @@ jobs:
         run: |
           exec > >(tee -a "$RUNNER_TEMP/test-output.log") 2>&1
           nvim -n -i NONE --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
-          name: test-output-test-${{ matrix.os }}
+          name: test-output-test-${{ matrix.os }}-${{ matrix.nvim }}
           path: ${{ runner.temp }}/test-output.log
           if-no-files-found: ignore
+          retention-days: 14
 
   health:
     name: checkhealth loads
@@ -125,9 +127,10 @@ jobs:
             -c "lua require('buffer_ctx').setup({})" \
             -c "checkhealth buffer_ctx" \
             -c "qa!"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: failure()
         with:
           name: test-output-health
           path: ${{ runner.temp }}/test-output.log
           if-no-files-found: ignore
+          retention-days: 14
