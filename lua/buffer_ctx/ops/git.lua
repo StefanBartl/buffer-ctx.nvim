@@ -5,17 +5,14 @@
 --- so the result is correct even when :cd points somewhere else.
 ---@see buffer_ctx.ops.location for the file-position counterpart
 
+local lib_git = require("lib.nvim.git")
+
 local M = {}
 local api = vim.api
 local fn = vim.fn
 
----@type table<string, string[]>
-local ARGV = {
-  hash = { "rev-parse", "HEAD" },
-  short = { "rev-parse", "--short", "HEAD" },
-  branch = { "rev-parse", "--abbrev-ref", "HEAD" },
-  tag = { "describe", "--tags", "--always" },
-}
+---@type table<string, boolean>
+local MODES = { hash = true, short = true, branch = true, tag = true }
 
 ---@internal
 ---Directory to run git in: the buffer's own directory, else cwd.
@@ -36,8 +33,7 @@ end
 ---@return string|nil result, string|nil err
 function M.get(mode)
   mode = (mode or "short"):lower()
-  local argv = ARGV[mode]
-  if not argv then
+  if not MODES[mode] then
     return nil, "unknown git mode: " .. mode .. " (hash|short|branch|tag)"
   end
 
@@ -45,25 +41,38 @@ function M.get(mode)
     return nil, "git executable not found in PATH"
   end
 
-  local cmd = { "git", "-C", repo_dir() }
-  vim.list_extend(cmd, argv)
+  local opts = { dir = repo_dir() }
 
-  local out = fn.systemlist(cmd)
-  if vim.v.shell_error ~= 0 then
-    -- git writes its own diagnosis to stderr, which systemlist folds into out.
-    local reason = (type(out) == "table" and out[1]) or "git command failed"
-    return nil, "git: " .. reason
+  -- "branch" gets its own path: `current_branch` returns nil on a detached
+  -- HEAD too (same as any other failure), and that specific case is worth
+  -- naming rather than handing back a bare "could not resolve".
+  if mode == "branch" then
+    local branch = lib_git.current_branch(opts)
+    if branch then
+      return branch
+    end
+    if lib_git.is_detached_head(opts) then
+      return nil, "detached HEAD — no current branch"
+    end
+    return nil, "git: could not resolve the current branch"
   end
 
-  local value = type(out) == "table" and out[1] or nil
-  if not value or value == "" then
-    return nil, "git returned no output for mode: " .. mode
+  local value
+  if mode == "hash" then
+    value = lib_git.head_hash(opts)
+  elseif mode == "short" then
+    value = lib_git.head_short_hash(opts)
+  elseif mode == "tag" then
+    value = lib_git.describe(opts)
   end
 
-  -- A detached HEAD reports the branch as literal "HEAD"; say so rather than
-  -- handing back a word that looks like a branch name but isn't one.
-  if mode == "branch" and value == "HEAD" then
-    return nil, "detached HEAD — no current branch"
+  -- lib.nvim.git's convenience functions return a bare nil on any failure
+  -- (not a repo, git missing, ...) with no error string -- unlike the old
+  -- `systemlist` call, which folded git's own stderr diagnosis into `out`
+  -- and quoted it here. That specific message is gone; only the fact of
+  -- failure remains.
+  if not value then
+    return nil, "git: could not resolve " .. mode
   end
 
   return value
