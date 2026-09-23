@@ -75,7 +75,17 @@ end
 function M.browser()
   local ok_open, open_mod = pcall(require, "open")
   if ok_open and type(open_mod) == "table" and type(open_mod.open) == "function" then
-    return open_mod.open("browser", "%")
+    -- pcall guards the call itself (ERR-01), same as the vim.ui.open
+    -- fallback below: open.nvim's own dispatch deliberately re-raises a
+    -- misbehaving handler's error rather than swallowing it (its
+    -- context.with_cache does `if not ok then error(err, 0) end`), so a
+    -- buggy or misconfigured browser handler must not take this command
+    -- down with it.
+    local call_ok, ok_or_err, browser_err = pcall(open_mod.open, "browser", "%")
+    if not call_ok then
+      return false, tostring(ok_or_err)
+    end
+    return ok_or_err, browser_err
   end
 
   local path, path_err = current_path()
