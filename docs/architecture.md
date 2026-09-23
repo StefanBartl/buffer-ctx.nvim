@@ -31,6 +31,11 @@ lua/buffer_ctx/
                            registers the BufferCtxMarkCleanup autocmd (BufDelete/BufWipeout)
     types/
       init.lua             type anchor for the mark domain
+  reveal/
+    init.lua               :RevealInFm / :OpenInBrowser -- plain lib.nvim.bindings.usercmd
+                           commands (no composer verb: two independent,
+                           argument-less actions, no subcommand tree to route
+                           through) + their optional keymaps
   ops/
     filepath.lua           path string builder (relative/absolute/nvim/lua/unix/win/…)
     module.lua             Lua module path derivation + require()/@module/import formatting
@@ -52,6 +57,9 @@ lua/buffer_ctx/
     env.lua                environment variable read + name listing (completion)
     git.lua                git revision info (hash/short/branch/tag), buffer-dir scoped
     bufinfo.lua            linecount / bufnr (plain buffer introspection)
+    reveal.lua             reveal_in_fm / open.nvim / vim.ui.open dispatch -- side
+                           effects on an external process, not a text producer like
+                           every sibling in this directory
     types/
       init.lua             type anchor for the ops domain (including ops/boilerplate)
   util/

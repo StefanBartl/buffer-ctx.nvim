@@ -41,6 +41,13 @@ function M.setup(user_opts)
     require("buffer_ctx.mark").setup(mark_opts)
   end
 
+  local reveal = cfg.reveal
+  if reveal ~= false then
+    local reveal_opts = (reveal == true or reveal == nil) and { enable = true } or reveal
+    ---@cast reveal_opts BufferCtx.RevealConfig
+    require("buffer_ctx.reveal").setup(reveal_opts)
+  end
+
   vim.g.loaded_buffer_ctx = 1
 end
 

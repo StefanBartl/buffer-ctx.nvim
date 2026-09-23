@@ -8,6 +8,7 @@
 - *(optional)* [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim) — enables `:Telescope buffer_ctx boilerplate`, a picker over the boilerplate templates with a live preview of what each one inserts. Without it, `:Insert boilerplate` falls back to `vim.ui.select`, so nothing is lost.
 - *(optional)* `git` in `PATH` — only for the `git` subcommand
 - *(optional)* [ui.nvim](https://github.com/StefanBartl/ui.nvim) — `ui.kit`'s `select`/`input`/`form` back the snippet/boilerplate picker prompts and the interactive column-align/guard-clause templates; lazily required, so nothing loads it until one of those runs
+- *(optional)* [open.nvim](https://github.com/StefanBartl/open.nvim) — `:OpenInBrowser` delegates to its `browser` handler when installed; without it, falls back to `vim.ui.open` (Neovim 0.10+), so nothing is lost
 
 ## Choosing a loading strategy
 
@@ -34,7 +35,7 @@
 {
   "stefanbartl/buffer-ctx.nvim",
   dependencies = { "stefanbartl/lib.nvim" },
-  cmd  = { "Insert", "Copy", "Format", "Mark" },
+  cmd  = { "Insert", "Copy", "Format", "Mark", "RevealInFm", "OpenInBrowser" },
   opts = {},
 }
 ```

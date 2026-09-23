@@ -194,11 +194,38 @@ return function(H)
   local health_ok = pcall(require("buffer_ctx.health").check)
   H.ok(health_ok, "health.check() does not error with the default config")
 
-  -- ── health: format/mark both disabled — exercises the early-return branch
-  -- after "subsystem disabled" for each of the two `vim.health.start` blocks.
-  config.setup({ format = false, mark = false })
+  -- ── health: format/mark/reveal all disabled — exercises the
+  -- "subsystem disabled" branch for each of the three `vim.health.start`
+  -- blocks. None of them may early-`return` out of `M.check()` itself (a
+  -- regression caught while adding the reveal section: mark's own disabled
+  -- branch used to `return`, which -- once reveal's section was appended
+  -- after mark's -- would have skipped reveal's health report whenever
+  -- mark alone was disabled).
+  config.setup({ format = false, mark = false, reveal = false })
   local health_disabled_ok = pcall(require("buffer_ctx.health").check)
-  H.ok(health_disabled_ok, "health.check() does not error with format/mark disabled")
+  H.ok(health_disabled_ok, "health.check() does not error with format/mark/reveal disabled")
+
+  -- ── health: only mark disabled — the reveal section (which comes after
+  -- mark's in the report) must still run rather than being skipped. A bare
+  -- pcall isn't enough to catch that regression (an early `return` out of
+  -- M.check() is not an error) — the actual section names reported are
+  -- recorded instead, via a stubbed vim.health.start.
+  do
+    config.setup({ mark = false })
+    local started = {}
+    local original_start = vim.health.start
+    vim.health.start = function(name)
+      started[#started + 1] = name
+    end
+    local health_mark_only_ok = pcall(require("buffer_ctx.health").check)
+    vim.health.start = original_start
+
+    H.ok(health_mark_only_ok, "health.check() does not error with only mark disabled")
+    H.ok(
+      vim.tbl_contains(started, "buffer_ctx.reveal"),
+      "health.check(): the reveal section still runs when only mark is disabled"
+    )
+  end
 
   -- Restore the defaults so this spec leaves no global state behind, in case
   -- another spec is ever added after it.

@@ -33,6 +33,7 @@ require("buffer_ctx").setup({})
 | `lua/buffer_ctx/ops/` | One file per value the buffer can produce (filepath, module, timestamp, UUID, annotations, boilerplate) |
 | `lua/buffer_ctx/format/` | Buffer- and selection-level formatting operations |
 | `lua/buffer_ctx/mark/` | Per-line mark state, toggling and yanking |
+| `lua/buffer_ctx/reveal/` | `:RevealInFm` / `:OpenInBrowser` — reveal-in-file-manager and open-in-browser for the current buffer |
 | `lua/buffer_ctx/bindings/` | The `:Insert` / `:Copy` / `:Format` / `:Mark` route trees and the default keymaps |
 | `lua/buffer_ctx/config/` | Defaults and `setup()` validation |
 | `lua/buffer_ctx/util/` | Shared helpers |

@@ -45,5 +45,12 @@ return {
     -- `:Mark yank todo` / `:Mark clear todo` filter by it.
     categories = {},
   },
+  reveal = {
+    enable = true,
+    keymaps = {
+      fm = "<leader>of",
+      browser = "<leader>ob",
+    },
+  },
   which_key = true,
 }

@@ -36,12 +36,15 @@ CONTENTS                                               *buffer-ctx-contents*
      7.1  toggle ................ |:Mark-toggle|
      7.2  yank .................. |:Mark-yank|
      7.3  clear ................. |:Mark-clear|
-  8. Keymaps ................... |buffer-ctx-keymaps|
-  9. Lua API ................... |buffer-ctx-api|
- 10. Tab completion ............ |buffer-ctx-completion|
- 11. Telescope integration ..... |buffer-ctx-telescope|
- 12. Health check .............. |buffer-ctx-health|
- 13. Architecture .............. |buffer-ctx-architecture|
+  8. Reveal commands ........... |buffer-ctx-reveal|
+     8.1  RevealInFm ............ |:RevealInFm|
+     8.2  OpenInBrowser ......... |:OpenInBrowser|
+  9. Keymaps ................... |buffer-ctx-keymaps|
+ 10. Lua API ................... |buffer-ctx-api|
+ 11. Tab completion ............ |buffer-ctx-completion|
+ 12. Telescope integration ..... |buffer-ctx-telescope|
+ 13. Health check .............. |buffer-ctx-health|
+ 14. Architecture .............. |buffer-ctx-architecture|
 
 ==============================================================================
 1. INTRODUCTION                                           *buffer-ctx-intro*
@@ -72,6 +75,9 @@ out to the `git` executable. Every other subcommand is shell-free.
     (https://github.com/nvim-telescope/telescope.nvim)
     Enables the boilerplate picker, see |buffer-ctx-telescope|.
   - (optional) `git` in $PATH — only for the |:Insert-git| subcommand.
+  - (optional) open.nvim (https://github.com/StefanBartl/open.nvim)
+    |:OpenInBrowser| delegates to its `browser` handler when installed;
+    falls back to |vim.ui.open| (Neovim 0.10+) otherwise.
 
 ==============================================================================
 3. INSTALLATION                                    *buffer-ctx-installation*
@@ -88,7 +94,7 @@ lazy.nvim, lazy-loaded on command use: >lua
   {
     "stefanbartl/buffer-ctx.nvim",
     dependencies = { "stefanbartl/lib.nvim" },
-    cmd  = { "Insert", "Copy", "Format", "Mark" },
+    cmd  = { "Insert", "Copy", "Format", "Mark", "RevealInFm", "OpenInBrowser" },
     opts = {},
   }
 <
@@ -173,6 +179,18 @@ mark ~
                       `:Mark toggle <name>` marks in that category; `yank`
                       and `clear` take a `<name>` to filter by it.
   Set `mark = false` to disable the entire `:Mark` tree.
+
+reveal ~
+  Table controlling |:RevealInFm| / |:OpenInBrowser|. Default: >lua
+    reveal = {
+      enable  = true,
+      keymaps = { fm = "<leader>of", browser = "<leader>ob" },
+    }
+<
+  `enable`   boolean  Register both commands. Default: `true`.
+  `keymaps`  table    Normal-mode keymaps, or `false` to disable. Keys:
+                      `fm`, `browser`.
+  Set `reveal = false` to disable both commands entirely.
 
 ==============================================================================
 5. COMMANDS                                          *buffer-ctx-commands*
@@ -727,7 +745,45 @@ No keymap by default. Bind one with `mark.keymaps.clear`, see
 |buffer-ctx-config|.
 
 ==============================================================================
-8. KEYMAPS                                          *buffer-ctx-keymaps*
+8. REVEAL COMMANDS                                      *buffer-ctx-reveal*
+
+Two independent, argument-less commands -- unlike |buffer-ctx-format| and
+|buffer-ctx-mark| there is no shared subcommand tree here. Both act on the
+current buffer's own path. Disable either (or both) via `opts.reveal`, see
+|buffer-ctx-config|.
+
+------------------------------------------------------------------------------
+8.1  RevealInFm                                              *:RevealInFm*
+
+  :RevealInFm
+
+Reveals the current buffer in the system file manager -- a file selected
+inside its parent directory (Explorer/Finder/Nautilus/…). Delegates to
+lib.nvim's `cross.reveal_in_fm`, the exact dispatcher filetree.nvim's
+`<leader>fm` and open.nvim's `:Open filemanager` handler already share, so a
+fix there lands here too. No fallback: lib.nvim is already a hard dependency
+for this plugin's command layer (see |buffer-ctx-requirements|).
+
+Default keymap: `<leader>of`
+
+------------------------------------------------------------------------------
+8.2  OpenInBrowser                                        *:OpenInBrowser*
+
+  :OpenInBrowser
+
+Opens the current buffer with the OS-registered application for it -- a
+browser for an `.html` file, whatever else the OS associates otherwise.
+
+Prefers open.nvim's own `browser` handler when open.nvim is installed
+(`require("open").open("browser", "%")`, an explicit target+scope so
+open.nvim dispatches straight to it rather than running its own no-target
+heuristic). Falls back to |vim.ui.open| (Neovim 0.10+) when open.nvim is
+absent.
+
+Default keymap: `<leader>ob`
+
+==============================================================================
+9. KEYMAPS                                          *buffer-ctx-keymaps*
 
 Registered only when `setup()` is called (or `keymaps = false` to disable).
 
@@ -738,13 +794,16 @@ Registered only when `setup()` is called (or `keymaps = false` to disable).
   `<S-m>`        :Mark toggle    (toggle mark on current line)
   `<C-p>`        :Mark yank      (yank all marked lines to clipboard)
 
+  `<leader>of`   :RevealInFm     (reveal current buffer in file manager)
+  `<leader>ob`   :OpenInBrowser  (open current buffer in the browser)
+
 All keys are configurable via the respective config tables.
 
 When which-key.nvim is installed, the `<leader>cn` prefix is automatically
 labeled "buffer-ctx: copy context". Set `which_key = false` to disable this.
 
 ==============================================================================
-9. LUA API                                             *buffer-ctx-api*
+10. LUA API                                             *buffer-ctx-api*
 
 >lua
   local ctx = require("buffer_ctx")
@@ -767,7 +826,7 @@ Examples: >lua
 <
 
 ==============================================================================
-10. TAB COMPLETION                                *buffer-ctx-completion*
+11. TAB COMPLETION                                *buffer-ctx-completion*
 
 Both `:Insert` and `:Copy` provide context-aware tab completion:
 
@@ -784,7 +843,7 @@ Both `:Insert` and `:Copy` provide context-aware tab completion:
   `:Insert env <Tab>`             → environment variables currently set
 
 ==============================================================================
-11. TELESCOPE INTEGRATION                          *buffer-ctx-telescope*
+12. TELESCOPE INTEGRATION                          *buffer-ctx-telescope*
 
 With telescope.nvim installed, register the extension: >lua
   require("telescope").load_extension("buffer_ctx")
@@ -799,7 +858,7 @@ Telescope is an optional dependency — the extension file is only ever loaded
 by Telescope itself, so the plugin works standalone without it.
 
 ==============================================================================
-12. HEALTH CHECK                                     *buffer-ctx-health*
+13. HEALTH CHECK                                     *buffer-ctx-health*
 
 >
   :checkhealth buffer_ctx
@@ -818,9 +877,12 @@ Checks:
   - `:CopyFilepathAbsolute`, `:CopyFilepathRelative` and `:CopyFilepathRepos` compat commands registered
   - Format subsystem: enabled flag, `:Format` registered, each sub-module loadable
   - Mark subsystem: enabled flag, `:Mark` and `:MarkLineToggle` registered
+  - Reveal subsystem: enabled flag, `:RevealInFm`/`:OpenInBrowser` registered,
+    lib.nvim.cross.reveal_in_fm detected (required), open.nvim or vim.ui.open
+    detected (optional — :OpenInBrowser's fallback chain)
 
 ==============================================================================
-13. ARCHITECTURE                                *buffer-ctx-architecture*
+14. ARCHITECTURE                                *buffer-ctx-architecture*
 
   plugin/buffer_ctx.lua        Load guard
   lua/buffer_ctx/
@@ -848,6 +910,8 @@ Checks:
       blank_lines.lua          squeeze (collapse blank-line runs, range-aware)
     mark/
       init.lua                 :Mark command (lib.nvim.bindings.usercmd.composer) + toggle/clear/yank logic + compat cmds
+    reveal/
+      init.lua                 :RevealInFm / :OpenInBrowser (lib.nvim.bindings.usercmd, plain -- no composer verb needed for two argument-less commands) + keymaps
     util/
       notify.lua               "[buffer-ctx] " notify wrapper; upgrades to lib.nvim if present
       map.lua                  keymap wrapper; upgrades to lib.nvim.bindings.keymap if present
@@ -865,6 +929,7 @@ Checks:
       git.lua                  Git revision info (hash/short/branch/tag)
       bufinfo.lua              Buffer line count and handle
       snippet.lua              VSCode-format snippet loading
+      reveal.lua               reveal_in_fm / open.nvim / vim.ui.open dispatch (side effects, no text return)
       boilerplate/
         init.lua               Template registry + dispatch
         templates/
