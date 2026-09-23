@@ -128,6 +128,21 @@ return function(H)
     )
   end)
 
+  -- ── browser(): open.nvim installed but its handler throws (a misbehaving
+  --    or misconfigured handler in open.nvim's own registry, e.g. a bug
+  --    surfaced by its context.with_cache re-raising rather than
+  --    swallowing it) -- must be reported back as (false, err), not left to
+  --    propagate and take the command down with it ─────────────────────────
+  with_module("open", {
+    open = function()
+      error("boom: handler blew up", 0)
+    end,
+  }, function()
+    local ok, err = reveal_op.browser()
+    H.eq(ok, false, "reveal.browser returns false when open.nvim's handler throws")
+    H.match(err, "boom", "reveal.browser reports the thrown error rather than propagating it")
+  end)
+
   -- ── browser(): open.nvim absent, falls back to vim.ui.open ──────────────
   with_module("open", false, function()
     H.scratch(cwd .. "/lua/revealtest2/page.html")
