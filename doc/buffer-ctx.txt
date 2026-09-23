@@ -197,6 +197,7 @@ mode ~
   `cwd`   relative to working directory (default)
   `abs`   absolute path
   `nvim`  relative to `stdpath("config")`
+  `repos` relative to `$REPOS_DIR` (errors if unset)
 
 format ~
   `unix`   forward slashes (default)
@@ -213,10 +214,12 @@ Examples: >
   :Copy filepath lua                → buffer_ctx.ops.filepath
   :Copy filepath 1                  → filepath.lua
   :Copy filepath nvim               → relative to nvim config dir
+  :Copy filepath repos              → relative to $REPOS_DIR
 <
 Compat commands are registered automatically:
   :CopyFilepathAbsolute   →  :Copy filepath absolute
   :CopyFilepathRelative   →  :Copy filepath relative
+  :CopyFilepathRepos      →  :Copy filepath repos
 
 ------------------------------------------------------------------------------
 5.2  filename                                          *:Insert-filename*
@@ -812,7 +815,7 @@ Checks:
   - lib.nvim detected? (optional — map upgrade)
   - which-key detected? (optional — <leader>cn group label)
   - `buffer_ctx.bindings` loadable
-  - `:CopyFilepathAbsolute` and `:CopyFilepathRelative` compat commands registered
+  - `:CopyFilepathAbsolute`, `:CopyFilepathRelative` and `:CopyFilepathRepos` compat commands registered
   - Format subsystem: enabled flag, `:Format` registered, each sub-module loadable
   - Mark subsystem: enabled flag, `:Mark` and `:MarkLineToggle` registered
 

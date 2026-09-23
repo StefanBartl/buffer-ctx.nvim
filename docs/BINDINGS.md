@@ -59,6 +59,7 @@ only when every line already carries that category does the range unmark.
 | `:Copy` | `{subcmd} [args…]` | Copy context text to clipboard |
 | `:CopyFilepathAbsolute` | — | Compat alias for `:Copy filepath absolute` |
 | `:CopyFilepathRelative` | — | Compat alias for `:Copy filepath relative` |
+| `:CopyFilepathRepos` | — | Compat alias for `:Copy filepath repos` |
 | `:Format` | `{subcmd} [args…]` | Buffer/selection formatting operations |
 | `:Mark` | `{subcmd} [category]` | Toggle per-line marks, clear them, and yank them to clipboard. `:Mark toggle` accepts a range (`:'<,'>Mark toggle`). `toggle`/`clear`/`yank` all take an optional category name, tab-completed from the configured ones. |
 | `:MarkLineToggle` | — | Compat alias for `:Mark toggle` |

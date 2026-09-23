@@ -22,7 +22,7 @@ disabled in `opts` — a disabled subsystem isn't a problem to report on.
 | which-key.nvim | detected — `<leader>cn` group label registered | info: not found, keymaps still work |
 | `buffer_ctx.bindings` | loaded | warn: failed to load |
 | `:Insert` / `:Copy` route health | delegated to `lib.nvim`'s composer (`composer.checkhealth("Insert"\|"Copy")`) | — |
-| `:CopyFilepathAbsolute` / `:CopyFilepathRelative` | compat commands registered | warn: not found |
+| `:CopyFilepathAbsolute` / `:CopyFilepathRelative` / `:CopyFilepathRepos` | compat commands registered | warn: not found |
 
 lib.nvim is the one **required** dependency here — everything else in this
 section (notify, keymap, which-key) is cosmetic and degrades gracefully, which

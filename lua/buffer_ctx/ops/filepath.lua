@@ -36,6 +36,18 @@ function M.get_path(opts)
     if opts.format == "lua" then
       opts.format = "unix"
     end
+  elseif opts.mode == "repos" then
+    local repos_dir = vim.env.REPOS_DIR
+    if not repos_dir or repos_dir == "" then
+      return nil, "$REPOS_DIR is not set"
+    end
+    local norm_abs = abs:gsub("\\", "/")
+    local norm_repos = (repos_dir:gsub("\\", "/"))
+    if norm_abs:sub(1, #norm_repos + 1) == norm_repos .. "/" then
+      base = norm_abs:sub(#norm_repos + 2)
+    else
+      base = pu.relative_to_cwd(abs)
+    end
   else
     base = pu.relative_to_cwd(abs)
   end
@@ -135,6 +147,8 @@ function M.parse_args(args)
       opts.mode = "cwd"
     elseif lo == "nvim" then
       opts.mode = "nvim"
+    elseif lo == "repos" or lo == "reposdir" then
+      opts.mode = "repos"
     elseif lo == "lua" then
       opts.format = "lua"
     elseif lo == "win" or lo == "windows" then
