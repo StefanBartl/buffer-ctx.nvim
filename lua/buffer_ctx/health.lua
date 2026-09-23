@@ -73,6 +73,28 @@ function M.check()
     )
   end
 
+  -- Cross-plugin shims on :Insert/:Copy (commands.lua's "markdownlink"/
+  -- "imagepaste") — soft dependencies, same resolve_kit() convention as
+  -- which-key above, checked here rather than in a subsystem section since
+  -- neither has its own enable gate (they're plain DISPATCH/route entries).
+  if pcall(require, "markdown.commands.markdown_links") then
+    vim.health.ok(
+      "markdown.nvim detected — :Insert/:Copy markdownlink delegates to its own link builder (optional dependency)"
+    )
+  else
+    vim.health.info(
+      "markdown.nvim not found — :Insert/:Copy markdownlink falls back to a literal [title](path) (optional dependency)"
+    )
+  end
+
+  if pcall(require, "images") then
+    vim.health.ok("images.nvim detected — :Insert imagepaste can dispatch (optional dependency)")
+  else
+    vim.health.info(
+      "images.nvim not found — :Insert imagepaste will fail (optional dependency, no local fallback)"
+    )
+  end
+
   local bindings_ok = pcall(require, "buffer_ctx.bindings")
   if bindings_ok then
     vim.health.ok("buffer_ctx.bindings loaded")

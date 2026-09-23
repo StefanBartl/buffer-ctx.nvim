@@ -24,13 +24,20 @@ still has to run.
 | lib.nvim (notify) | detected — using `lib.nvim.notify` | info: using plain `vim.notify` |
 | lib.nvim (keymap) | detected — using `lib.nvim.bindings.keymap` | info: using plain `vim.keymap.set` |
 | which-key.nvim | detected — `<leader>cn` group label registered | info: not found, keymaps still work |
+| markdown.nvim | detected — `:Insert`/`:Copy markdownlink` delegates to its link builder | info: not found, `markdownlink` falls back to a literal `[title](path)` |
+| images.nvim | detected — `:Insert imagepaste` can dispatch | info: not found, `:Insert imagepaste` will fail (no local fallback) |
 | `buffer_ctx.bindings` | loaded | warn: failed to load |
 | `:Insert` / `:Copy` route health | delegated to `lib.nvim`'s composer (`composer.checkhealth("Insert"\|"Copy")`) | — |
 | `:CopyFilepathAbsolute` / `:CopyFilepathRelative` / `:CopyFilepathRepos` | compat commands registered | warn: not found |
 
 lib.nvim is the one **required** dependency here — everything else in this
-section (notify, keymap, which-key) is cosmetic and degrades gracefully, which
-is why those three are `info` rather than `warn` when absent.
+section (notify, keymap, which-key, markdown.nvim) is cosmetic and degrades
+gracefully, which is why those are `info` rather than `warn` when absent.
+images.nvim is the one exception among the optional deps in this section:
+`:Insert imagepaste` genuinely fails without it (its clipboard-read pipeline
+has no local fallback here, see [commands.md](commands.md)) — still `info`,
+not `warn`, since the rest of `:Insert`/`:Copy` is entirely unaffected by its
+absence.
 
 ## `buffer_ctx.format`
 

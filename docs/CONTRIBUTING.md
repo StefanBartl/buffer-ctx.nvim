@@ -24,6 +24,14 @@ require("buffer_ctx").setup({})
 - An operation returns a string; whether that string is inserted or copied is the
   caller's decision, not the operation's. That split is the reason `:Insert` and
   `:Copy` share everything below the command layer.
+  The one exception under `:Insert`/`:Copy` themselves is a cross-plugin shim
+  whose sister plugin's own action already inserts its result at the cursor
+  (see `ops/imagepaste.lua`) — that shim is wired as an `:Insert`-only route
+  outside the shared dispatch table instead of forcing a fake `:Copy`
+  counterpart onto it. `ops/reveal.lua`'s `:RevealInFm`/`:OpenInBrowser` are a
+  clearer case of the same thing, but sit entirely outside `:Insert`/`:Copy`
+  as their own standalone commands, so they never went through this rule in
+  the first place.
 - Descriptive commit messages.
 
 ## Project layout
