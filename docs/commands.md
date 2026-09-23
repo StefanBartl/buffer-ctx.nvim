@@ -68,7 +68,7 @@ Copy or insert the current buffer's path.
 
 | Arg | Values | Default |
 |---|---|---|
-| mode | `cwd`/`relative`/`rel`, `abs`/`absolute`, `nvim` | `cwd` |
+| mode | `cwd`/`relative`/`rel`, `abs`/`absolute`, `nvim`, `repos`/`reposdir` | `cwd` |
 | format | `unix`, `lua`, `win`, `system` | `unix` |
 | depth | `0`–`3` (last N+1 segments) | full path |
 
@@ -78,13 +78,18 @@ Copy or insert the current buffer's path.
 :Copy filepath lua             → "buffer_ctx.ops.filepath"
 :Copy filepath 1               → "filepath.lua"
 :Copy filepath nvim            → relative to stdpath("config")
+:Copy filepath repos           → relative to $REPOS_DIR
 ```
+
+`repos` errors (rather than falling back) when `$REPOS_DIR` itself is unset
+— unlike `nvim`, which always has `stdpath("config")` to fall back around,
+there's no universal default for "the repos root".
 
 `nvim_module` is not a path format — it's an alias straight into the `module`
 subcommand (`:Copy filepath nvim_module` == `:Copy module`), kept so
 tab-completion under `filepath` still reaches it.
 
-Compat commands: `:CopyFilepathAbsolute` → `:Copy filepath absolute`, `:CopyFilepathRelative` → `:Copy filepath relative`
+Compat commands: `:CopyFilepathAbsolute` → `:Copy filepath absolute`, `:CopyFilepathRelative` → `:Copy filepath relative`, `:CopyFilepathRepos` → `:Copy filepath repos`
 
 ### `filename [noext]`
 

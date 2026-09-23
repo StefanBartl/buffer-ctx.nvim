@@ -264,6 +264,32 @@ return function(H)
     "filepath mode=nvim outside the config dir falls back to cwd-relative"
   )
 
+  -- mode=repos inside $REPOS_DIR, outside it, and with the variable unset.
+  do
+    local saved_repos_dir = vim.env.REPOS_DIR
+
+    vim.env.REPOS_DIR = cwd .. "/reposroot"
+    H.scratch(cwd .. "/reposroot/plugin.nvim/lua/init.lua")
+    H.eq(
+      filepath.get_path({ mode = "repos", format = "unix" }),
+      "plugin.nvim/lua/init.lua",
+      "filepath mode=repos inside $REPOS_DIR strips the repos-root prefix"
+    )
+
+    H.scratch(cwd .. "/lua/fp4/thing.lua")
+    H.eq(
+      filepath.get_path({ mode = "repos", format = "unix" }),
+      filepath.get_path({ mode = "cwd", format = "unix" }),
+      "filepath mode=repos outside $REPOS_DIR falls back to cwd-relative"
+    )
+
+    vim.env.REPOS_DIR = nil
+    local _, repos_unset_err = filepath.get_path({ mode = "repos", format = "unix" })
+    H.ok(repos_unset_err ~= nil, "filepath mode=repos errors when $REPOS_DIR is unset")
+
+    vim.env.REPOS_DIR = saved_repos_dir
+  end
+
   H.scratch(nil)
   local _, path_unnamed_err = filepath.get_path({ mode = "cwd", format = "unix" })
   H.ok(path_unnamed_err ~= nil, "filepath.get_path on an unnamed buffer errors")
