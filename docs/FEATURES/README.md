@@ -21,6 +21,9 @@ Grouped by theme:
 - [MARK.md](MARK.md) — the `:Mark` subsystem: persistent per-line marks.
 - [REVEAL.md](REVEAL.md) — `:RevealInFm`/`:OpenInBrowser`: hand the current
   buffer off to the system file manager or the browser.
+- [CROSS_PLUGIN.md](CROSS_PLUGIN.md) — `markdownlink`/`imagepaste`: two
+  `:Insert`/`:Copy` subcommands that delegate to a sister plugin
+  (markdown.nvim/images.nvim) instead of computing their result locally.
 
 For the exact keymap/command/autocommand surface, see
 [../BINDINGS.md](../BINDINGS.md). For per-subcommand argument reference,

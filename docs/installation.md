@@ -9,6 +9,8 @@
 - *(optional)* `git` in `PATH` — only for the `git` subcommand
 - *(optional)* [ui.nvim](https://github.com/StefanBartl/ui.nvim) — `ui.kit`'s `select`/`input`/`form` back the snippet/boilerplate picker prompts and the interactive column-align/guard-clause templates; lazily required, so nothing loads it until one of those runs
 - *(optional)* [open.nvim](https://github.com/StefanBartl/open.nvim) — `:OpenInBrowser` delegates to its `browser` handler when installed; without it, falls back to `vim.ui.open` (Neovim 0.10+), so nothing is lost
+- *(optional)* [markdown.nvim](https://github.com/StefanBartl/markdown.nvim) — `:Insert`/`:Copy markdownlink` delegates to its own link builder when installed; without it, falls back to a literal `"[title](path)"`, so nothing is lost
+- *(optional)* [images.nvim](https://github.com/StefanBartl/images.nvim) — `:Insert imagepaste` delegates to its `paste` feature. **No fallback** — this one subcommand fails without images.nvim installed; the rest of `:Insert`/`:Copy` is unaffected
 
 ## Choosing a loading strategy
 

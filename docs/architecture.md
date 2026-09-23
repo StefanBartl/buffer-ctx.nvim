@@ -5,7 +5,9 @@ lua/buffer_ctx/
   init.lua                 setup() + public Lua facade (insert/copy wrappers)
   @types.lua               shared LuaLS type annotations
   health.lua               :checkhealth buffer_ctx (+ .format, .mark sub-reports)
-  commands.lua             :Insert/:Copy dispatch table + the two filepath compat commands
+  commands.lua             :Insert/:Copy dispatch table + the two filepath compat commands;
+                           also wires the "imagepaste" :Insert-only route (not part of the
+                           shared dispatch table -- see ops/imagepaste.lua)
   config/
     init.lua               runtime store (setup/get)
     DEFAULTS.lua           typed default configuration
@@ -60,6 +62,11 @@ lua/buffer_ctx/
     reveal.lua             reveal_in_fm / open.nvim / vim.ui.open dispatch -- side
                            effects on an external process, not a text producer like
                            every sibling in this directory
+    markdown_link.lua      "[title](path)" wrapper (soft dep: markdown.nvim's own
+                           link builder, falls back to a literal format string)
+    imagepaste.lua         images.nvim "paste" delegate -- side effect (inserts at
+                           the cursor itself), same shape as reveal.lua above, no
+                           :Copy (clipboard-sink) counterpart
     types/
       init.lua             type anchor for the ops domain (including ops/boilerplate)
   util/

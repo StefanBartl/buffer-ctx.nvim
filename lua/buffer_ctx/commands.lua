@@ -5,6 +5,15 @@
 --- factory (build_routes(sink)) since they dispatch through the exact same
 --- DISPATCH table and differ only in where the result goes.
 ---
+--- "markdownlink" is a cross-plugin shim (soft dependency on markdown.nvim,
+--- see ops/markdown_link.lua) that fits this table like every other entry: a
+--- pure text producer, wired under both :Insert and :Copy. "imagepaste" is a
+--- *different* kind of cross-plugin shim (soft dependency on images.nvim,
+--- see ops/imagepaste.lua) that does NOT go through DISPATCH/sink_text at
+--- all -- images.nvim's own paste pipeline always inserts its result at the
+--- cursor itself, so it is wired as a route on the :Insert verb only (see
+--- build_routes's own docs and M.register below).
+---
 --- Three single-word compat commands are registered directly (untouched by
 --- composer, same pattern as :Mark's :MarkLineToggle/:MarkLinesYank):
 ---   :CopyFilepathAbsolute   →  :Copy filepath absolute
@@ -12,6 +21,8 @@
 ---   :CopyFilepathRepos      →  :Copy filepath repos
 ---@see buffer_ctx.format
 ---@see buffer_ctx.mark
+---@see buffer_ctx.ops.markdown_link
+---@see buffer_ctx.ops.imagepaste
 ---@see buffer_ctx.util.cursor
 ---@see buffer_ctx.util.clip
 
@@ -34,6 +45,8 @@ local boiler = require("buffer_ctx.ops.boilerplate")
 local snippet = require("buffer_ctx.ops.snippet")
 local git_op = require("buffer_ctx.ops.git")
 local bufinfo = require("buffer_ctx.ops.bufinfo")
+local markdown_link_op = require("buffer_ctx.ops.markdown_link")
+local imagepaste_op = require("buffer_ctx.ops.imagepaste")
 
 ---@internal
 ---Soft dependency, matching util/notify.lua's convention: ui.nvim's ui.kit
@@ -120,6 +133,25 @@ local DISPATCH = {
       return
     end
     sink_text(result, sink)
+  end,
+
+  markdownlink = function(fargs, sink)
+    -- Same mode/format tokens as "filepath" (mirrors "filepath nvim_module"'s
+    -- reuse of module_op above): the path string this wraps is exactly what
+    -- `:Insert filepath ...`/`:Copy filepath ...` would produce, so every
+    -- existing mode (abs/cwd/nvim/repos + lua/win/unix/system) is available
+    -- here for free rather than re-implemented.
+    local opts, parse_err = filepath.parse_args(fargs)
+    if parse_err then
+      notify.error("[markdownlink] " .. parse_err)
+      return
+    end
+    local path, err = filepath.get_path(opts)
+    if not path then
+      notify.error(err or "markdownlink failed")
+      return
+    end
+    sink_text(markdown_link_op.build(path), sink)
   end,
 
   filename = function(fargs, sink)
@@ -310,6 +342,7 @@ local DISPATCH = {
 
 local SUBCMDS = {
   "filepath",
+  "markdownlink",
   "filename",
   "module",
   "timestamp",
@@ -355,23 +388,29 @@ local TIMESTAMP_FORMATS = {
   "--utc",
 }
 
+-- Shared by "filepath" and "markdownlink": the latter wraps whatever
+-- "filepath" would produce in a Markdown link, so both accept the exact same
+-- mode/format tokens (see the "markdownlink" DISPATCH entry above).
+local FILEPATH_ARGS = {
+  "relative",
+  "absolute",
+  "cwd",
+  "abs",
+  "nvim",
+  "repos",
+  "lua",
+  "unix",
+  "win",
+  "system",
+  "0",
+  "1",
+  "2",
+  "3",
+}
+
 local SUBCMD_ARGS = {
-  filepath = {
-    "relative",
-    "absolute",
-    "cwd",
-    "abs",
-    "nvim",
-    "repos",
-    "lua",
-    "unix",
-    "win",
-    "system",
-    "0",
-    "1",
-    "2",
-    "3",
-  },
+  filepath = FILEPATH_ARGS,
+  markdownlink = FILEPATH_ARGS,
   filename = { "noext" },
   module = { "require", "lua_ls", "js", "c", "generic" },
   git = { "hash", "short", "branch", "tag" },
@@ -450,7 +489,7 @@ local CUSTOM_ARG_TYPE = {
 }
 
 ---@internal
----Build the 14 `:Insert`/`:Copy` routes sharing DISPATCH, differing only in sink.
+---Build the 15 `:Insert`/`:Copy` routes sharing DISPATCH, differing only in sink.
 --- Each route declares a single optional first-arg (matching the existing
 --- completion, which only ever completed the first token after the
 --- subcommand) and forwards the reconstructed full token list into the
@@ -488,11 +527,38 @@ local function build_routes(sink)
   return routes
 end
 
+---@internal
+---`:Insert imagepaste [name] [path=relative|absolute|repos|<prefix>]` --
+---images.nvim's own `paste` argument grammar (`bindings/usrcmds.lua`'s
+---"paste" route), mirrored here so the shim accepts exactly what
+---`:Image paste` itself would. Not part of SUBCMDS/build_routes: unlike
+---every route built there, this one does not call M._dispatch or
+---sink_text/sink_lines -- see ops/imagepaste.lua's module docs for why
+---there is no `:Copy imagepaste` counterpart.
+---@return Lib.UserCmd.Composer.Route
+local function build_imagepaste_route()
+  return {
+    path = { "imagepaste" },
+    args = { { name = "name", type = "STRING", optional = true } },
+    kv = { { key = "path", type = "STRING", values = { "relative", "absolute", "repos" } } },
+    desc = "images.nvim: paste the clipboard image, insert its Markdown link at the cursor (requires images.nvim)",
+    run = function(ctx)
+      local ok, err = imagepaste_op.paste(ctx.args.name, (ctx.kv or {}).path)
+      if not ok then
+        notify.error(err or "imagepaste failed")
+      end
+    end,
+  }
+end
+
 ---Register the `:Insert` and `:Copy` user commands via lib.nvim's composer.
 function M.register()
+  local insert_routes = build_routes("cursor")
+  insert_routes[#insert_routes + 1] = build_imagepaste_route()
+
   composer.verb("Insert", {
     desc = "Insert context text at cursor",
-    routes = build_routes("cursor"),
+    routes = insert_routes,
   })
   composer.verb("Copy", {
     desc = "Copy context text to clipboard",

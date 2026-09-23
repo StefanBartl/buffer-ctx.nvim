@@ -1,6 +1,6 @@
 # Commands
 
-Four command trees, plus two standalone actions with no subcommands of
+Four command trees, plus three standalone actions with no subcommands of
 their own:
 
 - **`:Insert {subcmd} [args…]`** — writes text at cursor position
@@ -10,11 +10,25 @@ their own:
 - **`:RevealInFm`**    — reveal the current buffer in the system file manager
 - **`:OpenInBrowser`** — open the current buffer with the OS-registered application (browser)
 
+`:Insert`/`:Copy` also carry two cross-plugin shims to sister plugins,
+soft-dependency style (a plain `pcall(require, ...)`, matching `ui.kit`'s own
+convention in this plugin — see [Requirements](installation.md) for what's
+optional):
+
+- **`markdownlink`** — wraps the current buffer's path in a Markdown link,
+  delegating to markdown.nvim when installed; works under both `:Insert` and
+  `:Copy`, like every other subcommand.
+- **`imagepaste`** — pastes the clipboard image via images.nvim's own `paste`
+  feature. `:Insert`-only: images.nvim's `paste` always inserts its result at
+  the cursor itself, so there is no `:Copy imagepaste` (see its own section
+  below for why).
+
 ## Quick reference
 
 | Subcommand | Args | Result |
 |---|---|---|
 | `filepath` | `[cwd\|abs\|nvim\|nvim_module] [lua\|unix\|win\|system] [0-3]` | Path of current buffer |
+| `markdownlink` | `[cwd\|abs\|nvim\|repos] [lua\|unix\|win\|system] [0-3]` | `[title](path)` for the current buffer |
 | `filename` | `[noext]` | Filename (with/without extension) |
 | `module` | `[require\|lua_ls\|js\|c\|generic]` | Lua `require(…)` or `---@module` |
 | `location` | `[cwd\|abs\|lua] [range]` | `path:line`, or `path:L1-L2` with `range` |
@@ -93,6 +107,26 @@ subcommand (`:Copy filepath nvim_module` == `:Copy module`), kept so
 tab-completion under `filepath` still reaches it.
 
 Compat commands: `:CopyFilepathAbsolute` → `:Copy filepath absolute`, `:CopyFilepathRelative` → `:Copy filepath relative`, `:CopyFilepathRepos` → `:Copy filepath repos`
+
+### `markdownlink [mode] [format] [depth]`
+
+Wrap the current buffer's path in a Markdown link (`[title](path)`). Takes
+the exact same `mode`/`format`/`depth` arguments as `filepath` above —
+whatever `:Copy filepath ...` would produce is what gets wrapped.
+
+```
+:Copy markdownlink                → "[filepath.lua](lua/buffer_ctx/ops/filepath.lua)"
+:Insert markdownlink abs          → "[filepath.lua](/home/user/…/filepath.lua)"
+:Copy markdownlink repos          → "[filepath.lua](buffer-ctx.nvim/lua/…/filepath.lua)"
+```
+
+Cross-plugin shim: delegates to markdown.nvim's own
+`markdown.commands.markdown_links.for_paths()` (the function behind
+`:Markdown links <path>`) when markdown.nvim is installed — soft dependency,
+`pcall(require, ...)`, same convention as `ui.kit` in `commands.lua`'s
+`resolve_kit()`. Falls back to the literal `"[%s](%s)"` format inline
+otherwise (markdown.nvim hardcodes the exact same format for a single file,
+so nothing behaves differently either way).
 
 ### `filename [noext]`
 
@@ -331,6 +365,35 @@ rather than returning the literal string `HEAD`.
 :Insert linecount         → 348   (lines in the current buffer)
 :Insert bufnr             → 3     (current buffer handle)
 ```
+
+### `:Insert imagepaste [name] [path=relative|absolute|repos|<prefix>]`
+
+```
+:Insert imagepaste
+:Insert imagepaste screenshot-1
+:Insert imagepaste path=absolute
+```
+
+Pastes the clipboard image via images.nvim's own `paste` feature
+(`require("images").paste(name, nil, path_mode)`) — the exact same
+`{name}`/`path=...` grammar as `:Image paste` itself (see images.nvim's
+`docs/commands.md`), so this is a convenience alias for reaching that action
+through buffer-ctx's own `:Insert` family rather than a second
+implementation of it.
+
+`:Insert`-only, unlike every other subcommand above: images.nvim's `paste`
+reads the OS clipboard *asynchronously* and inserts the resulting Markdown
+link directly into the buffer at the cursor itself — there is no "give me
+the link text instead" mode to route through `:Copy`'s clipboard sink, so
+`:Copy imagepaste` does not exist (attempting it errors with "unknown
+subcommand", the same as any other typo).
+
+Cross-plugin shim: soft dependency on images.nvim, `pcall(require, "images")`
+re-checked on every call, same convention as `ui.kit` in `commands.lua`'s
+`resolve_kit()`. Without images.nvim installed, this errors rather than
+falling back — reimplementing its clipboard-read pipeline here (`paste.lua`'s
+per-platform clipboard-to-file dispatch) would duplicate logic that already
+exists once, there, on purpose.
 
 ### `:RevealInFm`
 

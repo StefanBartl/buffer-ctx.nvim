@@ -88,15 +88,19 @@ what each of the two actions here actually does.
 
 | command | subcmds |
 | --- | --- |
-| `:Insert` | `filepath`, `filename`, `module`, `timestamp`, `date`, `uuid`, `annotation`, `boilerplate`, `snippet`, `location`, `env`, `git`, `linecount`, `bufnr` |
-| `:Copy` | same catalog as `:Insert` |
+| `:Insert` | `filepath`, `markdownlink`, `filename`, `module`, `timestamp`, `date`, `uuid`, `annotation`, `boilerplate`, `snippet`, `location`, `env`, `git`, `linecount`, `bufnr`, `imagepaste` |
+| `:Copy` | same catalog as `:Insert`, **except** `imagepaste` (`:Insert`-only, see below) |
 | `:Format` | `column`, `table`, `textwidth`, `filter`, `enum`, `trim`, `sort`, `unique`, `case`, `indent`, `clear`, `squeeze` |
 | `:Mark` | `toggle`, `clear`, `yank` |
 
 `filepath` also accepts `nvim_module` as an alias for the `module` subcommand.
 `location` and `Format squeeze` accept a command range (`:'<,'>` / `:L1,L2`);
 `location` additionally takes a `range` arg to switch its output to
-`path:L1-L2`. See [commands.md](commands.md) for full per-subcommand args.
+`path:L1-L2`. `markdownlink` and `imagepaste` are cross-plugin shims (soft
+dependencies on markdown.nvim/images.nvim, `pcall(require, ...)`); `imagepaste`
+has no `:Copy` counterpart because images.nvim's own `paste` always inserts
+its result at the cursor itself rather than returning text to a sink. See
+[commands.md](commands.md) for full per-subcommand args.
 
 ---
 

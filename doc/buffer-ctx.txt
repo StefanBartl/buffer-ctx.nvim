@@ -24,6 +24,8 @@ CONTENTS                                               *buffer-ctx-contents*
      5.11 snippet ............... |:Insert-snippet|
      5.12 git ................... |:Insert-git|
      5.13 linecount / bufnr ..... |:Insert-linecount|
+     5.14 markdownlink .......... |:Insert-markdownlink|
+     5.15 imagepaste ............ |:Insert-imagepaste|
   6. Format command ............ |buffer-ctx-format|
      6.1  column ................ |:Format-column|
      6.2  table ................. |:Format-table|
@@ -49,13 +51,18 @@ CONTENTS                                               *buffer-ctx-contents*
 ==============================================================================
 1. INTRODUCTION                                           *buffer-ctx-intro*
 
-buffer-ctx.nvim provides two commands with an identical subcommand catalog:
+buffer-ctx.nvim provides two commands with (almost) an identical subcommand
+catalog:
 
   :Insert {subcmd} [args…]   — write text at the current cursor position
   :Copy   {subcmd} [args…]   — copy text to the system clipboard (+ register)
 
 All subcommands derive their output from the current buffer: its path, cursor
-position, Lua module hierarchy, or structured content patterns.
+position, Lua module hierarchy, or structured content patterns. Two
+subcommands are cross-plugin shims to sister plugins instead, soft-dependency
+style: `markdownlink` (|:Insert-markdownlink|, delegates to markdown.nvim,
+works under both commands) and `imagepaste` (|:Insert-imagepaste|, delegates
+to images.nvim, `:Insert`-only — see its own section for why).
 
 No hard dependency. Pure Lua, with one exception: the `git` subcommand shells
 out to the `git` executable. Every other subcommand is shell-free.
@@ -78,6 +85,12 @@ out to the `git` executable. Every other subcommand is shell-free.
   - (optional) open.nvim (https://github.com/StefanBartl/open.nvim)
     |:OpenInBrowser| delegates to its `browser` handler when installed;
     falls back to |vim.ui.open| (Neovim 0.10+) otherwise.
+  - (optional) markdown.nvim (https://github.com/StefanBartl/markdown.nvim)
+    |:Insert-markdownlink| delegates to its own link builder when installed;
+    falls back to a literal "[title](path)" otherwise.
+  - (optional) images.nvim (https://github.com/StefanBartl/images.nvim)
+    |:Insert-imagepaste| delegates to its `paste` feature. No local
+    fallback — the subcommand fails without images.nvim installed.
 
 ==============================================================================
 3. INSTALLATION                                    *buffer-ctx-installation*
@@ -195,7 +208,10 @@ reveal ~
 ==============================================================================
 5. COMMANDS                                          *buffer-ctx-commands*
 
-Both `:Insert` and `:Copy` accept the same subcommands and arguments.
+`:Insert` and `:Copy` accept the same subcommands and arguments, with one
+exception: `imagepaste` (|:Insert-imagepaste|) is `:Insert`-only, since it
+delegates to a sister plugin whose own action always inserts its result at
+the cursor rather than returning text to a sink.
 
   :Insert {subcmd} [args…]   Insert at cursor
   :Copy   {subcmd} [args…]   Copy to clipboard
@@ -523,6 +539,60 @@ Examples: >
   :Insert bufnr              → 3
 <
 
+------------------------------------------------------------------------------
+5.14  markdownlink                                *:Insert-markdownlink*
+
+  :Insert markdownlink [mode] [format] [depth]
+
+Wrap the current buffer's path in a Markdown link ("[title](path)"). Takes
+the exact same `mode`/`format`/`depth` arguments as |:Insert-filepath| —
+whatever `:Copy filepath ...` would produce is what gets wrapped.
+
+Cross-plugin shim: delegates to markdown.nvim's own
+`markdown.commands.markdown_links.for_paths()` (the function behind
+`:Markdown links <path>`) when markdown.nvim is installed — soft dependency,
+`pcall(require, ...)`, same convention as `ui.kit` in `commands.lua`'s
+`resolve_kit()`. Falls back to the literal "[%s](%s)" format inline
+otherwise (markdown.nvim hardcodes the exact same format for a single file,
+so nothing behaves differently either way).
+
+Examples: >
+  :Copy markdownlink                → [filepath.lua](lua/buffer_ctx/ops/filepath.lua)
+  :Insert markdownlink abs          → [filepath.lua](C:/…/filepath.lua)
+  :Copy markdownlink repos          → [filepath.lua](buffer-ctx.nvim/lua/…/filepath.lua)
+<
+
+------------------------------------------------------------------------------
+5.15  imagepaste                                    *:Insert-imagepaste*
+
+  :Insert imagepaste [name] [path=relative|absolute|repos|<prefix>]
+
+Paste the clipboard image via images.nvim's own `paste` feature
+(`require("images").paste(name, nil, path_mode)`) — the exact same
+`{name}`/`path=...` grammar `:Image paste` itself accepts, so this is a
+convenience alias for reaching that action through buffer-ctx's own
+`:Insert` family rather than a second implementation of it.
+
+`:Insert`-only, unlike every other subcommand above: images.nvim's `paste`
+reads the OS clipboard *asynchronously* and inserts the resulting Markdown
+link directly into the buffer at the cursor itself — there is no "give me
+the link text instead" mode to route through `:Copy`'s clipboard sink, so
+`:Copy imagepaste` does not exist (attempting it errors "unknown
+subcommand", the same as any other typo).
+
+Cross-plugin shim: soft dependency on images.nvim, `pcall(require, "images")`
+re-checked on every call, same convention as `ui.kit` in `commands.lua`'s
+`resolve_kit()`. Without images.nvim installed, this errors rather than
+falling back — reimplementing its clipboard-read pipeline here would
+duplicate platform-specific logic that already exists once, there, on
+purpose.
+
+Examples: >
+  :Insert imagepaste
+  :Insert imagepaste screenshot-1
+  :Insert imagepaste path=absolute
+<
+
 ==============================================================================
 6. FORMAT COMMAND                                     *buffer-ctx-format*
 
@@ -832,6 +902,7 @@ Both `:Insert` and `:Copy` provide context-aware tab completion:
 
   `:Insert <Tab>`                 → list all subcommands
   `:Insert filepath <Tab>`        → cwd, abs, nvim, lua, unix, win, system, 0–3
+  `:Insert markdownlink <Tab>`    → same values as `filepath` (see above)
   `:Insert module <Tab>`          → require, lua_ls, js, c, generic
   `:Insert timestamp <Tab>`       → iso, iso-date, iso-time, unix, human, …
   `:Insert uuid <Tab>`            → standard, compact, upper, braced
@@ -873,6 +944,8 @@ Checks:
   - lib.nvim detected? (optional — notify upgrade)
   - lib.nvim detected? (optional — map upgrade)
   - which-key detected? (optional — <leader>cn group label)
+  - markdown.nvim detected? (optional — :Insert/:Copy markdownlink's own link builder)
+  - images.nvim detected? (optional, no local fallback — :Insert imagepaste)
   - `buffer_ctx.bindings` loadable
   - `:CopyFilepathAbsolute`, `:CopyFilepathRelative` and `:CopyFilepathRepos` compat commands registered
   - Format subsystem: enabled flag, `:Format` registered, each sub-module loadable
@@ -930,6 +1003,8 @@ Checks:
       bufinfo.lua              Buffer line count and handle
       snippet.lua              VSCode-format snippet loading
       reveal.lua               reveal_in_fm / open.nvim / vim.ui.open dispatch (side effects, no text return)
+      markdown_link.lua        [title](path) wrapper; delegates to markdown.nvim when installed
+      imagepaste.lua           images.nvim "paste" delegate (side effect, no text return -- like reveal.lua)
       boilerplate/
         init.lua               Template registry + dispatch
         templates/
