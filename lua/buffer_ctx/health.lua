@@ -172,32 +172,83 @@ function M.check()
 
   if mark_enabled then
     vim.health.ok("mark subsystem enabled")
+
+    if vim.fn.exists(":Mark") == 2 then
+      vim.health.ok(":Mark command registered")
+    else
+      vim.health.info(":Mark command not found (call setup() first)")
+    end
+
+    if vim.fn.exists(":MarkLineToggle") == 2 then
+      vim.health.ok(":MarkLineToggle compat command registered")
+    else
+      vim.health.info(":MarkLineToggle compat command not found (call setup() first)")
+    end
+
+    local mark_ok = pcall(require, "buffer_ctx.mark")
+    if mark_ok then
+      vim.health.ok("buffer_ctx.mark loaded")
+    else
+      vim.health.warn("buffer_ctx.mark failed to load")
+    end
+
+    if composer_ok then
+      composer_mod.checkhealth("Mark")
+    end
   else
     vim.health.info("mark subsystem disabled (mark = false in opts)")
-    return
   end
 
-  if vim.fn.exists(":Mark") == 2 then
-    vim.health.ok(":Mark command registered")
+  -- Reveal subsystem (mark's own section no longer returns early when
+  -- disabled -- this section must run either way).
+  vim.health.start("buffer_ctx.reveal")
+
+  local reveal_enabled = false
+  if cfg_ok then
+    local cfg = cfg_mod.get()
+    local rv = cfg.reveal
+    reveal_enabled = rv ~= false and (rv == true or rv == nil or rv.enable ~= false)
+  end
+
+  if reveal_enabled then
+    vim.health.ok("reveal subsystem enabled")
+
+    if vim.fn.exists(":RevealInFm") == 2 then
+      vim.health.ok(":RevealInFm command registered")
+    else
+      vim.health.info(":RevealInFm command not found (call setup() first)")
+    end
+
+    if vim.fn.exists(":OpenInBrowser") == 2 then
+      vim.health.ok(":OpenInBrowser command registered")
+    else
+      vim.health.info(":OpenInBrowser command not found (call setup() first)")
+    end
+
+    if pcall(require, "lib.nvim.cross.reveal_in_fm") then
+      vim.health.ok("lib.nvim.cross.reveal_in_fm detected -- :RevealInFm can dispatch")
+    else
+      vim.health.error(
+        "lib.nvim.cross.reveal_in_fm not found -- :RevealInFm will fail",
+        { 'Install "StefanBartl/lib.nvim"' }
+      )
+    end
+
+    if pcall(require, "open") then
+      vim.health.ok(
+        "open.nvim detected -- :OpenInBrowser delegates to its browser handler (optional dependency)"
+      )
+    elseif type(vim.ui.open) == "function" then
+      vim.health.info(
+        "open.nvim not found -- :OpenInBrowser falls back to vim.ui.open (optional dependency)"
+      )
+    else
+      vim.health.warn(
+        "neither open.nvim nor vim.ui.open (Neovim 0.10+) available -- :OpenInBrowser will fail"
+      )
+    end
   else
-    vim.health.info(":Mark command not found (call setup() first)")
-  end
-
-  if vim.fn.exists(":MarkLineToggle") == 2 then
-    vim.health.ok(":MarkLineToggle compat command registered")
-  else
-    vim.health.info(":MarkLineToggle compat command not found (call setup() first)")
-  end
-
-  local mark_ok = pcall(require, "buffer_ctx.mark")
-  if mark_ok then
-    vim.health.ok("buffer_ctx.mark loaded")
-  else
-    vim.health.warn("buffer_ctx.mark failed to load")
-  end
-
-  if composer_ok then
-    composer_mod.checkhealth("Mark")
+    vim.health.info("reveal subsystem disabled (reveal = false in opts)")
   end
 end
 

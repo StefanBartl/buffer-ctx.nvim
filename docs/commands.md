@@ -1,11 +1,14 @@
 # Commands
 
-Four command trees:
+Four command trees, plus two standalone actions with no subcommands of
+their own:
 
 - **`:Insert {subcmd} [args…]`** — writes text at cursor position
 - **`:Copy   {subcmd} [args…]`** — copies text to the system clipboard
 - **`:Format {subcmd} [args…]`** — buffer/selection formatting operations
 - **`:Mark   {subcmd}`**         — toggle per-line marks, clear them, and yank them to clipboard
+- **`:RevealInFm`**    — reveal the current buffer in the system file manager
+- **`:OpenInBrowser`** — open the current buffer with the OS-registered application (browser)
 
 ## Quick reference
 
@@ -328,3 +331,27 @@ rather than returning the literal string `HEAD`.
 :Insert linecount         → 348   (lines in the current buffer)
 :Insert bufnr             → 3     (current buffer handle)
 ```
+
+### `:RevealInFm`
+
+```
+:RevealInFm
+```
+
+Reveals the current buffer in the system file manager (Explorer/Finder/
+Nautilus/…) — a file selected inside its parent directory. Delegates to
+lib.nvim's `cross.reveal_in_fm`, the same dispatcher filetree.nvim's
+`<leader>fm` and open.nvim's `:Open filemanager` handler already share.
+Default keymap: `<leader>of`.
+
+### `:OpenInBrowser`
+
+```
+:OpenInBrowser
+```
+
+Opens the current buffer with the OS-registered application for it — a
+browser for an `.html` file, whatever else the OS associates otherwise.
+Delegates to open.nvim's `browser` handler when open.nvim is installed
+(`require("open").open("browser", "%")`), falling back to `vim.ui.open`
+(Neovim 0.10+) otherwise. Default keymap: `<leader>ob`.

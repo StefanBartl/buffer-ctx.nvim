@@ -3,10 +3,10 @@
 buffer-ctx.nvim generates small pieces of text about the current buffer —
 its path, its Lua module name, a timestamp, a UUID, a LuaLS annotation, a
 code skeleton — and either inserts them at the cursor (`:Insert {subcmd}`)
-or copies them to the system clipboard (`:Copy {subcmd}`). Two independent
-subsystems, `:Format` and `:Mark`, live alongside that core and are
-documented in their own files here since they don't go through the
-`:Insert`/`:Copy` dispatch at all.
+or copies them to the system clipboard (`:Copy {subcmd}`). Independent
+subsystems — `:Format`, `:Mark`, and `:RevealInFm`/`:OpenInBrowser` — live
+alongside that core and are documented in their own files here since they
+don't go through the `:Insert`/`:Copy` dispatch at all.
 
 Grouped by theme:
 
@@ -19,6 +19,8 @@ Grouped by theme:
 - [FORMAT.md](FORMAT.md) — the `:Format` subsystem: buffer/selection
   formatting operations, independent of `:Insert`/`:Copy`.
 - [MARK.md](MARK.md) — the `:Mark` subsystem: persistent per-line marks.
+- [REVEAL.md](REVEAL.md) — `:RevealInFm`/`:OpenInBrowser`: hand the current
+  buffer off to the system file manager or the browser.
 
 For the exact keymap/command/autocommand surface, see
 [../BINDINGS.md](../BINDINGS.md). For per-subcommand argument reference,

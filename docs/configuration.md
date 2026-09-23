@@ -44,6 +44,14 @@ require("buffer_ctx").setup({
     },
   },
   -- mark = false   to disable :Mark entirely
+  reveal = {
+    enable  = true,          -- register :RevealInFm / :OpenInBrowser
+    keymaps = {
+      fm      = "<leader>of", -- reveal current buffer in the system file manager
+      browser = "<leader>ob", -- open current buffer in the browser
+    },
+  },
+  -- reveal = false   to disable :RevealInFm / :OpenInBrowser entirely
 })
 ```
 

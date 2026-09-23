@@ -63,6 +63,14 @@
 ---@field enable?  boolean   Register :Format command (default true)
 ---@field command? string   Command name              (default "Format")
 
+---@class BufferCtx.RevealKeymaps
+---@field fm?      string   keymap to reveal current buffer in the system file manager (default "<leader>of")
+---@field browser? string   keymap to open current buffer in the OS-registered application / browser (default "<leader>ob")
+
+---@class BufferCtx.RevealConfig
+---@field enable?  boolean   Register :RevealInFm/:OpenInBrowser (default true)
+---@field keymaps? BufferCtx.RevealKeymaps | false
+
 ---@class BufferCtx.Config
 ---@field keymaps?   BufferCtx.KeymapConfig | boolean
 ---@field commands?  boolean
@@ -70,4 +78,5 @@
 ---@field snippets?  BufferCtx.SnippetConfig
 ---@field format?    BufferCtx.FormatConfig | boolean
 ---@field mark?      BufferCtx.MarkConfig | boolean
+---@field reveal?    BufferCtx.RevealConfig | boolean
 ---@field which_key? boolean   Label configured keymaps in which-key when installed (default true)

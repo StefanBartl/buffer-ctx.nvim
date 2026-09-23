@@ -57,14 +57,18 @@ local KNOWN = {
     sign = true,
     categories = true,
   },
+  reveal = {
+    enable = "boolean",
+    keymaps = "table_or_false",
+  },
   which_key = "boolean",
 }
 
 -- Keys DEFAULTS holds as a table but whose user-facing type also allows a
 -- plain boolean override (`keymaps = false`, `format = false`, `mark =
--- false` -- see @types.lua's `| boolean` unions). Without this, sanitize()
--- would misreport a deliberate `false` as "must be a table".
-local BOOL_OVERRIDABLE = { keymaps = true, format = true, mark = true }
+-- false`, `reveal = false` -- see @types.lua's `| boolean` unions). Without
+-- this, sanitize() would misreport a deliberate `false` as "must be a table".
+local BOOL_OVERRIDABLE = { keymaps = true, format = true, mark = true, reveal = true }
 
 ---@internal
 ---`key` with the nearest known one as a hint when there is a plausible one.

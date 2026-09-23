@@ -63,6 +63,7 @@ local specs = {
   "format_spec.lua",
   "format_extra_spec.lua",
   "mark_spec.lua",
+  "reveal_spec.lua",
   "features_spec.lua",
   "boilerplate_spec.lua",
   "bindings_spec.lua",

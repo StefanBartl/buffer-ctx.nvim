@@ -1,9 +1,9 @@
 # buffer-ctx.nvim — Binding Cheatsheet
 
-Every keymap, user command, and autocommand `buffer-ctx.nvim` defines. Kept in sync with `lua/buffer_ctx/bindings/` (base keymaps + `:Insert`/`:Copy`) and the self-contained `lua/buffer_ctx/format/` and `lua/buffer_ctx/mark/` subsystems (which own their own commands/keymaps).
+Every keymap, user command, and autocommand `buffer-ctx.nvim` defines. Kept in sync with `lua/buffer_ctx/bindings/` (base keymaps + `:Insert`/`:Copy`) and the self-contained `lua/buffer_ctx/format/`, `lua/buffer_ctx/mark/` and `lua/buffer_ctx/reveal/` subsystems (which own their own commands/keymaps).
 
 All keymaps are individually configurable (or fully disabled) via
-`require("buffer_ctx").setup({ keymaps = ..., mark = { keymaps = ... } })`.
+`require("buffer_ctx").setup({ keymaps = ..., mark = { keymaps = ... }, reveal = { keymaps = ... } })`.
 See [configuration.md](configuration.md) for the exact option shapes.
 
 ## Table of content
@@ -11,6 +11,7 @@ See [configuration.md](configuration.md) for the exact option shapes.
   - [Keymaps](#keymaps)
     - [Core](#core)
     - [Mark](#mark)
+    - [Reveal](#reveal)
   - [User Commands](#user-commands)
     - [Subcommand catalog](#subcommand-catalog)
   - [Autocommands](#autocommands)
@@ -51,6 +52,20 @@ only when every line already carries that category does the range unmark.
 
 ---
 
+### Reveal
+
+| lhs | mode | action | desc |
+| --- | --- | --- | --- |
+| `<leader>of` | n | fm | Reveal current buffer in the system file manager |
+| `<leader>ob` | n | browser | Open current buffer in the browser (OS-registered application) |
+
+Neither key collides with the ecosystem's `<leader>fm` (format-file, a
+different plugin entirely) or filetree.nvim's own buffer-local `<leader>fm`
+(reveal-in-fm inside a *tree* buffer) — see [commands.md](commands.md) for
+what each of the two actions here actually does.
+
+---
+
 ## User Commands
 
 | name | args | desc |
@@ -64,6 +79,8 @@ only when every line already carries that category does the range unmark.
 | `:Mark` | `{subcmd} [category]` | Toggle per-line marks, clear them, and yank them to clipboard. `:Mark toggle` accepts a range (`:'<,'>Mark toggle`). `toggle`/`clear`/`yank` all take an optional category name, tab-completed from the configured ones. |
 | `:MarkLineToggle` | — | Compat alias for `:Mark toggle` |
 | `:MarkLinesYank` | — | Compat alias for `:Mark yank` |
+| `:RevealInFm` | — | Reveal current buffer in the system file manager (`lib.nvim.cross.reveal_in_fm`) |
+| `:OpenInBrowser` | — | Open current buffer with the OS-registered application/browser (open.nvim if installed, else `vim.ui.open`) |
 
 ---
 

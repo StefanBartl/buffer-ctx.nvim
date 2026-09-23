@@ -4,9 +4,13 @@
 :checkhealth buffer_ctx
 ```
 
-Three sections, `buffer_ctx` first and always run; `buffer_ctx.format` and
-`buffer_ctx.mark` each stop early (`info`, not `warn`) when that subsystem is
-disabled in `opts` — a disabled subsystem isn't a problem to report on.
+Four sections, `buffer_ctx` first and always run; `buffer_ctx.format`,
+`buffer_ctx.mark` and `buffer_ctx.reveal` each report a single `info` line
+(not `warn`) instead of their per-command checks when that subsystem is
+disabled in `opts` — a disabled subsystem isn't a problem to report on, and
+none of the three early-`return`s out of `M.check()` itself, since a later
+section (or, for `mark`, the fixed sibling `reveal` section right after it)
+still has to run.
 
 ## `buffer_ctx`
 
@@ -55,3 +59,23 @@ Note: `:MarkLinesYank` (the `:Mark yank` compat alias) is not checked here —
 only `:MarkLineToggle` is. Both are registered back-to-back in the same
 `mark/init.lua` setup function, so in practice a missing `:MarkLineToggle`
 means the pair failed together.
+
+## `buffer_ctx.reveal`
+
+Skipped (a single `info` line, per-command checks omitted) when
+`opts.reveal = false` or `opts.reveal.enable = false`.
+
+| Check | ok | warn / info / error |
+|---|---|---|
+| `:RevealInFm` command | registered | info: not found — call `setup()` first |
+| `:OpenInBrowser` command | registered | info: not found — call `setup()` first |
+| `lib.nvim.cross.reveal_in_fm` | detected | **error**: not found — `:RevealInFm` will fail |
+| open.nvim / `vim.ui.open` | open.nvim detected (ok) | info: open.nvim absent, `vim.ui.open` fallback available; warn: neither available — `:OpenInBrowser` will fail |
+
+`lib.nvim.cross.reveal_in_fm` is the one **required** dependency for this
+subsystem (same standing as `lib.nvim`'s command layer in the main
+`buffer_ctx` section above) — there is no local fallback for the platform
+dispatch it does. open.nvim, by contrast, is a genuinely optional
+dependency for `:OpenInBrowser`: `vim.ui.open` (Neovim 0.10+) covers the
+same ground when open.nvim isn't installed, which is why its absence is
+`info`, not `warn`, as long as `vim.ui.open` exists.
