@@ -19,6 +19,9 @@
 [![Lua](https://img.shields.io/badge/Lua-5.1%2FLuaJIT-2C2D72?logo=lua&logoColor=white)](https://www.lua.org)
 ![Status](https://img.shields.io/badge/status-beta-orange)
 [![CI](https://github.com/StefanBartl/buffer-ctx.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/StefanBartl/buffer-ctx.nvim/actions/workflows/ci.yml)
+[![wkd](https://img.shields.io/badge/wkd-family-c6ff3d)](https://stefanbartl.github.io/wkd/p/buffer-ctx/)
+
+> Part of the [wkd](https://stefanbartl.github.io/wkd/) family — see this plugin's [page](https://stefanbartl.github.io/wkd/p/buffer-ctx/) on the site.
 
 Everything the current buffer already knows about itself, as text you can insert
 or copy: its path, its Lua module name, the line you are on, a timestamp, a UUID,
