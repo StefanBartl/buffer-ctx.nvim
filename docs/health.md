@@ -24,7 +24,7 @@ still has to run.
 | lib.nvim (notify) | detected — using `lib.nvim.notify` | info: using plain `vim.notify` |
 | lib.nvim (keymap) | detected — using `lib.nvim.bindings.keymap` | info: using plain `vim.keymap.set` |
 | which-key.nvim | detected — `<leader>cn` group label registered | info: not found, keymaps still work |
-| markdown.nvim | detected — `:Insert`/`:Copy markdownlink` delegates to its link builder | info: not found, `markdownlink` falls back to a literal `[title](path)` |
+| markdown.nvim | detected — `:Insert`/`:Copy mdlink` delegates to its link builder | info: not found, `mdlink` falls back to a literal `[title](path)` |
 | images.nvim | detected — `:Insert imagepaste` can dispatch | info: not found, `:Insert imagepaste` will fail (no local fallback) |
 | `buffer_ctx.bindings` | loaded | warn: failed to load |
 | `:Insert` / `:Copy` route health | delegated to `lib.nvim`'s composer (`composer.checkhealth("Insert"\|"Copy")`) | — |

@@ -24,7 +24,7 @@ CONTENTS                                               *buffer-ctx-contents*
      5.11 snippet ............... |:Insert-snippet|
      5.12 git ................... |:Insert-git|
      5.13 linecount / bufnr ..... |:Insert-linecount|
-     5.14 markdownlink .......... |:Insert-markdownlink|
+     5.14 mdlink ................ |:Insert-mdlink|
      5.15 imagepaste ............ |:Insert-imagepaste|
   6. Format command ............ |buffer-ctx-format|
      6.1  column ................ |:Format-column|
@@ -60,7 +60,7 @@ catalog:
 All subcommands derive their output from the current buffer: its path, cursor
 position, Lua module hierarchy, or structured content patterns. Two
 subcommands are cross-plugin shims to sister plugins instead, soft-dependency
-style: `markdownlink` (|:Insert-markdownlink|, delegates to markdown.nvim,
+style: `mdlink` (|:Insert-mdlink|, delegates to markdown.nvim,
 works under both commands) and `imagepaste` (|:Insert-imagepaste|, delegates
 to images.nvim, `:Insert`-only — see its own section for why).
 
@@ -86,7 +86,7 @@ out to the `git` executable. Every other subcommand is shell-free.
     |:OpenInBrowser| delegates to its `browser` handler when installed;
     falls back to |vim.ui.open| (Neovim 0.10+) otherwise.
   - (optional) markdown.nvim (https://github.com/StefanBartl/markdown.nvim)
-    |:Insert-markdownlink| delegates to its own link builder when installed;
+    |:Insert-mdlink| delegates to its own link builder when installed;
     falls back to a literal "[title](path)" otherwise.
   - (optional) images.nvim (https://github.com/StefanBartl/images.nvim)
     |:Insert-imagepaste| delegates to its `paste` feature. No local
@@ -540,9 +540,9 @@ Examples: >
 <
 
 ------------------------------------------------------------------------------
-5.14  markdownlink                                *:Insert-markdownlink*
+5.14  mdlink                                            *:Insert-mdlink*
 
-  :Insert markdownlink [mode] [format] [depth]
+  :Insert mdlink [mode] [format] [depth]
 
 Wrap the current buffer's path in a Markdown link ("[title](path)"). Takes
 the exact same `mode`/`format`/`depth` arguments as |:Insert-filepath| —
@@ -557,9 +557,9 @@ otherwise (markdown.nvim hardcodes the exact same format for a single file,
 so nothing behaves differently either way).
 
 Examples: >
-  :Copy markdownlink                → [filepath.lua](lua/buffer_ctx/ops/filepath.lua)
-  :Insert markdownlink abs          → [filepath.lua](C:/…/filepath.lua)
-  :Copy markdownlink repos          → [filepath.lua](buffer-ctx.nvim/lua/…/filepath.lua)
+  :Copy mdlink                      → [filepath.lua](lua/buffer_ctx/ops/filepath.lua)
+  :Insert mdlink abs                → [filepath.lua](C:/…/filepath.lua)
+  :Copy mdlink repos                → [filepath.lua](buffer-ctx.nvim/lua/…/filepath.lua)
 <
 
 ------------------------------------------------------------------------------
@@ -902,7 +902,7 @@ Both `:Insert` and `:Copy` provide context-aware tab completion:
 
   `:Insert <Tab>`                 → list all subcommands
   `:Insert filepath <Tab>`        → cwd, abs, nvim, lua, unix, win, system, 0–3
-  `:Insert markdownlink <Tab>`    → same values as `filepath` (see above)
+  `:Insert mdlink <Tab>`          → same values as `filepath` (see above)
   `:Insert module <Tab>`          → require, lua_ls, js, c, generic
   `:Insert timestamp <Tab>`       → iso, iso-date, iso-time, unix, human, …
   `:Insert uuid <Tab>`            → standard, compact, upper, braced
@@ -944,7 +944,7 @@ Checks:
   - lib.nvim detected? (optional — notify upgrade)
   - lib.nvim detected? (optional — map upgrade)
   - which-key detected? (optional — <leader>cn group label)
-  - markdown.nvim detected? (optional — :Insert/:Copy markdownlink's own link builder)
+  - markdown.nvim detected? (optional — :Insert/:Copy mdlink's own link builder)
   - images.nvim detected? (optional, no local fallback — :Insert imagepaste)
   - `buffer_ctx.bindings` loadable
   - `:CopyFilepathAbsolute`, `:CopyFilepathRelative` and `:CopyFilepathRepos` compat commands registered

@@ -5,7 +5,7 @@
 --- factory (build_routes(sink)) since they dispatch through the exact same
 --- DISPATCH table and differ only in where the result goes.
 ---
---- "markdownlink" is a cross-plugin shim (soft dependency on markdown.nvim,
+--- "mdlink" is a cross-plugin shim (soft dependency on markdown.nvim,
 --- see ops/markdown_link.lua) that fits this table like every other entry: a
 --- pure text producer, wired under both :Insert and :Copy. "imagepaste" is a
 --- *different* kind of cross-plugin shim (soft dependency on images.nvim,
@@ -135,7 +135,7 @@ local DISPATCH = {
     sink_text(result, sink)
   end,
 
-  markdownlink = function(fargs, sink)
+  mdlink = function(fargs, sink)
     -- Same mode/format tokens as "filepath" (mirrors "filepath nvim_module"'s
     -- reuse of module_op above): the path string this wraps is exactly what
     -- `:Insert filepath ...`/`:Copy filepath ...` would produce, so every
@@ -143,12 +143,12 @@ local DISPATCH = {
     -- here for free rather than re-implemented.
     local opts, parse_err = filepath.parse_args(fargs)
     if parse_err then
-      notify.error("[markdownlink] " .. parse_err)
+      notify.error("[mdlink] " .. parse_err)
       return
     end
     local path, err = filepath.get_path(opts)
     if not path then
-      notify.error(err or "markdownlink failed")
+      notify.error(err or "mdlink failed")
       return
     end
     sink_text(markdown_link_op.build(path), sink)
@@ -342,7 +342,7 @@ local DISPATCH = {
 
 local SUBCMDS = {
   "filepath",
-  "markdownlink",
+  "mdlink",
   "filename",
   "module",
   "timestamp",
@@ -388,9 +388,9 @@ local TIMESTAMP_FORMATS = {
   "--utc",
 }
 
--- Shared by "filepath" and "markdownlink": the latter wraps whatever
+-- Shared by "filepath" and "mdlink": the latter wraps whatever
 -- "filepath" would produce in a Markdown link, so both accept the exact same
--- mode/format tokens (see the "markdownlink" DISPATCH entry above).
+-- mode/format tokens (see the "mdlink" DISPATCH entry above).
 local FILEPATH_ARGS = {
   "relative",
   "absolute",
@@ -410,7 +410,7 @@ local FILEPATH_ARGS = {
 
 local SUBCMD_ARGS = {
   filepath = FILEPATH_ARGS,
-  markdownlink = FILEPATH_ARGS,
+  mdlink = FILEPATH_ARGS,
   filename = { "noext" },
   module = { "require", "lua_ls", "js", "c", "generic" },
   git = { "hash", "short", "branch", "tag" },
