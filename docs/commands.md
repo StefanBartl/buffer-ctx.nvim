@@ -15,7 +15,7 @@ soft-dependency style (a plain `pcall(require, ...)`, matching `ui.kit`'s own
 convention in this plugin — see [Requirements](installation.md) for what's
 optional):
 
-- **`markdownlink`** — wraps the current buffer's path in a Markdown link,
+- **`mdlink`** — wraps the current buffer's path in a Markdown link,
   delegating to markdown.nvim when installed; works under both `:Insert` and
   `:Copy`, like every other subcommand.
 - **`imagepaste`** — pastes the clipboard image via images.nvim's own `paste`
@@ -28,7 +28,7 @@ optional):
 | Subcommand | Args | Result |
 |---|---|---|
 | `filepath` | `[cwd\|abs\|nvim\|nvim_module] [lua\|unix\|win\|system] [0-3]` | Path of current buffer |
-| `markdownlink` | `[cwd\|abs\|nvim\|repos] [lua\|unix\|win\|system] [0-3]` | `[title](path)` for the current buffer |
+| `mdlink` | `[cwd\|abs\|nvim\|repos] [lua\|unix\|win\|system] [0-3]` | `[title](path)` for the current buffer |
 | `filename` | `[noext]` | Filename (with/without extension) |
 | `module` | `[require\|lua_ls\|js\|c\|generic]` | Lua `require(…)` or `---@module` |
 | `location` | `[cwd\|abs\|lua] [range]` | `path:line`, or `path:L1-L2` with `range` |
@@ -108,16 +108,16 @@ tab-completion under `filepath` still reaches it.
 
 Compat commands: `:CopyFilepathAbsolute` → `:Copy filepath absolute`, `:CopyFilepathRelative` → `:Copy filepath relative`, `:CopyFilepathRepos` → `:Copy filepath repos`
 
-### `markdownlink [mode] [format] [depth]`
+### `mdlink [mode] [format] [depth]`
 
 Wrap the current buffer's path in a Markdown link (`[title](path)`). Takes
 the exact same `mode`/`format`/`depth` arguments as `filepath` above —
 whatever `:Copy filepath ...` would produce is what gets wrapped.
 
 ```
-:Copy markdownlink                → "[filepath.lua](lua/buffer_ctx/ops/filepath.lua)"
-:Insert markdownlink abs          → "[filepath.lua](/home/user/…/filepath.lua)"
-:Copy markdownlink repos          → "[filepath.lua](buffer-ctx.nvim/lua/…/filepath.lua)"
+:Copy mdlink                      → "[filepath.lua](lua/buffer_ctx/ops/filepath.lua)"
+:Insert mdlink abs                → "[filepath.lua](/home/user/…/filepath.lua)"
+:Copy mdlink repos                → "[filepath.lua](buffer-ctx.nvim/lua/…/filepath.lua)"
 ```
 
 Cross-plugin shim: delegates to markdown.nvim's own

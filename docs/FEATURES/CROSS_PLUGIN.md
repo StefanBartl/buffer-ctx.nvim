@@ -1,18 +1,18 @@
 # Cross-plugin shims
 
 Two `:Insert`/`:Copy` subcommands that reach into a sister plugin instead of
-computing their result locally: `markdownlink` (markdown.nvim) and
+computing their result locally: `mdlink` (markdown.nvim) and
 `imagepaste` (images.nvim). Both are soft dependencies — a plain
 `pcall(require, ...)`, re-checked on every call, never cached — the same
 convention `buffer_ctx.commands`'s own `resolve_kit()` already uses for
 `ui.kit`.
 
-## markdownlink
+## mdlink
 
 - **Tab:** true (shares `filepath`'s mode/format/depth completion)
 - **Module:** `ops/markdown_link.lua` (`M.build`)
-- **Usercmds:** `:Insert markdownlink [mode] [format] [depth]`,
-  `:Copy markdownlink [mode] [format] [depth]`
+- **Usercmds:** `:Insert mdlink [mode] [format] [depth]`,
+  `:Copy mdlink [mode] [format] [depth]`
 - **Tests:** `TESTS/cross_plugin_spec.lua`
 
 Wraps whatever `:Insert`/`:Copy filepath [mode] [format] [depth]` would
@@ -67,7 +67,7 @@ over `SUBCMDS`. `:Copy imagepaste` therefore doesn't merely "do nothing" —
 it doesn't exist as a subcommand at all (attempting it errors "unknown
 subcommand", the same as any other typo).
 
-No local fallback when images.nvim is absent (unlike `markdownlink` above):
+No local fallback when images.nvim is absent (unlike `mdlink` above):
 the clipboard-read pipeline is genuinely nontrivial and platform-specific,
 so `imagepaste` simply reports the missing dependency rather than
 half-reimplementing it.
@@ -81,9 +81,9 @@ be easy to imagine a `lua/buffer_ctx/providers/init.lua` with a
 deliberately not built here.
 
 With exactly two sister plugins involved, and each shim needing genuinely
-different handling on the failure path (`markdownlink` degrades gracefully
+different handling on the failure path (`mdlink` degrades gracefully
 inline; `imagepaste` has nothing sensible to degrade *to*) and a different
-place in the command tree (`markdownlink` is a normal `DISPATCH` entry under
+place in the command tree (`mdlink` is a normal `DISPATCH` entry under
 both `:Insert`/`:Copy`; `imagepaste` is an `:Insert`-only route bypassing
 `DISPATCH` entirely), a registry abstraction would need to accommodate both
 shapes from day one — for two call sites, each already only a few lines long

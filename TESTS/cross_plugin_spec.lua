@@ -1,5 +1,5 @@
 -- TESTS/cross_plugin_spec.lua — the two cross-plugin shims from
--- buffer_ctx.commands: "markdownlink" (a pure text producer wired under both
+-- buffer_ctx.commands: "mdlink" (a pure text producer wired under both
 -- :Insert and :Copy, delegating to markdown.nvim) and "imagepaste" (a
 -- side-effecting :Insert-only route, delegating to images.nvim). Neither
 -- sister plugin is ever actually invoked for real: markdown.nvim and
@@ -69,30 +69,30 @@ return function(H)
     H.eq(result, "[thing.lua](lua/thing.lua)", "markdown_link.build falls back to [title](path)")
   end)
 
-  -- ── markdownlink DISPATCH: end-to-end via M._dispatch, both sinks ───────
+  -- ── mdlink DISPATCH: end-to-end via M._dispatch, both sinks ───────
   with_module("markdown.commands.markdown_links", false, function()
     H.scratch(cwd .. "/lua/mdlinktest/thing.lua")
 
     vim.fn.setreg('"', "")
-    commands._dispatch("markdownlink", { "abs" }, "clip")
+    commands._dispatch("mdlink", { "abs" }, "clip")
     local abs_result = vim.fn.getreg('"')
     H.match(
       abs_result,
       "^%[thing%.lua%]%(.*mdlinktest[/\\]thing%.lua%)$",
-      "markdownlink mode=abs via :Copy"
+      "mdlink mode=abs via :Copy"
     )
 
     vim.api.nvim_buf_set_lines(0, 0, -1, false, {})
-    commands._dispatch("markdownlink", { "cwd" }, "cursor")
+    commands._dispatch("mdlink", { "cwd" }, "cursor")
     local inserted = vim.api.nvim_buf_get_lines(0, 0, -1, false)[1]
     H.eq(
       inserted,
       "[thing.lua](lua/mdlinktest/thing.lua)",
-      "markdownlink mode=cwd via :Insert (default mode when no args given)"
+      "mdlink mode=cwd via :Insert (default mode when no args given)"
     )
   end)
 
-  -- ── markdownlink DISPATCH: parse errors surface like "filepath"'s own ──
+  -- ── mdlink DISPATCH: parse errors surface like "filepath"'s own ──
   do
     H.scratch(cwd .. "/lua/mdlinktest2/thing.lua")
     local original_notify_error = require("buffer_ctx.util.notify").error
@@ -100,13 +100,9 @@ return function(H)
     require("buffer_ctx.util.notify").error = function(msg)
       last_err = msg
     end
-    commands._dispatch("markdownlink", { "not-a-real-mode" }, "clip")
+    commands._dispatch("mdlink", { "not-a-real-mode" }, "clip")
     require("buffer_ctx.util.notify").error = original_notify_error
-    H.match(
-      last_err or "",
-      "^%[markdownlink%] unknown argument",
-      "markdownlink reports unknown arguments"
-    )
+    H.match(last_err or "", "^%[mdlink%] unknown argument", "mdlink reports unknown arguments")
   end
 
   -- ── imagepaste.paste(): images.nvim installed, delegates with the right
@@ -135,7 +131,7 @@ return function(H)
     H.match(err, "images%.nvim not found", "imagepaste.paste names the missing dependency")
   end)
 
-  -- ── commands.lua wiring: :Insert has both shims, :Copy only markdownlink ─
+  -- ── commands.lua wiring: :Insert has both shims, :Copy only mdlink ─
   do
     local composer = require("lib.nvim.bindings.usercmd.composer")
     -- Idempotent (usercmd.create defaults to force = true, same as
@@ -166,8 +162,8 @@ return function(H)
       ":Copy has no 'imagepaste' route (no clipboard sink for it)"
     )
 
-    H.ok(has_route(registry.Insert, "markdownlink"), ":Insert has a 'markdownlink' route")
-    H.ok(has_route(registry.Copy, "markdownlink"), ":Copy has a 'markdownlink' route")
+    H.ok(has_route(registry.Insert, "mdlink"), ":Insert has a 'mdlink' route")
+    H.ok(has_route(registry.Copy, "mdlink"), ":Copy has a 'mdlink' route")
   end
 
   -- ── :Insert imagepaste end-to-end through the composer (args + kv) ─────

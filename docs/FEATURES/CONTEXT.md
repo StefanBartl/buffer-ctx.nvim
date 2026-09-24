@@ -26,7 +26,7 @@ N path segments.
 :Copy filepath 1               → "filepath.lua"
 ```
 
-`markdownlink` (a cross-plugin shim, not documented here — see
+`mdlink` (a cross-plugin shim, not documented here — see
 [CROSS_PLUGIN.md](CROSS_PLUGIN.md)) wraps whatever this subcommand produces
 in a Markdown link, reusing this exact mode/format/depth grammar.
 
