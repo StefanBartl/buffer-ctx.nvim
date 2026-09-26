@@ -48,4 +48,33 @@ return function(H)
     not pu.is_inside_nvim_config("/definitely/not/nvim/config/foo.lua"),
     "is_inside_nvim_config: outside"
   )
+
+  -- strip_root: the shared root-matching helper behind mode="nvim"/"repos"/
+  -- "env" in ops/filepath.lua (and is_inside_nvim_config above).
+  H.eq(pu.strip_root(cwd .. "/lua/foo.lua", cwd), "lua/foo.lua", "strip_root: basic match")
+  local _, root_len = pu.strip_root(cwd .. "/lua/foo.lua", cwd)
+  H.eq(root_len, #cwd, "strip_root: reports the matched root's length")
+  H.eq(pu.strip_root(cwd, cwd), "", "strip_root: exact match returns an empty rest")
+  H.eq(
+    pu.strip_root(cwd .. "/lua/foo.lua", "/definitely/not/it"),
+    nil,
+    "strip_root: no match returns nil"
+  )
+  H.eq(pu.strip_root(cwd .. "/lua/foo.lua", nil), nil, "strip_root: nil root returns nil")
+  H.eq(pu.strip_root(cwd .. "/lua/foo.lua", ""), nil, "strip_root: empty root returns nil")
+  H.eq(
+    pu.strip_root(cwd .. "/lua/foo.lua", cwd .. "/"),
+    "lua/foo.lua",
+    "strip_root: a trailing separator on root is ignored"
+  )
+  if vim.fn.has("win32") == 1 then
+    -- Windows compares paths case-insensitively; $REPOS_DIR/stdpath("config")
+    -- can differ in case (e.g. drive letter) from what fnamemodify(":p")
+    -- reports for the same file.
+    H.eq(
+      pu.strip_root(cwd .. "/lua/foo.lua", cwd:upper()),
+      "lua/foo.lua",
+      "strip_root: case-insensitive match on Windows"
+    )
+  end
 end
