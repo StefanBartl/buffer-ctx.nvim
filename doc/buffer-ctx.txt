@@ -249,11 +249,18 @@ Examples: >
   :Copy filepath 1                  → filepath.lua
   :Copy filepath nvim               → relative to nvim config dir
   :Copy filepath repos              → relative to $REPOS_DIR
+  :Copy filepath env                → "$REPOS_DIR/…" or "$NVIM_CONFIG_DIR/…"
 <
+`env` folds the buffer path under whichever of $REPOS_DIR / $NVIM_CONFIG_DIR
+(stdpath("config")) it lives under into a literal "$VAR/…" string (longest
+root wins); with neither set or matching, it falls back to the plain
+cwd-relative path, same as `nvim`/`repos` do.
+
 Compat commands are registered automatically:
   :CopyFilepathAbsolute   →  :Copy filepath absolute
   :CopyFilepathRelative   →  :Copy filepath relative
   :CopyFilepathRepos      →  :Copy filepath repos
+  :CopyFilepathEnv        →  :Copy filepath env
 
 ------------------------------------------------------------------------------
 5.2  filename                                          *:Insert-filename*
@@ -947,7 +954,7 @@ Checks:
   - markdown.nvim detected? (optional — :Insert/:Copy mdlink's own link builder)
   - images.nvim detected? (optional, no local fallback — :Insert imagepaste)
   - `buffer_ctx.bindings` loadable
-  - `:CopyFilepathAbsolute`, `:CopyFilepathRelative` and `:CopyFilepathRepos` compat commands registered
+  - `:CopyFilepathAbsolute`, `:CopyFilepathRelative`, `:CopyFilepathRepos` and `:CopyFilepathEnv` compat commands registered
   - Format subsystem: enabled flag, `:Format` registered, each sub-module loadable
   - Mark subsystem: enabled flag, `:Mark` and `:MarkLineToggle` registered
   - Reveal subsystem: enabled flag, `:RevealInFm`/`:OpenInBrowser` registered,

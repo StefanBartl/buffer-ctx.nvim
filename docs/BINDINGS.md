@@ -75,6 +75,7 @@ what each of the two actions here actually does.
 | `:CopyFilepathAbsolute` | — | Compat alias for `:Copy filepath absolute` |
 | `:CopyFilepathRelative` | — | Compat alias for `:Copy filepath relative` |
 | `:CopyFilepathRepos` | — | Compat alias for `:Copy filepath repos` |
+| `:CopyFilepathEnv` | — | Compat alias for `:Copy filepath env` |
 | `:Format` | `{subcmd} [args…]` | Buffer/selection formatting operations |
 | `:Mark` | `{subcmd} [category]` | Toggle per-line marks, clear them, and yank them to clipboard. `:Mark toggle` accepts a range (`:'<,'>Mark toggle`). `toggle`/`clear`/`yank` all take an optional category name, tab-completed from the configured ones. |
 | `:MarkLineToggle` | — | Compat alias for `:Mark toggle` |

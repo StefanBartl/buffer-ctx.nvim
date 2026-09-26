@@ -1,6 +1,7 @@
 ---@module 'buffer_ctx.ops.filepath'
 --- Builds a formatted path string for the current buffer (relative, absolute,
---- nvim-config-relative, or dotted Lua-module style).
+--- nvim-config-relative, $REPOS_DIR/$NVIM_CONFIG_DIR-folded, or dotted
+--- Lua-module style).
 ---@see buffer_ctx.util.path for the pure path helpers this builds on
 ---@see buffer_ctx.ops.location for the "path:line" variant
 ---@see buffer_ctx.ops.module for the Lua-module-name variant
@@ -47,6 +48,36 @@ function M.get_path(opts)
       base = norm_abs:sub(#norm_repos + 2)
     else
       base = pu.relative_to_cwd(abs)
+    end
+  elseif opts.mode == "env" then
+    -- Folds whichever of $REPOS_DIR / $NVIM_CONFIG_DIR the buffer lives
+    -- under into a literal "$VAR/..." prefix (longest root wins, mirroring
+    -- filetree.nvim's env_rooted); falls back to cwd-relative like "nvim"
+    -- and "repos" do when neither root matches.
+    local norm_abs = abs:gsub("\\", "/")
+    local candidates = {
+      { name = "REPOS_DIR", root = vim.env.REPOS_DIR },
+      { name = "NVIM_CONFIG_DIR", root = fn.stdpath("config") },
+    }
+    local best_name, best_root
+    for _, c in ipairs(candidates) do
+      if type(c.root) == "string" and c.root ~= "" then
+        local norm_root = c.root:gsub("\\", "/")
+        local under = norm_abs == norm_root or norm_abs:sub(1, #norm_root + 1) == norm_root .. "/"
+        if under and (not best_root or #norm_root > #best_root) then
+          best_name, best_root = c.name, norm_root
+        end
+      end
+    end
+    if best_name then
+      base = "$" .. best_name .. norm_abs:sub(#best_root + 1)
+    else
+      base = pu.relative_to_cwd(abs)
+    end
+    -- for env mode, format defaults to system (a dotted module name would
+    -- swallow the "$VAR" segment)
+    if opts.format == "lua" then
+      opts.format = "unix"
     end
   else
     base = pu.relative_to_cwd(abs)
@@ -149,6 +180,8 @@ function M.parse_args(args)
       opts.mode = "nvim"
     elseif lo == "repos" or lo == "reposdir" then
       opts.mode = "repos"
+    elseif lo == "env" then
+      opts.mode = "env"
     elseif lo == "lua" then
       opts.format = "lua"
     elseif lo == "win" or lo == "windows" then

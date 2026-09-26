@@ -85,7 +85,7 @@ Copy or insert the current buffer's path.
 
 | Arg | Values | Default |
 |---|---|---|
-| mode | `cwd`/`relative`/`rel`, `abs`/`absolute`, `nvim`, `repos`/`reposdir` | `cwd` |
+| mode | `cwd`/`relative`/`rel`, `abs`/`absolute`, `nvim`, `repos`/`reposdir`, `env` | `cwd` |
 | format | `unix`, `lua`, `win`, `system` | `unix` |
 | depth | `0`–`3` (last N+1 segments) | full path |
 
@@ -96,17 +96,23 @@ Copy or insert the current buffer's path.
 :Copy filepath 1               → "filepath.lua"
 :Copy filepath nvim            → relative to stdpath("config")
 :Copy filepath repos           → relative to $REPOS_DIR
+:Copy filepath env             → "$REPOS_DIR/…" or "$NVIM_CONFIG_DIR/…", whichever root matches
 ```
 
 `repos` errors (rather than falling back) when `$REPOS_DIR` itself is unset
 — unlike `nvim`, which always has `stdpath("config")` to fall back around,
 there's no universal default for "the repos root".
 
+`env` folds the buffer path under whichever of `$REPOS_DIR` /
+`$NVIM_CONFIG_DIR` (`stdpath("config")`) it lives under into a literal
+`"$VAR/…"` string (longest root wins); with neither set or matching, it falls
+back to the plain cwd-relative path, same as `nvim`/`repos` do.
+
 `nvim_module` is not a path format — it's an alias straight into the `module`
 subcommand (`:Copy filepath nvim_module` == `:Copy module`), kept so
 tab-completion under `filepath` still reaches it.
 
-Compat commands: `:CopyFilepathAbsolute` → `:Copy filepath absolute`, `:CopyFilepathRelative` → `:Copy filepath relative`, `:CopyFilepathRepos` → `:Copy filepath repos`
+Compat commands: `:CopyFilepathAbsolute` → `:Copy filepath absolute`, `:CopyFilepathRelative` → `:Copy filepath relative`, `:CopyFilepathRepos` → `:Copy filepath repos`, `:CopyFilepathEnv` → `:Copy filepath env`
 
 ### `mdlink [mode] [format] [depth]`
 
