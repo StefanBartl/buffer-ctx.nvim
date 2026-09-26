@@ -330,6 +330,33 @@ return function(H)
     vim.env.REPOS_DIR = saved_repos_dir
   end
 
+  -- mode=env (and mode=repos, sharing the same helper) still match when
+  -- $REPOS_DIR carries a trailing slash, or -- on Windows -- differs in case
+  -- from the buffer's actual path (e.g. a differently-cased drive letter).
+  do
+    local saved_repos_dir = vim.env.REPOS_DIR
+
+    vim.env.REPOS_DIR = cwd .. "/reposroot/"
+    H.scratch(cwd .. "/reposroot/trailingslash.nvim/init.lua")
+    H.eq(
+      filepath.get_path({ mode = "env", format = "unix" }),
+      "$REPOS_DIR/trailingslash.nvim/init.lua",
+      "filepath mode=env matches even when $REPOS_DIR has a trailing slash"
+    )
+
+    if vim.fn.has("win32") == 1 then
+      vim.env.REPOS_DIR = (cwd .. "/reposroot"):upper()
+      H.scratch(cwd .. "/reposroot/casemismatch.nvim/init.lua")
+      H.eq(
+        filepath.get_path({ mode = "env", format = "unix" }),
+        "$REPOS_DIR/casemismatch.nvim/init.lua",
+        "filepath mode=env matches $REPOS_DIR case-insensitively on Windows"
+      )
+    end
+
+    vim.env.REPOS_DIR = saved_repos_dir
+  end
+
   H.scratch(nil)
   local _, path_unnamed_err = filepath.get_path({ mode = "cwd", format = "unix" })
   H.ok(path_unnamed_err ~= nil, "filepath.get_path on an unnamed buffer errors")

@@ -25,14 +25,7 @@ function M.get_path(opts)
   if opts.mode == "abs" then
     base = abs
   elseif opts.mode == "nvim" then
-    local config = fn.stdpath("config")
-    local norm_abs = abs:gsub("\\", "/")
-    local norm_config = (config:gsub("\\", "/"))
-    if norm_abs:sub(1, #norm_config + 1) == norm_config .. "/" then
-      base = norm_abs:sub(#norm_config + 2)
-    else
-      base = pu.relative_to_cwd(abs)
-    end
+    base = pu.strip_root(abs, fn.stdpath("config")) or pu.relative_to_cwd(abs)
     -- for nvim mode, format defaults to system
     if opts.format == "lua" then
       opts.format = "unix"
@@ -42,35 +35,27 @@ function M.get_path(opts)
     if not repos_dir or repos_dir == "" then
       return nil, "$REPOS_DIR is not set"
     end
-    local norm_abs = abs:gsub("\\", "/")
-    local norm_repos = (repos_dir:gsub("\\", "/"))
-    if norm_abs:sub(1, #norm_repos + 1) == norm_repos .. "/" then
-      base = norm_abs:sub(#norm_repos + 2)
-    else
-      base = pu.relative_to_cwd(abs)
-    end
+    base = pu.strip_root(abs, repos_dir) or pu.relative_to_cwd(abs)
   elseif opts.mode == "env" then
     -- Folds whichever of $REPOS_DIR / $NVIM_CONFIG_DIR the buffer lives
     -- under into a literal "$VAR/..." prefix (longest root wins, mirroring
     -- filetree.nvim's env_rooted); falls back to cwd-relative like "nvim"
-    -- and "repos" do when neither root matches.
-    local norm_abs = abs:gsub("\\", "/")
+    -- and "repos" do when neither root matches. Shares pu.strip_root with
+    -- those two branches above so the Windows case-fold and trailing-slash
+    -- handling live in one place instead of three near-identical copies.
     local candidates = {
       { name = "REPOS_DIR", root = vim.env.REPOS_DIR },
       { name = "NVIM_CONFIG_DIR", root = fn.stdpath("config") },
     }
-    local best_name, best_root
+    local best_name, best_rest, best_len
     for _, c in ipairs(candidates) do
-      if type(c.root) == "string" and c.root ~= "" then
-        local norm_root = c.root:gsub("\\", "/")
-        local under = norm_abs == norm_root or norm_abs:sub(1, #norm_root + 1) == norm_root .. "/"
-        if under and (not best_root or #norm_root > #best_root) then
-          best_name, best_root = c.name, norm_root
-        end
+      local rest, root_len = pu.strip_root(abs, c.root)
+      if rest and (not best_len or root_len > best_len) then
+        best_name, best_rest, best_len = c.name, rest, root_len
       end
     end
     if best_name then
-      base = "$" .. best_name .. norm_abs:sub(#best_root + 1)
+      base = "$" .. best_name .. (best_rest == "" and "" or "/" .. best_rest)
     else
       base = pu.relative_to_cwd(abs)
     end
