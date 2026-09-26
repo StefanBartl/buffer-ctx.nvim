@@ -6,7 +6,7 @@
 
 ---@alias BufferCtx.Sink "cursor" | "clip"
 
----@alias BufferCtx.FilepathMode "cwd" | "abs" | "nvim" | "repos"
+---@alias BufferCtx.FilepathMode "cwd" | "abs" | "nvim" | "repos" | "env"
 ---@alias BufferCtx.FilepathFormat "lua" | "unix" | "win" | "system"
 
 ---@class BufferCtx.FilepathOpts

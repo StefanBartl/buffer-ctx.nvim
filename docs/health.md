@@ -28,7 +28,7 @@ still has to run.
 | images.nvim | detected — `:Insert imagepaste` can dispatch | info: not found, `:Insert imagepaste` will fail (no local fallback) |
 | `buffer_ctx.bindings` | loaded | warn: failed to load |
 | `:Insert` / `:Copy` route health | delegated to `lib.nvim`'s composer (`composer.checkhealth("Insert"\|"Copy")`) | — |
-| `:CopyFilepathAbsolute` / `:CopyFilepathRelative` / `:CopyFilepathRepos` | compat commands registered | warn: not found |
+| `:CopyFilepathAbsolute` / `:CopyFilepathRelative` / `:CopyFilepathRepos` / `:CopyFilepathEnv` | compat commands registered | warn: not found |
 
 lib.nvim is the one **required** dependency here — everything else in this
 section (notify, keymap, which-key, markdown.nvim) is cosmetic and degrades

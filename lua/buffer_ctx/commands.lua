@@ -14,11 +14,12 @@
 --- cursor itself, so it is wired as a route on the :Insert verb only (see
 --- build_routes's own docs and M.register below).
 ---
---- Three single-word compat commands are registered directly (untouched by
+--- Four single-word compat commands are registered directly (untouched by
 --- composer, same pattern as :Mark's :MarkLineToggle/:MarkLinesYank):
 ---   :CopyFilepathAbsolute   →  :Copy filepath absolute
 ---   :CopyFilepathRelative   →  :Copy filepath relative
 ---   :CopyFilepathRepos      →  :Copy filepath repos
+---   :CopyFilepathEnv        →  :Copy filepath env
 ---@see buffer_ctx.format
 ---@see buffer_ctx.mark
 ---@see buffer_ctx.ops.markdown_link
@@ -398,6 +399,7 @@ local FILEPATH_ARGS = {
   "abs",
   "nvim",
   "repos",
+  "env",
   "lua",
   "unix",
   "win",
@@ -577,6 +579,10 @@ function M.register()
   usercmd.create("CopyFilepathRepos", function()
     M._dispatch("filepath", { "repos" }, "clip")
   end, { desc = "[buffer-ctx compat] Copy $REPOS_DIR-relative filepath to clipboard" })
+
+  usercmd.create("CopyFilepathEnv", function()
+    M._dispatch("filepath", { "env" }, "clip")
+  end, { desc = "[buffer-ctx compat] Copy filepath, $REPOS_DIR/$NVIM_CONFIG_DIR folded in" })
 end
 
 return M

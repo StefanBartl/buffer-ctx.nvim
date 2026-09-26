@@ -125,6 +125,12 @@ function M.check()
     vim.health.info(":CopyFilepathRepos compat command not found (call setup() first)")
   end
 
+  if vim.fn.exists(":CopyFilepathEnv") == 2 then
+    vim.health.ok(":CopyFilepathEnv compat command registered")
+  else
+    vim.health.info(":CopyFilepathEnv compat command not found (call setup() first)")
+  end
+
   local cfg_ok, cfg_mod = pcall(require, "buffer_ctx.config")
   if cfg_ok and type(cfg_mod.issues) == "function" then
     local issues = cfg_mod.issues()

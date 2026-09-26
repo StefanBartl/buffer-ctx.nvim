@@ -290,6 +290,46 @@ return function(H)
     vim.env.REPOS_DIR = saved_repos_dir
   end
 
+  -- mode=env folds whichever of $REPOS_DIR / $NVIM_CONFIG_DIR matches into a
+  -- literal "$VAR/..." prefix (longest root wins); falls back to cwd-relative
+  -- like repos/nvim do when neither matches, and keeps working with only one
+  -- of the two roots available.
+  do
+    local saved_repos_dir = vim.env.REPOS_DIR
+    vim.env.REPOS_DIR = cwd .. "/reposroot"
+
+    H.scratch(cwd .. "/reposroot/envmode.nvim/lua/init.lua")
+    H.eq(
+      filepath.get_path({ mode = "env", format = "unix" }),
+      "$REPOS_DIR/envmode.nvim/lua/init.lua",
+      "filepath mode=env inside $REPOS_DIR folds the repos-root into $REPOS_DIR"
+    )
+
+    H.scratch(nvim_config .. "/lua/envmode/x.lua")
+    H.eq(
+      filepath.get_path({ mode = "env", format = "lua" }),
+      "$NVIM_CONFIG_DIR/lua/envmode/x.lua",
+      "filepath mode=env inside the config dir folds into $NVIM_CONFIG_DIR and forces format to unix"
+    )
+
+    H.scratch(cwd .. "/lua/fp5/thing.lua")
+    H.eq(
+      filepath.get_path({ mode = "env", format = "unix" }),
+      filepath.get_path({ mode = "cwd", format = "unix" }),
+      "filepath mode=env outside both roots falls back to cwd-relative"
+    )
+
+    vim.env.REPOS_DIR = nil
+    H.scratch(nvim_config .. "/lua/plugin/y.lua")
+    H.eq(
+      filepath.get_path({ mode = "env", format = "unix" }),
+      "$NVIM_CONFIG_DIR/lua/plugin/y.lua",
+      "filepath mode=env still folds $NVIM_CONFIG_DIR when $REPOS_DIR is unset"
+    )
+
+    vim.env.REPOS_DIR = saved_repos_dir
+  end
+
   H.scratch(nil)
   local _, path_unnamed_err = filepath.get_path({ mode = "cwd", format = "unix" })
   H.ok(path_unnamed_err ~= nil, "filepath.get_path on an unnamed buffer errors")
