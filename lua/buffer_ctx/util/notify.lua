@@ -11,7 +11,8 @@ local M = {}
 local function resolve()
   local ok, lib_notify = pcall(require, "lib.nvim.notify")
   if ok and type(lib_notify) == "table" and type(lib_notify.create) == "function" then
-    local create_ok, notifier = pcall(lib_notify.create, PREFIX)
+    local create_ok, notifier =
+      pcall(lib_notify.create, PREFIX, { popup = true, source = "buffer-ctx" })
     if create_ok and type(notifier) == "table" then
       return notifier
     end
