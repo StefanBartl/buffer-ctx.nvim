@@ -5,9 +5,15 @@
 local M = {}
 local api = vim.api
 
----Insert text at cursor position (inline within the current line)
+---Insert text at cursor position (inline within the current line).
+---With `opts.link` the text is a Markdown link and the cursor goes where the
+---link still needs typing (its empty title, else its path) in insert mode --
+---`lib.nvim.markdown.link_cursor`, tuned by its `setup()` -- instead of behind
+---the text. Without lib.nvim's helper (or without a link in the text) the cursor
+---ends up behind the text as before.
 ---@param text string
-function M.insert_text(text)
+---@param opts? { link?: boolean }
+function M.insert_text(text, opts)
   if type(text) ~= "string" or text == "" then
     return
   end
@@ -20,6 +26,12 @@ function M.insert_text(text)
   local line = api.nvim_get_current_line()
   col = math.min(col, #line)
   api.nvim_set_current_line(line:sub(1, col) .. text .. line:sub(col + 1))
+  if opts and opts.link then
+    local ok, link_cursor = pcall(require, "lib.nvim.markdown.link_cursor")
+    if ok and link_cursor.place(win, row - 1, col, text) then
+      return
+    end
+  end
   api.nvim_win_set_cursor(win, { row, col + #text })
 end
 
