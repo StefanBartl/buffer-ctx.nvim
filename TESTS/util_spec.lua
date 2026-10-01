@@ -53,6 +53,34 @@ return function(H)
     "cursor.insert_text splices text in at the cursor column"
   )
 
+  -- `link = true`: the cursor goes into the link (here its path, the title is
+  -- filled), not behind it; plain text keeps the old placement. `:startinsert`
+  -- is stubbed -- a headless script never returns to the loop where it would act.
+  local real_cmd = vim.cmd
+  vim.cmd = function() end
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "ab" })
+  vim.api.nvim_win_set_cursor(0, { 1, 1 })
+  cursor.insert_text("[n](p.md)", { link = true })
+  vim.cmd = real_cmd
+  H.eq(
+    vim.api.nvim_buf_get_lines(buf, 0, -1, false)[1],
+    "a[n](p.md)b",
+    "cursor.insert_text(link) inserts the text inline"
+  )
+  H.eq(vim.api.nvim_win_get_cursor(0)[2], 9, "cursor.insert_text(link): cursor in the link's path")
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "ab" })
+  vim.api.nvim_win_set_cursor(0, { 1, 1 })
+  cursor.insert_text("XY", { link = true })
+  H.eq(
+    vim.api.nvim_win_get_cursor(0)[2],
+    3,
+    "cursor.insert_text(link): no link in the text -> behind it"
+  )
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "ab" })
+  vim.api.nvim_win_set_cursor(0, { 1, 1 })
+  cursor.insert_text("XY")
+  vim.api.nvim_buf_set_lines(buf, 0, -1, false, { "aXYb" })
+
   -- Empty/invalid text is a no-op rather than an error.
   local before = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
   cursor.insert_text("")

@@ -126,6 +126,12 @@ whatever `:Copy filepath ...` would produce is what gets wrapped.
 :Copy mdlink repos                → "[filepath.lua](buffer-ctx.nvim/lua/…/filepath.lua)"
 ```
 
+`:Insert mdlink` puts the cursor where the link still needs typing -- the path of a link
+with a title, the title of one without -- and enters insert mode, instead of leaving it
+behind the link (`lib.nvim.markdown.link_cursor`; its `setup({ enable, startinsert,
+path_cursor })` tunes or disables that, module-wide). Without lib.nvim's helper the cursor
+stays behind the text as before.
+
 Cross-plugin shim: delegates to markdown.nvim's own
 `markdown.commands.markdown_links.for_paths()` (the function behind
 `:Markdown links <path>`) when markdown.nvim is installed — soft dependency,

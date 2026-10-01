@@ -65,7 +65,8 @@ end
 --- Route a result to the chosen sink
 ---@param text string
 ---@param sink BufferCtx.Sink
-local function sink_text(text, sink)
+---@param opts? { link?: boolean }  `link`: the text is a Markdown link, put the cursor into it when inserting
+local function sink_text(text, sink, opts)
   if sink == "clip" then
     local ok, err, preview = clip.copy(text)
     if ok then
@@ -74,7 +75,7 @@ local function sink_text(text, sink)
       notify.warn(err or "copy failed")
     end
   else
-    cursor.insert_text(text)
+    cursor.insert_text(text, opts)
   end
 end
 
@@ -152,7 +153,7 @@ local DISPATCH = {
       notify.error(err or "mdlink failed")
       return
     end
-    sink_text(markdown_link_op.build(path), sink)
+    sink_text(markdown_link_op.build(path), sink, { link = true })
   end,
 
   filename = function(fargs, sink)
