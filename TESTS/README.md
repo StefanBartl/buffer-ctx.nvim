@@ -10,12 +10,18 @@ on scratch buffers created per-test.
 From the repo root:
 
 ```sh
-nvim --headless -u NONE -c "set rtp+=." -l TESTS/run.lua
+bash scripts/test.sh                 # every spec
+bash scripts/test.sh --file format   # only spec files whose name contains "format"
+bash scripts/test.sh --json ir.json  # also write the machine-readable result
 ```
 
-The runner prints one line per spec and exits non-zero on the first failure
-(`BUFFER_CTX_TESTS_OK` on success). `lib.nvim` is resolved from a sibling
-checkout (`../lib.nvim`), `$LIB_NVIM_PATH`, or the lazy.nvim bootstrap copy.
+The runner is [testing.nvim](https://github.com/StefanBartl/testing.nvim)
+(configured in `.testing.lua`, dialect `h` = the shared `harness.lua`). It
+prints one line per spec, exits non-zero when a spec fails or a dependency is
+missing, and prints `BUFFER_CTX_TESTS_OK` on a fully green run. `testing.nvim`
+and `lib.nvim` are looked up in `$TESTING_NVIM_DIR` / `$LIB_NVIM_DIR`,
+`.deps/<name>`, `../<name>` and `stdpath('data')/lazy/<name>`; a missing one is
+a loud error naming all four places.
 
 ## Layout
 
@@ -33,7 +39,7 @@ checkout (`../lib.nvim`), `$LIB_NVIM_PATH`, or the lazy.nvim bootstrap copy.
 | `bindings_spec.lua`      | `bindings/keymaps.lua` (attach with defaults/overrides/`false`, driving the bound action end to end via clipboard), `bindings/usrcmds.lua`, `bindings/autocmds.lua`, and `bindings/init.lua`'s `cfg.commands` gate (via stubbed sub-registrars). |
 | `util_spec.lua`          | `util/clip.lua`'s pure-sink contract, `util/cursor.lua`'s mutation guards, and the lib.nvim-present/absent soft-dependency branches of `util/notify.lua` and `util/map.lua` (forced via `package.preload`). |
 | `config_spec.lua`        | `config/init.lua`'s deep-merge `setup()`/`get()` and the non-table-argument guard, plus `health.lua`'s report with the default config and with `format`/`mark` disabled. Runs last (see below). |
-| `run.lua`                | Runner: loads every `*_spec.lua`, reports results, sets exit code.                                        |
+| `minimal_init.lua`       | Runtimepath + dependency lookup for isolated child runs (fails loudly when a dependency is missing).      |
 
 ## Coverage
 
@@ -142,7 +148,7 @@ saying "not found". Still present, still not a bug worth fixing on its own.
 ## Adding a spec
 
 Create `<name>_spec.lua` returning `function(H) … end` (use `H.eq` / `H.ok` /
-`H.match` / `H.scratch`) and add its filename to the `specs` list in
-`run.lua`. `config_spec.lua` calls `buffer_ctx.config.setup()` directly and
-restores the defaults at the end, so it must stay last in that list unless a
-future spec is written to tolerate a non-default active config.
+`H.match` / `H.scratch`); it is discovered automatically (files are run in
+alphabetical order). `config_spec.lua` calls `buffer_ctx.config.setup()`
+directly and restores the defaults at the end, so a spec running after it must
+tolerate the default config being active again.
