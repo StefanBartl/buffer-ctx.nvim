@@ -60,8 +60,8 @@ require("buffer_ctx").setup({})
 
 ## Tests
 
-`TESTS/` is a [plenary.nvim](https://github.com/nvim-lua/plenary.nvim)
-busted-style suite; [`TESTS/README.md`](../TESTS/README.md) has the invocation.
+`TESTS/` is a headless suite run by [testing.nvim](https://github.com/StefanBartl/testing.nvim)
+(`bash scripts/test.sh`); [`TESTS/README.md`](../TESTS/README.md) has the invocation.
 [GitHub Actions](../.github/workflows/ci.yml) runs it on every push and PR to
 `main`.
 
