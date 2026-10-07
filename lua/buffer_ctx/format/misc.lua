@@ -3,7 +3,7 @@
 --- whole buffer by default, or only the given command range when one is
 --- supplied (":10,20Format sort" sorts lines 10-20, not the whole buffer).
 ---
---- Registers: trim, sort, unique, case, indent, clear.
+--- Registers: trim, sort, unique, case, indent, clear, cite.
 
 local api = vim.api
 
@@ -88,6 +88,21 @@ local function unique_lines(lines, ignore_case)
     end
   end
   return uniq, removed
+end
+
+---Remove the `[cite: N]` markers AI answers carry (also the list form `[cite: 1, 2]`). Only the
+---markers go: the whitespace around them is left alone, so `:%s/\[cite: \d\+\]//g` and this
+---give the same text for single numbers.
+---@param lines string[]
+---@return string[] stripped, integer removed  New lines and the number of markers removed
+function M.strip_cites(lines)
+  local out, removed = {}, 0
+  for i, line in ipairs(lines) do
+    local stripped, n = line:gsub("%[cite:%s*%d[%d,%s]*%]", "")
+    out[i] = stripped
+    removed = removed + n
+  end
+  return out, removed
 end
 
 ---@internal
@@ -201,6 +216,24 @@ function M.register_subcommands(register_fn)
     nargs = "0",
     range = true,
     desc = "Remove trailing whitespace from buffer",
+  })
+
+  register_fn("cite", {
+    handler = function(_, ctx)
+      local buf = api.nvim_get_current_buf()
+      local s, e = resolve_range(buf, ctx)
+      local stripped, removed = M.strip_cites(api.nvim_buf_get_lines(buf, s - 1, e, false))
+      if removed > 0 then
+        api.nvim_buf_set_lines(buf, s - 1, e, false, stripped)
+      end
+      notify.info(string.format("Removed %d [cite: N] marker(s)", removed))
+    end,
+    complete = function()
+      return {}
+    end,
+    nargs = "0",
+    range = true,
+    desc = "Remove [cite: N] markers (AI answers)",
   })
 
   register_fn("sort", {

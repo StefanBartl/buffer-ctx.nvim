@@ -91,7 +91,7 @@ what each of the two actions here actually does.
 | --- | --- |
 | `:Insert` | `filepath`, `mdlink`, `filename`, `module`, `timestamp`, `date`, `uuid`, `annotation`, `boilerplate`, `snippet`, `location`, `env`, `git`, `linecount`, `bufnr`, `imagepaste` |
 | `:Copy` | same catalog as `:Insert`, **except** `imagepaste` (`:Insert`-only, see below) |
-| `:Format` | `column`, `table`, `textwidth`, `filter`, `enum`, `trim`, `sort`, `unique`, `case`, `indent`, `clear`, `squeeze` |
+| `:Format` | `column`, `table`, `textwidth`, `filter`, `enum`, `trim`, `sort`, `unique`, `case`, `indent`, `clear`, `cite`, `squeeze` |
 | `:Mark` | `toggle`, `clear`, `yank` |
 
 `filepath` also accepts `nvim_module` as an alias for the `module` subcommand.

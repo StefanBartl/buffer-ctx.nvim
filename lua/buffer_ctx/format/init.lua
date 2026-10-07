@@ -7,7 +7,7 @@
 ---   :Format filter [--remove] <pattern> ...
 ---   :Format enum [STYLE] [sep=SEP] [start=N] [inline=true|false]
 ---   :Format squeeze  (collapse consecutive blank lines, range-aware)
----   :Format trim | sort [-r|-i|-n] | unique [-i] | case <mode> | indent | clear
+---   :Format trim | sort [-r|-i|-n] | unique [-i] | case <mode> | indent | clear | cite
 --- Built via lib.nvim.bindings.usercmd.composer: subcommand setup (register_subcommand,
 --- the per-subcommand handler/complete/desc defs below and in the sibling
 --- table_fmt/misc/blank_lines modules) is unchanged, only the final
