@@ -5,7 +5,7 @@
 | `<leader>cnl` | Copy `path:line` (cwd-relative) |
 | `<leader>cnm` | Copy Lua module path |
 | `<leader>cnf` | Copy filepath (cwd-relative) |
-| `<S-m>` | `:Mark toggle` (toggle mark on current line; `3<S-m>` marks three lines) |
+| `<S-m>` (`M`) | `:Mark toggle` (toggle mark on current line; `3<S-m>` marks three lines) |
 | `<C-p>` | `:Mark yank` (yank all marked lines to clipboard) |
 | `<leader>of` | `:RevealInFm` (reveal current buffer in the system file manager) |
 | `<leader>ob` | `:OpenInBrowser` (open current buffer in the browser) |

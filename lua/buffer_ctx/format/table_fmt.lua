@@ -13,7 +13,6 @@
 --- "cwd" scope, *.md file collection, and subcommand registration.
 
 local notify = require("buffer_ctx.util.notify")
-local globbable = require("lib.nvim.fs.globbable")
 local lib_table = require("lib.nvim.markdown.table")
 local expand_path = require("lib.nvim.cross.fs.expand_path")
 
@@ -53,17 +52,30 @@ end
 -- ─────────────────────────────────────────────────────────────────────────────
 
 ---@internal
+---Every `*.md` under `dir`, hidden files and directories excluded, sorted.
+---
+---Walked with `vim.fs.dir` rather than `glob()`, which reads its argument as a
+---pattern: a path holding `[`, `*` or a `~1` short-name segment matched nothing
+---or the wrong files, and every top-level file was listed twice (once per
+---glob call).
 ---@param dir string
 ---@return string[]
 local function collect_md_files(dir)
   dir = dir:gsub("[/\\]$", "")
-  -- Glob reads its argument as a pattern, so an 8.3 short root ("~1") is read
-  -- as a home-directory reference and matches nothing. See lib.nvim.fs.globbable.
-  dir = globbable(dir)
-  local result = vim.fn.glob(dir .. "/**/*.md", false, true)
-  for _, f in ipairs(vim.fn.glob(dir .. "/*.md", false, true)) do
-    result[#result + 1] = f
+  local result = {}
+  local iter = vim.fs.dir(dir, {
+    depth = 30,
+    skip = function(name)
+      return name:sub(1, 1) == "."
+    end,
+  })
+  for name, kind in iter do
+    local base = name:match("([^/\\]+)$") or name
+    if kind == "file" and base:sub(-3) == ".md" and base:sub(1, 1) ~= "." then
+      result[#result + 1] = dir .. "/" .. name
+    end
   end
+  table.sort(result)
   return result
 end
 

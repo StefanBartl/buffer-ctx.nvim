@@ -191,6 +191,28 @@ local function sanitize(user_opts)
   return clean, issues
 end
 
+---@internal
+---`keymaps = false` is the one switch for every key this plugin binds, not only
+---the three copy keys: the `:Mark` keys (`<S-m>`, `<C-p>`) and the reveal keys
+---(`<leader>of`, `<leader>ob`) belong to subsystems with a keymaps table of
+---their own, which used to stay bound. An explicit `mark.keymaps` /
+---`reveal.keymaps` still wins, so `keymaps = false` plus a table for one of them
+---keeps just that one. Does nothing unless `keymaps` is the literal `false`.
+---@param clean table  # the sanitized user options, changed in place
+local function apply_keymaps_switch(clean)
+  if clean.keymaps ~= false then
+    return
+  end
+  for _, group in ipairs({ "mark", "reveal" }) do
+    local value = clean[group]
+    if value == nil or value == true then
+      clean[group] = { keymaps = false }
+    elseif type(value) == "table" and value.keymaps == nil then
+      value.keymaps = false
+    end
+  end
+end
+
 --- Merge user options over the defaults and store the result.
 ---
 --- Unknown keys and mistyped values -- whole option tables (ERR-50) or a
@@ -203,6 +225,7 @@ function M.setup(user_opts)
     error("buffer_ctx.setup: expected table or nil, got " .. type(user_opts), 2)
   end
   local clean, issues = sanitize(user_opts or {})
+  apply_keymaps_switch(clean)
   _issues = issues
   if #issues > 0 then
     require("buffer_ctx.util.notify").warn("ignored config: " .. table.concat(issues, "; "))
