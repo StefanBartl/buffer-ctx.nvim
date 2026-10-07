@@ -222,6 +222,31 @@ return function(H)
     "cite: whole buffer by default"
   )
 
+  -- extmarks (the :Mark signs) survive: only the matched span is edited, not whole lines
+  vim.api.nvim_buf_set_lines(
+    buf_misc,
+    0,
+    -1,
+    false,
+    { "a [cite: 1] b [cite: 2, 3] c", "untouched", "d [cite:4]" }
+  )
+  local ns_cite = vim.api.nvim_create_namespace("buffer_ctx_cite_spec")
+  local mark_hit = vim.api.nvim_buf_set_extmark(buf_misc, ns_cite, 0, 0, {})
+  local mark_idle = vim.api.nvim_buf_set_extmark(buf_misc, ns_cite, 1, 3, {})
+  local mark_tail = vim.api.nvim_buf_set_extmark(buf_misc, ns_cite, 2, 0, {})
+  local function mark_pos(id)
+    return table.concat(vim.api.nvim_buf_get_extmark_by_id(buf_misc, ns_cite, id, {}), ":")
+  end
+  vim.cmd("Format cite")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "a  b  c|untouched|d ",
+    "cite: several markers per line, adjacent forms"
+  )
+  H.eq(mark_pos(mark_hit), "0:0", "cite: mark on a changed line kept")
+  H.eq(mark_pos(mark_idle), "1:3", "cite: mark on an untouched line kept")
+  H.eq(mark_pos(mark_tail), "2:0", "cite: mark on the last line kept")
+
   -- regression: `reverse and na > nb or na < nb` mis-sorted whenever na < nb
   -- (ERR-60 and/or-ternary trap — the middle term can itself be falsy)
   vim.api.nvim_buf_set_lines(buf_misc, 0, -1, false, { "a", "b", "c" })

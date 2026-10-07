@@ -90,6 +90,8 @@ local function unique_lines(lines, ignore_case)
   return uniq, removed
 end
 
+local CITE_PATTERN = "%[cite:%s*%d[%d,%s]*%]"
+
 ---Remove the `[cite: N]` markers AI answers carry (also the list form `[cite: 1, 2]`). Only the
 ---markers go: the whitespace around them is left alone, so `:%s/\[cite: \d\+\]//g` and this
 ---give the same text for single numbers.
@@ -98,11 +100,40 @@ end
 function M.strip_cites(lines)
   local out, removed = {}, 0
   for i, line in ipairs(lines) do
-    local stripped, n = line:gsub("%[cite:%s*%d[%d,%s]*%]", "")
+    local stripped, n = line:gsub(CITE_PATTERN, "")
     out[i] = stripped
     removed = removed + n
   end
   return out, removed
+end
+
+---Remove the markers from lines `s..e` of `bufnr` in place. Only the matched spans are edited
+---(`nvim_buf_set_text`), never whole lines: replacing lines would drop every extmark in the range
+---(the `:Mark` signs, diagnostics, ...) even on lines that hold no marker.
+---@param bufnr integer
+---@param s integer  1-based, inclusive
+---@param e integer  1-based, inclusive
+---@return integer removed
+function M.strip_cites_in_buffer(bufnr, s, e)
+  local removed = 0
+  for lnum = s, e do
+    local line = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1] or ""
+    local spans, init = {}, 1
+    while true do
+      local from, to = line:find(CITE_PATTERN, init)
+      if not from then
+        break
+      end
+      spans[#spans + 1] = { from - 1, to } -- 0-based start, exclusive end (byte columns)
+      init = to + 1
+    end
+    -- Last span first, so the columns of the earlier ones stay valid.
+    for i = #spans, 1, -1 do
+      api.nvim_buf_set_text(bufnr, lnum - 1, spans[i][1], lnum - 1, spans[i][2], {})
+    end
+    removed = removed + #spans
+  end
+  return removed
 end
 
 ---@internal
@@ -222,10 +253,7 @@ function M.register_subcommands(register_fn)
     handler = function(_, ctx)
       local buf = api.nvim_get_current_buf()
       local s, e = resolve_range(buf, ctx)
-      local stripped, removed = M.strip_cites(api.nvim_buf_get_lines(buf, s - 1, e, false))
-      if removed > 0 then
-        api.nvim_buf_set_lines(buf, s - 1, e, false, stripped)
-      end
+      local removed = M.strip_cites_in_buffer(buf, s, e)
       notify.info(string.format("Removed %d [cite: N] marker(s)", removed))
     end,
     complete = function()
