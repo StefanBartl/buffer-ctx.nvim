@@ -227,6 +227,35 @@ return function(H)
     )
   end
 
+  -- keymaps = false is the one switch for every key (REL-20): it also turns off
+  -- the :Mark and reveal keys, which used to stay bound. An explicit table for
+  -- one of them still wins, and the default is unchanged.
+  do
+    config.setup({ keymaps = false })
+    H.eq(config.get().mark.keymaps, false, "keymaps = false switches the mark keys off")
+    H.eq(config.get().reveal.keymaps, false, "keymaps = false switches the reveal keys off")
+
+    config.setup({ keymaps = false, mark = { command = "Mk" }, reveal = true })
+    H.eq(config.get().mark.keymaps, false, "keymaps = false reaches a mark table without keymaps")
+    H.eq(config.get().mark.command, "Mk", "keymaps = false leaves the rest of mark alone")
+    H.eq(config.get().reveal.keymaps, false, "keymaps = false reaches reveal = true")
+
+    config.setup({ keymaps = false, mark = { keymaps = { toggle = "<leader>mm" } } })
+    H.eq(
+      config.get().mark.keymaps.toggle,
+      "<leader>mm",
+      "an explicit mark.keymaps wins over keymaps = false"
+    )
+    H.eq(config.get().reveal.keymaps, false, "keymaps = false still applies to reveal then")
+
+    config.setup({ keymaps = false, mark = false })
+    H.eq(config.get().mark, false, "keymaps = false leaves mark = false alone")
+
+    config.setup({})
+    H.eq(type(config.get().mark.keymaps), "table", "default: the mark keys stay bound")
+    H.eq(type(config.get().reveal.keymaps), "table", "default: the reveal keys stay bound")
+  end
+
   -- Restore the defaults so this spec leaves no global state behind, in case
   -- another spec is ever added after it.
   config.setup(nil)

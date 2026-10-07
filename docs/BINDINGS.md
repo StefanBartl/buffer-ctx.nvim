@@ -36,7 +36,7 @@ See [configuration.md](configuration.md) for the exact option shapes.
 
 | lhs | mode | action | desc |
 | --- | --- | --- | --- |
-| `<S-m>` | n | toggle | Toggle mark on current line, or N lines with a count |
+| `<S-m>` (Neovim reports it as `M`) | n | toggle | Toggle mark on current line, or N lines with a count |
 | `<C-p>` | n | yank | Yank all marked lines to clipboard |
 | *(unset)* | n | clear | Remove every mark in the buffer |
 

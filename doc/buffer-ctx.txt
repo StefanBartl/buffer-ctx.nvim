@@ -139,7 +139,9 @@ commands ~
   Register `:Insert` and `:Copy`. Default: `true`.
 
 keymaps ~
-  Table of keymap strings, or `false` to disable all keymaps.
+  Table of keymap strings, or `false` to disable all keymaps -- the copy
+  keys, the `:Mark` keys and the reveal keys alike. An explicit
+  `mark.keymaps` / `reveal.keymaps` table still wins over `false`.
   See |buffer-ctx-keymaps| for defaults.
 
 which_key ~
