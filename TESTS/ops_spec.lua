@@ -74,6 +74,7 @@ return function(H)
   local val, err = env_op.get("BUFFER_CTX_DEFINITELY_UNSET_XYZ")
   H.eq(val, nil, "env.get unset var returns nil")
   H.ok(err ~= nil, "env.get unset var returns error message")
+  vim.fn.setenv("BUFFER_CTX_TEST_VAR", vim.NIL) -- do not leak the variable into later specs
 
   -- location
   H.eq(location_op.parse_args({}), "cwd", "location parse_args default")

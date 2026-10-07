@@ -4,7 +4,7 @@
 -- as running the specs).
 return {
   -- Lua module root of the project.
-  plugin = "buffer-ctx",
+  plugin = "buffer_ctx",
   -- How the spec files are run: "auto" = sniffed per file, "h" = on the project's own TESTS/harness.lua,
   -- "script" = a self-running script in its own process.
   dialect = "h",
@@ -18,16 +18,14 @@ return {
   isolated = "file",
   -- Environment variables the specs read; a child editor inherits an allowlist only (never secrets).
   env_allow = { "LIB_NVIM_PATH" },
-  -- Guards (docs/GUARDS.md): safety nets around every spec; all clean on this suite except `prompt`.
+  -- Guards (docs/GUARDS.md): safety nets around every spec; all clean on this suite.
   guards = {
     fs = "error",
     state = "error",
     scheduled_error = "error",
     deprecation = "error",
     process_net = "error",
-    -- Real repo bug, so `warn` and not `error`: the table-format-cwd spec relies on the headless
-    -- default answer of vim.fn.confirm() (table_fmt.lua), i.e. it asks a prompt nobody answers.
-    prompt = "warn",
+    prompt = "error",
   },
   -- What the guards let through on purpose.
   guard_allow = {

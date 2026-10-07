@@ -237,6 +237,7 @@ return function(H)
   local names = env_op.list_names()
   H.ok(#names > 0, "env list_names is non-empty")
   H.ok(vim.tbl_contains(names, "BUFFER_CTX_SPEC_VAR"), "env list_names sees a freshly set var")
+  vim.fn.setenv("BUFFER_CTX_SPEC_VAR", vim.NIL) -- do not leak the variable into later specs
 
   -- ── sticky UTC via config ────────────────────────────────────────────────
   local timestamp = require("buffer_ctx.ops.timestamp")
