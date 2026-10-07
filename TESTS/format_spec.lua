@@ -246,6 +246,30 @@ return function(H)
   H.eq(mark_pos(mark_hit), "0:0", "cite: mark on a changed line kept")
   H.eq(mark_pos(mark_idle), "1:3", "cite: mark on an untouched line kept")
   H.eq(mark_pos(mark_tail), "2:0", "cite: mark on the last line kept")
+  vim.api.nvim_buf_clear_namespace(buf_misc, ns_cite, 0, -1)
+
+  -- multibyte text around markers (byte columns), a one-line range, and out-of-range API calls
+  local misc_mod = require("buffer_ctx.format.misc")
+  vim.api.nvim_buf_set_lines(
+    buf_misc,
+    0,
+    -1,
+    false,
+    { "äöü[cite: 1]é", "x [cite: 2]", "[cite: 3] z" }
+  )
+  vim.cmd("2Format cite")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "äöü[cite: 1]é|x |[cite: 3] z",
+    "cite: a one-line range leaves the other lines alone"
+  )
+  H.eq(misc_mod.strip_cites_in_buffer(buf_misc, 0, 99), 2, "cite: an out-of-range span is clamped")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "äöüé|x | z",
+    "cite: multibyte neighbours intact"
+  )
+  H.eq(misc_mod.strip_cites_in_buffer(buf_misc, 3, 1), 0, "cite: s > e removes nothing")
 
   -- regression: `reverse and na > nb or na < nb` mis-sorted whenever na < nb
   -- (ERR-60 and/or-ternary trap — the middle term can itself be falsy)
