@@ -25,7 +25,7 @@ lua/buffer_ctx/
     filter_lines.lua       :Format filter [--remove] <pattern>...
     enum_lines.lua         :Format enum [STYLE] [opts]
     blank_lines.lua        :Format squeeze (blank-line collapse, range-aware)
-    misc.lua               :Format trim|sort|unique|case|indent|clear
+    misc.lua               :Format trim|sort|unique|case|indent|clear|cite
     types/
       init.lua             type anchor for the format domain
   mark/

@@ -190,6 +190,38 @@ return function(H)
     "misc: sort orders lines"
   )
 
+  -- cite: removes [cite: N] / [cite: 1, 2] markers, nothing that merely looks like one
+  local stripped, n_cites = require("buffer_ctx.format.misc").strip_cites({
+    "A [cite: 3] b [cite: 12].",
+    "C [cite: 1, 2] d [cite: x] [other: 4] [cite: ]",
+  })
+  H.eq(stripped[1], "A  b .", "cite: single markers removed")
+  H.eq(
+    stripped[2],
+    "C  d [cite: x] [other: 4] [cite: ]",
+    "cite: list form removed, look-alikes kept"
+  )
+  H.eq(n_cites, 3, "cite: marker count")
+  vim.api.nvim_buf_set_lines(
+    buf_misc,
+    0,
+    -1,
+    false,
+    { "x [cite: 1]", "y [cite: 2]", "z [cite: 3]" }
+  )
+  vim.cmd("2Format cite")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "x [cite: 1]|y |z [cite: 3]",
+    "cite: a command range limits the removal"
+  )
+  vim.cmd("Format cite")
+  H.eq(
+    table.concat(vim.api.nvim_buf_get_lines(buf_misc, 0, -1, false), "|"),
+    "x |y |z ",
+    "cite: whole buffer by default"
+  )
+
   -- regression: `reverse and na > nb or na < nb` mis-sorted whenever na < nb
   -- (ERR-60 and/or-ternary trap — the middle term can itself be falsy)
   vim.api.nvim_buf_set_lines(buf_misc, 0, -1, false, { "a", "b", "c" })

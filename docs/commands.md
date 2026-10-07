@@ -71,9 +71,10 @@ Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Ma
 | `case <mode>` | `upper`/`lower`/`title`/`sentence` (range-aware) | Change case |
 | `indent [--spaces\|--tabs] [N]` | flags, width (range-aware) | Fix indentation |
 | `clear` | — (range-aware) | Clear buffer |
+| `cite` | — (range-aware) | Remove `[cite: N]` / `[cite: 1, 2]` markers (the whitespace around them stays, like `:%s/\[cite: \d\+\]//g`) |
 | `squeeze` | — (range-aware) | Collapse consecutive blank lines to at most one |
 
-`trim`/`sort`/`unique`/`case`/`indent`/`clear`/`textwidth`/`enum` act on the
+`trim`/`sort`/`unique`/`case`/`indent`/`clear`/`cite`/`textwidth`/`enum` act on the
 whole buffer by default, or only the given command range when one is
 explicit (e.g. `:10,20Format sort` sorts lines 10-20, not the whole buffer).
 
