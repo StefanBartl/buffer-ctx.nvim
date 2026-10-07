@@ -367,11 +367,20 @@ return function(H)
     local orig_cwd = vim.fn.chdir(scope_dir)
 
     local test_ok, test_err = pcall(function()
-      -- Headless Neovim's vim.fn.confirm() has no UI to block on: it answers
-      -- its own default choice immediately, which format_tables_in_scope
-      -- sets to "No" (index 2) -- so an unconfirmed bulk format must be a
-      -- no-op, not a silent rewrite.
-      local declined_ok = table_fmt.format_tables_in_scope({ scope = "cwd" })
+      -- vim.fn.confirm() is stubbed to answer "No" (index 2) explicitly, so the
+      -- spec does not depend on the headless default answer: an unconfirmed
+      -- bulk format must be a no-op, not a silent rewrite.
+      local orig_confirm = vim.fn.confirm
+      local confirm_calls = 0
+      vim.fn.confirm = function()
+        confirm_calls = confirm_calls + 1
+        return 2 -- "No"
+      end
+      local declined_pcall_ok, declined_ok =
+        pcall(table_fmt.format_tables_in_scope, { scope = "cwd" })
+      vim.fn.confirm = orig_confirm
+      H.ok(declined_pcall_ok, "format_tables_in_scope(cwd) does not raise when declined")
+      H.eq(confirm_calls, 1, "UI-01: the bulk format asks exactly once")
       H.ok(declined_ok, "format_tables_in_scope(cwd) reports ok even when declined")
       H.eq(
         vim.fn.readfile(scope_md)[1],
