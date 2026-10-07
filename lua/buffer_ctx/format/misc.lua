@@ -115,23 +115,32 @@ end
 ---@param e integer  1-based, inclusive
 ---@return integer removed
 function M.strip_cites_in_buffer(bufnr, s, e)
+  s = math.max(s, 1)
+  e = math.min(e, api.nvim_buf_line_count(bufnr))
+  if s > e then
+    return 0
+  end
   local removed = 0
-  for lnum = s, e do
-    local line = api.nvim_buf_get_lines(bufnr, lnum - 1, lnum, false)[1] or ""
-    local spans, init = {}, 1
-    while true do
-      local from, to = line:find(CITE_PATTERN, init)
-      if not from then
-        break
+  -- One fetch for the whole range; a plain find skips the lines without a marker cheaply.
+  local lines = api.nvim_buf_get_lines(bufnr, s - 1, e, false)
+  for i, line in ipairs(lines) do
+    if line:find("[cite:", 1, true) then
+      local row = s - 2 + i
+      local spans, init = {}, 1
+      while true do
+        local from, to = line:find(CITE_PATTERN, init)
+        if not from then
+          break
+        end
+        spans[#spans + 1] = { from - 1, to } -- 0-based start, exclusive end (byte columns)
+        init = to + 1
       end
-      spans[#spans + 1] = { from - 1, to } -- 0-based start, exclusive end (byte columns)
-      init = to + 1
+      -- Last span first, so the columns of the earlier ones stay valid.
+      for j = #spans, 1, -1 do
+        api.nvim_buf_set_text(bufnr, row, spans[j][1], row, spans[j][2], {})
+      end
+      removed = removed + #spans
     end
-    -- Last span first, so the columns of the earlier ones stay valid.
-    for i = #spans, 1, -1 do
-      api.nvim_buf_set_text(bufnr, lnum - 1, spans[i][1], lnum - 1, spans[i][2], {})
-    end
-    removed = removed + #spans
   end
   return removed
 end
