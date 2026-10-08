@@ -300,6 +300,7 @@ function M.register_subcommands(register_fn)
     end,
     nargs = "*",
     range = true,
+    arg_desc = "Option: -r reverse, -i ignore case, -n by leading number",
     desc = "Sort buffer lines: sort [-r] [-i] [-n]",
   })
 
@@ -324,6 +325,7 @@ function M.register_subcommands(register_fn)
     end,
     nargs = "*",
     range = true,
+    arg_desc = "Option -i (--ignore-case): compare lines without case",
     desc = "Remove duplicate buffer lines: unique [-i]",
   })
 
@@ -354,6 +356,7 @@ function M.register_subcommands(register_fn)
     end,
     nargs = "1",
     range = true,
+    arg_desc = "Case mode: upper, lower, title or sentence",
     desc = "Change case: case <upper|lower|title|sentence>",
   })
 
@@ -393,6 +396,7 @@ function M.register_subcommands(register_fn)
     end,
     nargs = "*",
     range = true,
+    arg_desc = "--spaces, --tabs or an indent width (default: buffer settings)",
     desc = "Fix indentation: indent [--spaces|--tabs] [width]",
   })
 end

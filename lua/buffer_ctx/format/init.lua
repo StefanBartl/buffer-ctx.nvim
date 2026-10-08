@@ -71,6 +71,7 @@ local function setup_column_align()
     end,
     nargs = "*",
     range = true,
+    arg_desc = "Target column number (asked for when omitted)",
     -- Column alignment is about columns, so a linewise selection carries no
     -- usable geometry for it: its marks run from column 0 to MAXCOL. Refusing
     -- it up front beats silently aligning against those bounds.
@@ -134,6 +135,7 @@ local function setup_text_width()
     end,
     nargs = "1",
     range = true,
+    arg_desc = "Line width to reflow to, or max for the window width",
     desc = "Reflow text to width: textwidth <N|max>",
   })
 end
@@ -175,6 +177,7 @@ local function setup_filter_lines()
       return {}
     end,
     nargs = "+",
+    arg_desc = "Substring lines must contain (or --remove to drop matches)",
     desc = "Filter lines: filter [--remove] <pattern> ...",
   })
 end
@@ -305,6 +308,7 @@ local function setup_enum_lines()
     end,
     nargs = "*",
     range = true,
+    arg_desc = "Style (decimal|alpha|ALPHA|roman|ROMAN) or sep=, start=, inline=",
     desc = "Enumerate tokens in visual selection: enum [STYLE] [sep=SEP] [start=N] [inline=bool]",
   })
 end
@@ -322,24 +326,37 @@ end
 --- the first slot; further tokens fall through to `ctx.rest` uncompleted,
 --- same tradeoff already accepted for :Insert/:Copy in buffer_ctx.commands.
 --- `def.handler(args, ctx)` itself is called completely unchanged.
+---
+--- `def.arg_desc` is the one-line text of that first argument for lib.nvim's
+--- option float (the cheatsheet on the command line). A subcommand declared
+--- `nargs = "0"` takes no argument at all, so it gets no slot (an extra token
+--- still lands in `ctx.rest` and is ignored, as before).
 ---@return table[]
 local function build_routes()
   local routes = {}
   for name, def in pairs(subcommands) do
-    composer.register_type("BUFFER_CTX_FORMAT_" .. name:upper(), {
-      validate = function(raw)
-        return true, raw, nil
-      end,
-      complete = function(arg_lead)
-        local ok, result = pcall(def.complete, arg_lead)
-        return (ok and result) or {}
-      end,
-    })
+    local takes_arg = def.nargs ~= "0"
+    if takes_arg then
+      composer.register_type("BUFFER_CTX_FORMAT_" .. name:upper(), {
+        validate = function(raw)
+          return true, raw, nil
+        end,
+        complete = function(arg_lead)
+          local ok, result = pcall(def.complete, arg_lead)
+          return (ok and result) or {}
+        end,
+      })
+    end
     routes[#routes + 1] = {
       path = { name },
-      args = {
-        { name = "a1", type = "BUFFER_CTX_FORMAT_" .. name:upper(), optional = true },
-      },
+      args = takes_arg and {
+        {
+          name = "a1",
+          type = "BUFFER_CTX_FORMAT_" .. name:upper(),
+          optional = true,
+          desc = def.arg_desc,
+        },
+      } or {},
       range = true,
       -- Opt-in per subcommand: a nil `visual` means "any selection", which is
       -- what every subcommand except `column` wants.

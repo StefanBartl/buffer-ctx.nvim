@@ -464,7 +464,14 @@ function M.setup(opts)
     routes = {
       {
         path = { "toggle" },
-        args = { { name = "category", type = "MARK_CATEGORY", optional = true } },
+        args = {
+          {
+            name = "category",
+            type = "MARK_CATEGORY",
+            optional = true,
+            desc = "Category to mark with (else the default category)",
+          },
+        },
         range = true,
         desc = "Toggle the mark on the current line, or over a range",
         run = function(ctx)
@@ -481,7 +488,14 @@ function M.setup(opts)
       },
       {
         path = { "clear" },
-        args = { { name = "category", type = "MARK_CATEGORY", optional = true } },
+        args = {
+          {
+            name = "category",
+            type = "MARK_CATEGORY",
+            optional = true,
+            desc = "Only remove the marks of this category (default: all)",
+          },
+        },
         desc = "Remove every mark in this buffer (optionally only one category)",
         run = function(ctx)
           local n = M.clear(nil, ctx.args.category)
@@ -494,7 +508,14 @@ function M.setup(opts)
       },
       {
         path = { "yank" },
-        args = { { name = "category", type = "MARK_CATEGORY", optional = true } },
+        args = {
+          {
+            name = "category",
+            type = "MARK_CATEGORY",
+            optional = true,
+            desc = "Only yank the lines of this category (default: all)",
+          },
+        },
         desc = "Yank all marked lines to the system clipboard",
         run = function(ctx)
           M.yank(nil, ctx.args.category)

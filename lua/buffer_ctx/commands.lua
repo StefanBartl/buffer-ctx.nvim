@@ -427,6 +427,65 @@ local SUBCMD_ARGS = {
   env = nil, -- populated lazily from env_op.list_names()
 }
 
+-- Text of the first argument for lib.nvim's option float (the cheatsheet on the command line).
+-- A subcommand with a long value list explains the argument as a whole (`desc`), one with a short
+-- closed list explains its values (`enum_desc`), the three config-driven ones take the text of
+-- their type (`register_type` below).
+---@type table<string, string>
+local SUBCMD_ARG_DESC = {
+  filepath = "Path root (relative|absolute|nvim|repos|env), format or depth",
+  mdlink = "Link target: path root, format or depth, as for filepath",
+  timestamp = "Format such as iso, unix, human or 12h (default iso); --utc for UTC",
+  date = "Format such as short, long or weekday (default iso-date); --utc",
+}
+
+---@type table<string, table<string, string>>
+local SUBCMD_ENUM_DESC = {
+  filename = { noext = "File name without its extension" },
+  module = {
+    require = 'require("module.name") call (default)',
+    lua_ls = "---@module annotation line",
+    js = 'import "module/name" line',
+    c = '#include "module/name.h" line',
+    generic = "Bare dotted module name",
+  },
+  git = {
+    hash = "Full commit SHA of HEAD",
+    short = "Abbreviated SHA of HEAD (default)",
+    branch = "Current branch name",
+    tag = "Nearest tag via git describe (falls back to the SHA)",
+  },
+  uuid = {
+    standard = "Lowercase with hyphens (default)",
+    compact = "Lowercase without hyphens",
+    upper = "Uppercase with hyphens",
+    braced = "Standard form in curly braces",
+  },
+  annotation = {
+    module = "Module annotation of this buffer (default)",
+    class = "Class declaration; name as next argument or prompted",
+    field = "Field declaration: name and type",
+    param = "Parameter annotation: name and type",
+    ["return"] = "Return type annotation",
+    ["function"] = "Prompted description, parameters and return",
+    alias = "Type alias: name and type",
+    overload = "Overload signature, wrapped in fun() when needed",
+    diagnostic = "Disable-next-line comment for a diagnostic code",
+    deprecated = "Deprecation notice with a reason",
+  },
+  location = {
+    cwd = "Path relative to the cwd (default)",
+    abs = "Absolute path",
+    lua = "Lua module path, else the cwd-relative path",
+    range = "Line range as path:L1-L2 (range or last selection)",
+  },
+}
+
+-- Their handlers ignore every argument, so no slot is declared (an extra token still lands in
+-- `ctx.rest` and is ignored as before).
+---@type table<string, true>
+local TAKES_NO_ARG = { linecount = true, bufnr = true }
+
 ---Call a subcommand directly from Lua
 ---@param subcmd string
 ---@param fargs string[]
@@ -461,6 +520,7 @@ end
 -- Dynamically-populated first-token completion for the three subcommands
 -- whose valid values come from user config rather than a fixed list.
 composer.register_type("BUFFER_CTX_BOILERPLATE", {
+  desc = "Template name such as lua-module (a menu opens when omitted)",
   validate = function(raw)
     return true, raw, nil
   end,
@@ -469,6 +529,7 @@ composer.register_type("BUFFER_CTX_BOILERPLATE", {
   end,
 })
 composer.register_type("BUFFER_CTX_SNIPPET", {
+  desc = "Snippet key or prefix from snippets.paths (menu when omitted)",
   validate = function(raw)
     return true, raw, nil
   end,
@@ -477,6 +538,7 @@ composer.register_type("BUFFER_CTX_SNIPPET", {
   end,
 })
 composer.register_type("BUFFER_CTX_ENV", {
+  desc = "Environment variable to read, with or without the leading $",
   validate = function(raw)
     return true, raw, nil
   end,
@@ -505,9 +567,16 @@ local function build_routes(sink)
     local values = SUBCMD_ARGS[name]
     routes[#routes + 1] = {
       path = { name },
-      args = {
-        { name = "a1", type = CUSTOM_ARG_TYPE[name] or "STRING", optional = true, values = values },
-      },
+      args = not TAKES_NO_ARG[name] and {
+        {
+          name = "a1",
+          type = CUSTOM_ARG_TYPE[name] or "STRING",
+          optional = true,
+          values = values,
+          desc = SUBCMD_ARG_DESC[name],
+          enum_desc = SUBCMD_ENUM_DESC[name],
+        },
+      } or {},
       range = true,
       desc = ("%s → :%s"):format(name, sink == "clip" and "Copy" or "Insert"),
       run = function(ctx)
@@ -542,7 +611,14 @@ end
 local function build_imagepaste_route()
   return {
     path = { "imagepaste" },
-    args = { { name = "name", type = "STRING", optional = true } },
+    args = {
+      {
+        name = "name",
+        type = "STRING",
+        optional = true,
+        desc = "File name for the pasted image (default: images.nvim's own naming)",
+      },
+    },
     kv = {
       {
         key = "path",
