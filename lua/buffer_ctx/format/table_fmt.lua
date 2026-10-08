@@ -65,8 +65,10 @@ local function collect_md_files(dir)
   local result = {}
   local iter = vim.fs.dir(dir, {
     depth = 30,
-    skip = function(name)
-      return name:sub(1, 1) == "."
+    -- `vim.fs.dir` enters a directory unless `skip` returns exactly `false`,
+    -- and passes the path relative to `dir` (`sub/.hid`), not the bare name.
+    skip = function(subdir)
+      return vim.fs.basename(subdir):sub(1, 1) ~= "."
     end,
   })
   for name, kind in iter do

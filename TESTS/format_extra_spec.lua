@@ -403,4 +403,56 @@ return function(H)
       error(test_err, 0)
     end
   end
+
+  -- ── scope=cwd walks the right directories. vim.fs.dir enters a directory
+  -- unless `skip` returns exactly false, and hands `skip` the path relative to
+  -- the walk root: the filter once had that inverted, so plain subdirectories
+  -- were never entered while .deps/, .claude/ etc. were (and their *.md files
+  -- rewritten on disk). Nested plain directories must be formatted; hidden
+  -- directories at any depth, hidden files and non-markdown files must not.
+  do
+    local table_fmt = require("buffer_ctx.format.table_fmt")
+    local walk_dir = vim.fn.tempname()
+    local ragged = { "| a | b |", "|---|---|", "| ccc | d |" }
+    local formatted = { "a.md", "sub/b.md", "sub/deep/c.md" }
+    local untouched = {
+      ".hid/d.md",
+      ".hid/x/y/z.md",
+      "sub/.hid2/e.md",
+      "sub/deep/.hid3/f.md",
+      ".dot.md",
+      "sub/.dot.md",
+      "sub/note.txt",
+    }
+    for _, rel in ipairs(vim.list_extend(vim.list_slice(formatted), untouched)) do
+      vim.fn.mkdir(vim.fs.dirname(walk_dir .. "/" .. rel), "p")
+      vim.fn.writefile(ragged, walk_dir .. "/" .. rel)
+    end
+    local orig_cwd = vim.fn.chdir(walk_dir)
+
+    local test_ok, test_err = pcall(function()
+      local ok = table_fmt.format_tables_in_scope({ scope = "cwd", confirm = false })
+      H.ok(ok, "format_tables_in_scope(cwd) over a nested tree succeeds")
+      for _, rel in ipairs(formatted) do
+        H.eq(
+          vim.fn.readfile(walk_dir .. "/" .. rel)[1],
+          "|  a  | b |",
+          "scope=cwd formats " .. rel .. " (plain directories are entered at every depth)"
+        )
+      end
+      for _, rel in ipairs(untouched) do
+        H.eq(
+          vim.fn.readfile(walk_dir .. "/" .. rel)[1],
+          "| a | b |",
+          "scope=cwd leaves " .. rel .. " alone (hidden or not markdown)"
+        )
+      end
+    end)
+
+    vim.fn.chdir(orig_cwd)
+    vim.fn.delete(walk_dir, "rf")
+    if not test_ok then
+      error(test_err, 0)
+    end
+  end
 end
