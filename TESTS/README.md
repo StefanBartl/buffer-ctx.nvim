@@ -37,6 +37,7 @@ a loud error naming all four places.
 | `features_spec.lua`      | `git`, `bufinfo`, `snippet`, `location range`, the extra annotation types and boilerplate templates, sticky-UTC config, env completion. |
 | `boilerplate_spec.lua`   | `ops/boilerplate/*`: every registered template renders, the has-id/no-id and default-fallback branches of each template module (`lua`, `html`, `nvim`, `markdown`, `utils`), the plain (non-interactive) half of `guard.lua`, and the registry's unknown-key error. |
 | `bindings_spec.lua`      | `bindings/keymaps.lua` (attach with defaults/overrides/`false`, driving the bound action end to end via clipboard), `bindings/usrcmds.lua`, `bindings/autocmds.lua`, and `bindings/init.lua`'s `cfg.commands` gate (via stubbed sub-registrars). |
+| `usrcmds_help_spec.lua`  | every flag and `key=value` of `:Insert`/`:Copy` (today `imagepaste ... path=`) has a line in lib.nvim's option float: `composer.help.undocumented(<verb>)` is empty. |
 | `util_spec.lua`          | `util/clip.lua`'s pure-sink contract, `util/cursor.lua`'s mutation guards, and the lib.nvim-present/absent soft-dependency branches of `util/notify.lua` and `util/map.lua` (forced via `package.preload`). |
 | `config_spec.lua`        | `config/init.lua`'s deep-merge `setup()`/`get()` and the non-table-argument guard, plus `health.lua`'s report with the default config and with `format`/`mark` disabled. Runs last (see below). |
 | `minimal_init.lua`       | Runtimepath + dependency lookup for isolated child runs (fails loudly when a dependency is missing).      |

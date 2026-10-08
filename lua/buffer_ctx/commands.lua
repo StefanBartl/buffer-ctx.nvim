@@ -543,7 +543,19 @@ local function build_imagepaste_route()
   return {
     path = { "imagepaste" },
     args = { { name = "name", type = "STRING", optional = true } },
-    kv = { { key = "path", type = "STRING", values = { "relative", "absolute", "repos" } } },
+    kv = {
+      {
+        key = "path",
+        type = "STRING",
+        values = { "relative", "absolute", "repos" },
+        desc = "Link path style: relative, absolute, repos, env or a custom prefix",
+        enum_desc = {
+          relative = "Relative to the document",
+          absolute = "Full path with forward slashes",
+          repos = "Relative to $REPOS_DIR",
+        },
+      },
+    },
     desc = "images.nvim: paste the clipboard image, insert its Markdown link at the cursor (requires images.nvim)",
     run = function(ctx)
       local ok, err = imagepaste_op.paste(ctx.args.name, (ctx.kv or {}).path)
