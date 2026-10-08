@@ -649,7 +649,9 @@ skip=COL ~
 scope=SCOPE ~
   `cursor`  Format only the table under the cursor (default).
   `buffer`  Format all tables in the current buffer.
-  `cwd`     Format all *.md files under the working directory.
+  `cwd`     Format all *.md files under the working directory,
+            subdirectories included; hidden files and directories
+            (`.git/`, `.claude/`, ...) are skipped.
 
 Examples: >
   :Format table                          → format table at cursor

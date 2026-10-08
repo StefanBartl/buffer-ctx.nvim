@@ -61,7 +61,7 @@ Compat commands: `:MarkLineToggle` → `:Mark toggle`, `:MarkLinesYank` → `:Ma
 | Subcommand | Args | Action |
 |---|---|---|
 | `column <N> [fill]` | target column, fill char | Align visual selection to column — charwise/blockwise only, refused with a message on a linewise (`V`) selection, whose marks span column 0 to `MAXCOL` and give column alignment nothing to work with |
-| `table [ALIGN] [opts]` | `header=`, `cell=`, `skip=`, `scope=` | Format Markdown table(s). `scope=cwd` asks for confirmation once before rewriting every `*.md` file under cwd on disk |
+| `table [ALIGN] [opts]` | `header=`, `cell=`, `skip=`, `scope=` | Format Markdown table(s). `scope=cwd` asks for confirmation once before rewriting every `*.md` file under cwd on disk (subdirectories included; hidden files and directories such as `.git/` or `.claude/` are skipped) |
 | `textwidth <N\|max>` | number or `max` (window width) | Set `textwidth` and reflow text (range-aware) |
 | `filter [--remove] <pat>` | pattern(s) | Keep or remove matching lines |
 | `enum [STYLE] [opts]` | `decimal`/`alpha`/`roman`, `sep=`, `start=`, `inline=` | Enumerate a given range, or the visual selection (range-aware) |
