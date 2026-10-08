@@ -315,6 +315,7 @@ function M.setup(register_fn, notify_mod)
       return table_complete(arg_lead)
     end,
     nargs = "*",
+    arg_desc = "Alignment (left|center|right) or header=, cell=, skip=, scope=",
     desc = "Format Markdown table(s): table [ALIGN] [header=ALIGN] [cell=ALIGN] [skip=COL] [scope=cursor|buffer|cwd|PATH]",
   })
 end
