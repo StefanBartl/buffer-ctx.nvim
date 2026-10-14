@@ -102,7 +102,7 @@ jobs:
       # The IR of the Linux run carries the surface the specs exercised: the baseline (surface.baseline.json) is
       # written from exactly this artifact, so it matches what the runner measures.
       - uses: actions/upload-artifact@v7
-        if: matrix.os == 'ubuntu-latest' && always()
+        if: matrix.os == 'ubuntu-latest' && matrix.nvim == 'stable' && always()
         with:
           name: surface-ir
           path: ${{ runner.temp }}/testing-ir.json
@@ -113,7 +113,7 @@ jobs:
       # the Linux run. To accept an intended change, rewrite the file from a green Linux run (`scripts/test.sh surface
       # --from <ir> --write-baseline surface.baseline.json`, IR = the surface-ir artifact) and review the diff.
       - name: Surface baseline gate
-        if: matrix.os == 'ubuntu-latest'
+        if: matrix.os == 'ubuntu-latest' && matrix.nvim == 'stable'
         working-directory: buffer-ctx.nvim
         run: bash scripts/test.sh surface --from "$RUNNER_TEMP/testing-ir.json" --baseline surface.baseline.json --require-signed-baseline
       # The IR is what a reporter or a person reads to find out WHICH case failed on WHICH platform.
