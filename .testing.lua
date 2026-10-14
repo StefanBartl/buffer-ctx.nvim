@@ -34,5 +34,30 @@ return {
     spawn = { "git" },
   },
   -- gated: a failed conformance check makes `scripts/test.sh conformance` exit 1 (docs/CONFORMANCE.md of testing.nvim)
-  conformance = { gate = true },
+  conformance = {
+    gate = true,
+    waivers = {
+      {
+        check = "K13",
+        level = "warn",
+        text = ":Copy is a prefix",
+        reason = "the :CopyFilepath* family is deliberate and public (one command per path flavour); :Copy itself is the bare verb of the family, not a separate command to disambiguate",
+        expires = "2027-04-14",
+      },
+      {
+        check = "K13",
+        level = "warn",
+        text = ":Mark is a prefix",
+        reason = "the :Mark* family (:MarkLineToggle, :MarkLinesYank) is deliberate and public; renaming would break users' mappings and muscle memory",
+        expires = "2027-04-14",
+      },
+      {
+        check = "K13",
+        level = "warn",
+        text = ":Open is a prefix",
+        reason = "bare :Open is open.nvim's command, not this plugin's; :OpenInBrowser is a deliberate public name and renaming it would break users",
+        expires = "2027-04-14",
+      },
+    },
+  },
 }
