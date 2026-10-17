@@ -251,12 +251,14 @@ Examples: >
   :Copy filepath 1                  → filepath.lua
   :Copy filepath nvim               → relative to nvim config dir
   :Copy filepath repos              → relative to $REPOS_DIR
-  :Copy filepath env                → "$REPOS_DIR/…" or "$NVIM_CONFIG_DIR/…"
+  :Copy filepath env                → "$NAME/…" (a named root: $REPOS_DIR, $NVIM_CONFIG_DIR, …)
 <
-`env` folds the buffer path under whichever of $REPOS_DIR / $NVIM_CONFIG_DIR
-(stdpath("config")) it lives under into a literal "$VAR/…" string (longest
-root wins); with neither set or matching, it falls back to the plain
-cwd-relative path, same as `nvim`/`repos` do.
+`env` folds the buffer path into a literal "$NAME/…" string through the
+named-roots registry of lib.nvim (`lib.nvim.fs.roots`): the deepest root wins.
+The roots are the ones configured there ($REPOS_DIR, $NVIM_CONFIG_DIR =
+stdpath("config"), your own `extra` roots) plus those other plugins registered.
+With no matching root, it falls back to the plain cwd-relative path, same as
+`nvim`/`repos` do.
 
 Compat commands are registered automatically:
   :CopyFilepathAbsolute   →  :Copy filepath absolute

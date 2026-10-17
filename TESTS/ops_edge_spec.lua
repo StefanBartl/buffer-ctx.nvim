@@ -357,6 +357,30 @@ return function(H)
     vim.env.REPOS_DIR = saved_repos_dir
   end
 
+  -- mode=env goes through the named-roots registry of lib.nvim: a root another
+  -- plugin (or the user) registered is folded too, with no candidate list of
+  -- this plugin. Fails when the mode goes back to a fixed REPOS_DIR/config pair.
+  do
+    local roots = require("lib.nvim.fs.roots")
+    local unregister = roots.register("BCTX_SPEC_ROOT", cwd .. "/regroot")
+
+    H.scratch(cwd .. "/regroot/deep/file.lua")
+    local ok_call, got = pcall(filepath.get_path, { mode = "env", format = "lua" })
+    unregister()
+    H.ok(ok_call, "filepath mode=env with a registered root does not raise")
+    H.eq(
+      got,
+      "$BCTX_SPEC_ROOT/deep/file.lua",
+      "filepath mode=env folds a root registered in lib.nvim.fs.roots"
+    )
+
+    H.eq(
+      filepath.get_path({ mode = "env", format = "unix" }),
+      filepath.get_path({ mode = "cwd", format = "unix" }),
+      "filepath mode=env no longer folds a root after it was unregistered"
+    )
+  end
+
   H.scratch(nil)
   local _, path_unnamed_err = filepath.get_path({ mode = "cwd", format = "unix" })
   H.ok(path_unnamed_err ~= nil, "filepath.get_path on an unnamed buffer errors")
