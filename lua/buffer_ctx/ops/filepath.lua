@@ -37,25 +37,16 @@ function M.get_path(opts)
     end
     base = pu.strip_root(abs, repos_dir) or pu.relative_to_cwd(abs)
   elseif opts.mode == "env" then
-    -- Folds whichever of $REPOS_DIR / $NVIM_CONFIG_DIR the buffer lives
-    -- under into a literal "$VAR/..." prefix (longest root wins, mirroring
-    -- filetree.nvim's env_rooted); falls back to cwd-relative like "nvim"
-    -- and "repos" do when neither root matches. Shares pu.strip_root with
-    -- those two branches above so the Windows case-fold and trailing-slash
-    -- handling live in one place instead of three near-identical copies.
-    local candidates = {
-      { name = "REPOS_DIR", root = vim.env.REPOS_DIR },
-      { name = "NVIM_CONFIG_DIR", root = fn.stdpath("config") },
-    }
-    local best_name, best_rest, best_len
-    for _, c in ipairs(candidates) do
-      local rest, root_len = pu.strip_root(abs, c.root)
-      if rest and (not best_len or root_len > best_len) then
-        best_name, best_rest, best_len = c.name, rest, root_len
-      end
-    end
-    if best_name then
-      base = "$" .. best_name .. (best_rest == "" and "" or "/" .. best_rest)
+    -- Folds the buffer path into a literal "$NAME/..." prefix through the
+    -- named-roots registry of lib.nvim (lib.nvim.fs.roots): the deepest root
+    -- wins, and the roots are the user's ($REPOS_DIR, $NVIM_CONFIG_DIR, their
+    -- own) plus those other plugins registered. `force`: the user asked for
+    -- this mode by name, so the registry's global `enable` does not apply.
+    -- Falls back to cwd-relative like "nvim" and "repos" do when no root
+    -- matches.
+    local folded, root_name = require("lib.nvim.fs.roots").fold(abs, { force = true })
+    if root_name then
+      base = folded
     else
       base = pu.relative_to_cwd(abs)
     end
