@@ -330,6 +330,48 @@ return function(H)
     vim.env.REPOS_DIR = saved_repos_dir
   end
 
+  -- location-path-modes: location reuses filepath's nvim/repos/env path part,
+  -- for the single-line and the range form alike.
+  do
+    local loc = require("buffer_ctx.ops.location")
+    local saved_repos_dir = vim.env.REPOS_DIR
+    vim.env.REPOS_DIR = cwd .. "/reposroot"
+
+    H.scratch(nvim_config .. "/lua/plugin/loc.lua")
+    H.eq(loc.get("nvim"), "lua/plugin/loc.lua:1", "location nvim strips the config dir")
+    H.eq(
+      loc.get_range("nvim", 3, 5),
+      "lua/plugin/loc.lua:L3-L5",
+      "location range works with the nvim mode"
+    )
+
+    H.scratch(cwd .. "/reposroot/loc.nvim/lua/init.lua")
+    H.eq(loc.get("repos"), "loc.nvim/lua/init.lua:1", "location repos strips $REPOS_DIR")
+    H.eq(
+      loc.get("env"),
+      "$REPOS_DIR/loc.nvim/lua/init.lua:1",
+      "location env folds the root into $REPOS_DIR"
+    )
+    H.eq(
+      loc.get_range("env", 2, 4),
+      "$REPOS_DIR/loc.nvim/lua/init.lua:L2-L4",
+      "location range works with the env mode"
+    )
+
+    H.scratch(cwd .. "/lua/loc5/thing.lua")
+    H.eq(loc.get("repos"), loc.get("cwd"), "location repos outside $REPOS_DIR is cwd-relative")
+
+    vim.env.REPOS_DIR = nil
+    local res, repos_err = loc.get("repos")
+    H.eq(res, nil, "location repos without $REPOS_DIR returns no result")
+    H.match(repos_err or "", "REPOS_DIR", "location repos without $REPOS_DIR names the variable")
+    local rres, range_err = loc.get_range("repos", 1, 2)
+    H.eq(rres, nil, "location range repos without $REPOS_DIR returns no result")
+    H.ok(range_err ~= nil, "location range repos without $REPOS_DIR reports an error")
+
+    vim.env.REPOS_DIR = saved_repos_dir
+  end
+
   -- mode=env (and mode=repos, sharing the same helper) still match when
   -- $REPOS_DIR carries a trailing slash, or -- on Windows -- differs in case
   -- from the buffer's actual path (e.g. a differently-cased drive letter).

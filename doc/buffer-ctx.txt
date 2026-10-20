@@ -311,6 +311,12 @@ mode ~
   `cwd`  relative (default)
   `abs`  absolute
   `lua`  Lua module path
+  `nvim`   relative to the Neovim config directory
+  `repos`  relative to $REPOS_DIR (an error when it is unset)
+  `env`    folded into a literal `$NAME/...` prefix ($REPOS_DIR, ...)
+
+  `nvim`, `repos` and `env` behave exactly as in |:Insert-filepath|; a file
+  outside the root falls back to the cwd-relative path.
 
 range ~
   Emit `path:L1-L2` for a line span instead of a single line — useful for
@@ -325,6 +331,8 @@ Examples: >
   :Copy location             → lua/buffer_ctx/ops/filepath.lua:42
   :Copy location abs         → C:/…/filepath.lua:42
   :Copy location lua         → buffer_ctx.ops.filepath:42
+  :Copy location repos       → foo.nvim/lua/x.lua:42
+  :Copy location env         → $REPOS_DIR/foo.nvim/lua/x.lua:42
   :'<,'>Copy location range  → lua/buffer_ctx/ops/filepath.lua:L10-L20
   :10,20Copy location range  → lua/buffer_ctx/ops/filepath.lua:L10-L20
 <
@@ -928,7 +936,7 @@ Both `:Insert` and `:Copy` provide context-aware tab completion:
   `:Insert uuid <Tab>`            → standard, compact, upper, braced
   `:Insert annotation <Tab>`      → module, class, field, param, return, …
   `:Insert boilerplate <Tab>`     → lua-module, lua-class, nvim-autocmd, …
-  `:Insert location <Tab>`        → cwd, abs, lua, range
+  `:Insert location <Tab>`        → cwd, abs, lua, nvim, repos, env, range
   `:Insert git <Tab>`             → hash, short, branch, tag
   `:Insert snippet <Tab>`         → snippet keys and prefixes from your files
   `:Insert env <Tab>`             → environment variables currently set

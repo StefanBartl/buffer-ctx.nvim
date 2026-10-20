@@ -9,7 +9,10 @@ local pu = require("buffer_ctx.util.path")
 
 ---Every accepted path mode, in completion order (also feeds commands.lua).
 ---@type string[]
-M.MODES = { "cwd", "abs", "lua" }
+M.MODES = { "cwd", "abs", "lua", "nvim", "repos", "env" }
+
+-- Modes whose path part is exactly what `:Copy filepath <mode>` yields.
+local FILEPATH_MODES = { nvim = true, repos = true, env = true }
 
 ---@internal
 ---Resolve the path part of a location, without the line suffix
@@ -32,6 +35,9 @@ local function resolve_path(mode)
     return pu.normalize_sep(abs), nil
   elseif mode == "lua" then
     return pu.get_module_path(abs) or pu.relative_to_cwd(abs), nil
+  elseif FILEPATH_MODES[mode] then
+    -- Root lookup (and its errors, e.g. $REPOS_DIR unset) stays in one place.
+    return require("buffer_ctx.ops.filepath").get_path({ mode = mode, format = "unix" })
   end
   return pu.relative_to_cwd(abs), nil
 end

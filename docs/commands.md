@@ -31,7 +31,7 @@ optional):
 | `mdlink` | `[cwd\|abs\|nvim\|repos] [lua\|unix\|win\|system] [0-3]` | `[title](path)` for the current buffer |
 | `filename` | `[noext]` | Filename (with/without extension) |
 | `module` | `[require\|lua_ls\|js\|c\|generic]` | Lua `require(…)` or `---@module` |
-| `location` | `[cwd\|abs\|lua] [range]` | `path:line`, or `path:L1-L2` with `range` |
+| `location` | `[cwd\|abs\|lua\|nvim\|repos\|env] [range]` | `path:line`, or `path:L1-L2` with `range` |
 | `timestamp` | `[format] [--utc]` | Current timestamp |
 | `date` | `[format] [--utc]` | Shorthand for `timestamp`, defaulting to `iso-date` |
 | `uuid` | `[standard\|compact\|upper\|braced]` | UUID v4 |
@@ -173,7 +173,14 @@ Current buffer path + cursor line number.
 :Copy location             → "lua/buffer_ctx/ops/filepath.lua:42"
 :Copy location abs         → "/home/user/…/filepath.lua:42"
 :Copy location lua         → "buffer_ctx.ops.filepath:42"
+:Copy location nvim        → "lua/plugin/x.lua:42"          (relative to the Neovim config dir)
+:Copy location repos       → "foo.nvim/lua/x.lua:42"       (relative to $REPOS_DIR)
+:Copy location env         → "$REPOS_DIR/foo.nvim/lua/x.lua:42"
 ```
+
+`nvim`, `repos` and `env` take their path part from `filepath` with the same
+semantics: a file outside the root falls back to the cwd-relative path, and
+`repos` reports an error when `$REPOS_DIR` is unset. They combine with `range`.
 
 With `range`, the line span is emitted instead — handy for code-review
 comments and GitHub links. Select the lines in visual mode and press `:`

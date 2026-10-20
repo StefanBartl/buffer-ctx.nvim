@@ -59,7 +59,10 @@ line, a JS-style import, a C `#include`, or the bare dotted path.
 The buffer's path plus the cursor's line number (`path:line`), or, with a
 command range and the `range` argument, a line span (`path:L1-L2`) — handy
 for code-review comments and GitHub permalinks. A single-line range
-collapses back to `path:line` since there's no span to express.
+collapses back to `path:line` since there's no span to express. Path modes:
+`cwd` (default), `abs`, `lua`, and `nvim`, `repos`, `env` with the same
+semantics as `filepath` (`$REPOS_DIR/foo.nvim/lua/x.lua:42` is the readable,
+machine-independent form for notes and reviews).
 
 - **Module:** `ops/location.lua` (`get`, `get_range`, `parse_args`)
 - **Keymaps:** [`<leader>cnl`](../BINDINGS.md#keymaps)
