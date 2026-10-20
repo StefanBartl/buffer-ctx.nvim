@@ -372,6 +372,97 @@ return function(H)
     vim.env.REPOS_DIR = saved_repos_dir
   end
 
+  -- location-remote-permalink: `lib.nvim.git` is stubbed, so no real remote is needed.
+  do
+    local loc = require("buffer_ctx.ops.location")
+    local lib_git = require("lib.nvim.git")
+    local sha = string.rep("a", 40)
+    local state
+    local function reset()
+      state = {
+        repo = true,
+        url = "git@github.com:me/proj.git",
+        rel = "lua/p/x.lua",
+        sha = sha,
+        diff_ok = true,
+      }
+    end
+    local orig = {}
+    local stubs = {
+      in_git_repo = function()
+        return state.repo
+      end,
+      remote_url = function()
+        return state.url
+      end,
+      relative_path = function()
+        return state.rel
+      end,
+      head_hash = function()
+        return state.sha
+      end,
+      run = function()
+        return { ok = state.diff_ok }
+      end,
+    }
+    for k, v in pairs(stubs) do
+      orig[k] = lib_git[k]
+      lib_git[k] = v
+    end
+
+    H.scratch(cwd .. "/lua/p/x.lua")
+    reset()
+    H.eq(
+      loc.get_remote(7, 7),
+      "https://github.com/me/proj/blob/" .. sha .. "/lua/p/x.lua#L7",
+      "get_remote: single line links the commit, not a branch"
+    )
+    H.eq(
+      loc.get_remote(9, 3),
+      "https://github.com/me/proj/blob/" .. sha .. "/lua/p/x.lua#L3-L9",
+      "get_remote: a range is ordered and anchored L1-L2"
+    )
+    state.url = "https://gitlab.com/g/r.git"
+    H.eq(
+      loc.get_remote(1, 1),
+      "https://gitlab.com/g/r/-/blob/" .. sha .. "/lua/p/x.lua#L1",
+      "get_remote: GitLab form"
+    )
+
+    reset()
+    local _, _, clean_warn = loc.get_remote(1, 1)
+    H.eq(clean_warn, nil, "get_remote: a clean file raises no warning")
+    state.diff_ok = false
+    local _, _, dirty_warn = loc.get_remote(1, 1)
+    H.match(dirty_warn or "", "differs from HEAD", "get_remote: a changed file warns")
+    H.ok(loc.get_remote(1, 1) ~= nil, "get_remote: a changed file still yields a link")
+
+    reset()
+    state.repo = false
+    H.match(select(2, loc.get_remote(1, 1)) or "", "not inside a git", "get_remote: no repo")
+    reset()
+    state.url = nil
+    H.match(select(2, loc.get_remote(1, 1)) or "", "origin", "get_remote: no remote")
+    reset()
+    state.url = "https://git.example.org/a/b.git"
+    H.match(select(2, loc.get_remote(1, 1)) or "", "unknown git host", "get_remote: unknown host")
+    reset()
+    state.rel = nil
+    H.match(select(2, loc.get_remote(1, 1)) or "", "not tracked", "get_remote: untracked file")
+
+    for k, v in pairs(orig) do
+      lib_git[k] = v
+    end
+
+    local _, _, _, want_remote = loc.parse_args({ "remote", "range" })
+    H.eq(want_remote, true, "location parse_args detects remote")
+    H.eq(
+      select(4, loc.parse_args({ "abs" })),
+      false,
+      "location parse_args: remote defaults to false"
+    )
+  end
+
   -- mode=env (and mode=repos, sharing the same helper) still match when
   -- $REPOS_DIR carries a trailing slash, or -- on Windows -- differs in case
   -- from the buffer's actual path (e.g. a differently-cased drive letter).

@@ -31,7 +31,7 @@ optional):
 | `mdlink` | `[cwd\|abs\|nvim\|repos] [lua\|unix\|win\|system] [0-3]` | `[title](path)` for the current buffer |
 | `filename` | `[noext]` | Filename (with/without extension) |
 | `module` | `[require\|lua_ls\|js\|c\|generic]` | Lua `require(…)` or `---@module` |
-| `location` | `[cwd\|abs\|lua\|nvim\|repos\|env] [range]` | `path:line`, or `path:L1-L2` with `range` |
+| `location` | `[cwd\|abs\|lua\|nvim\|repos\|env] [range]`, `remote [range]` | `path:line`, or `path:L1-L2` with `range`; `remote`: forge permalink |
 | `timestamp` | `[format] [--utc]` | Current timestamp |
 | `date` | `[format] [--utc]` | Shorthand for `timestamp`, defaulting to `iso-date` |
 | `uuid` | `[standard\|compact\|upper\|braced]` | UUID v4 |
@@ -193,6 +193,20 @@ comments and GitHub links. Select the lines in visual mode and press `:`
 ```
 
 A single-line range has no span to express, so it collapses to `path:42`.
+
+With `remote`, a forge permalink is produced instead of `path:line`: the
+current commit (not the branch, so the link stays stable) plus a line anchor,
+for GitHub, GitLab and Codeberg (via `lib.nvim.git.remote`). It takes the
+cursor line, or a line span as with `range`:
+
+```
+:Copy location remote            → https://github.com/me/proj/blob/<sha>/lua/x.lua#L42
+:'<,'>Copy location remote       → https://github.com/me/proj/blob/<sha>/lua/x.lua#L10-L20
+```
+
+It reports an error outside a git repository, without an `origin` remote, for
+an unknown host or for an untracked file. A file with local changes still
+yields the link, with a warning that the line numbers may differ.
 
 ### `timestamp [format] [--utc]`
 

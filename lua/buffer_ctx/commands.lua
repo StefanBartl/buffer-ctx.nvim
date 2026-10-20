@@ -285,13 +285,19 @@ local DISPATCH = {
   end,
 
   location = function(fargs, sink, ctx)
-    local mode, want_range, parse_err = location.parse_args(fargs)
+    local mode, want_range, parse_err, want_remote = location.parse_args(fargs)
     if parse_err then
       notify.error(parse_err)
       return
     end
     local result, err
-    if want_range then
+    if want_remote then
+      local warn
+      result, err, warn = location.get_remote(ctx and ctx.line1, ctx and ctx.line2)
+      if result and warn then
+        notify.warn(warn)
+      end
+    elseif want_range then
       result, err = location.get_range(mode, ctx and ctx.line1, ctx and ctx.line2)
     else
       result, err = location.get(mode)
@@ -422,7 +428,7 @@ local SUBCMD_ARGS = {
   date = TIMESTAMP_FORMATS,
   uuid = uuid_op.FORMATS,
   annotation = ANNOTATION_TYPES,
-  location = vim.list_extend(vim.deepcopy(location.MODES), { "range" }),
+  location = vim.list_extend(vim.deepcopy(location.MODES), { "range", "remote" }),
   boilerplate = nil, -- populated lazily from boiler.list_keys()
   snippet = nil, -- populated lazily from snippet.list_keys()
   env = nil, -- populated lazily from env_op.list_names()
