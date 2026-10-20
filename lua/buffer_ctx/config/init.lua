@@ -11,12 +11,6 @@ local M = {}
 ---@type BufferCtx.Config
 local DEFAULTS = require("buffer_ctx.config.DEFAULTS")
 
-local _active = nil
-
----What the last `setup()` had to ignore, for `:checkhealth`.
----@type string[]
-local _issues = {}
-
 ---Keys `setup()` accepts and, for the option tables among them, their keys.
 ---A nested table's keys are validated one level deep; deeper structures
 ---(`mark.sign`, `mark.categories`) are accepted opaquely -- their own shapes
@@ -213,7 +207,42 @@ local function apply_keymaps_switch(clean)
   end
 end
 
---- Merge user options over the defaults and store the result.
+--- To the schema that `lib.lua.config` infers from `DEFAULTS`, the sections and values `KNOWN`
+--- checks are open (`sanitize` does it, one level deep, with the sentinel specs a bare type
+--- cannot say); an unknown top-level key is caught there as well.
+local ANY = "boolean|number|string|table|function"
+---@type table<string, string|table>
+local SCHEMA = {}
+for key, known in pairs(KNOWN) do
+  SCHEMA[key] = type(known) == "table" and { "table" } or ANY
+end
+for key in pairs(BOOL_OVERRIDABLE) do
+  SCHEMA[key] = ANY
+end
+
+local cfg = require("lib.lua.config").new(DEFAULTS, {
+  name = "buffer_ctx",
+  schema = SCHEMA,
+  -- The checks of KNOWN, before the merge: a wrong value is left out so the default underneath
+  -- applies. `opts` is a private copy, so it is rewritten in place.
+  normalize = function(opts, issues)
+    local clean, found = sanitize(opts)
+    apply_keymaps_switch(clean)
+    for key in pairs(opts) do
+      opts[key] = nil
+    end
+    for key, value in pairs(clean) do
+      opts[key] = value
+    end
+    vim.list_extend(issues, found)
+  end,
+  notify = function(message)
+    require("buffer_ctx.util.notify").warn(message)
+  end,
+})
+
+--- Merge user options over the defaults and store the result. Every call
+--- starts from `DEFAULTS`.
 ---
 --- Unknown keys and mistyped values -- whole option tables (ERR-50) or a
 --- single leaf value of the wrong type (ERR-22) -- are reported once here and
@@ -224,18 +253,12 @@ function M.setup(user_opts)
   if user_opts ~= nil and type(user_opts) ~= "table" then
     error("buffer_ctx.setup: expected table or nil, got " .. type(user_opts), 2)
   end
-  local clean, issues = sanitize(user_opts or {})
-  apply_keymaps_switch(clean)
-  _issues = issues
-  if #issues > 0 then
-    require("buffer_ctx.util.notify").warn("ignored config: " .. table.concat(issues, "; "))
-  end
-  _active = vim.tbl_deep_extend("force", DEFAULTS, clean)
+  cfg.setup(user_opts)
 end
 
 ---@return BufferCtx.Config
 function M.get()
-  return _active or DEFAULTS
+  return cfg.get()
 end
 
 ---What the last `setup()` ignored: unknown keys and values of the wrong
@@ -243,7 +266,7 @@ end
 ---each. Empty when everything was accepted.
 ---@return string[]
 function M.issues()
-  return vim.list_extend({}, _issues)
+  return cfg.issues()
 end
 
 return M
