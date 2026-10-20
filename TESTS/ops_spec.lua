@@ -87,6 +87,48 @@ return function(H)
     "location.get is forward-slashed on every platform"
   )
 
+  -- silent-arg-fallback: a typo in location/timestamp/date/uuid is reported, not defaulted
+  local _, _, loc_ok = location_op.parse_args({ "abs", "range" })
+  H.eq(loc_ok, nil, "location parse_args: valid tokens report no error")
+  local _, _, loc_typo = location_op.parse_args({ "bogus" })
+  H.match(loc_typo or "", "bogus", "location parse_args: unknown token is named in the error")
+  local _, _, ts_typo = timestamp_op.parse_args({ "isoo" })
+  H.match(ts_typo or "", "isoo", "timestamp parse_args: unknown format is named in the error")
+  local _, _, ts_ok = timestamp_op.parse_args({ "--utc", "HUMAN" })
+  H.eq(ts_ok, nil, "timestamp parse_args: --utc and a valid format report no error")
+  local _, _, date_typo = timestamp_op.parse_date_args({ "nope" })
+  H.ok(date_typo ~= nil, "date parse_args: unknown format reports an error")
+  local _, uuid_typo = uuid_op.parse_args({ "bogus" })
+  H.match(uuid_typo or "", "bogus", "uuid parse_args: unknown style is named in the error")
+  H.eq(select(2, uuid_op.parse_args({ "Compact" })), nil, "uuid parse_args: valid style is fine")
+
+  do
+    local commands = require("buffer_ctx.commands")
+    local notify = require("buffer_ctx.util.notify")
+    local original_error = notify.error
+    local errs = {}
+    notify.error = function(msg)
+      errs[#errs + 1] = msg
+    end
+    H.scratch(cwd .. "/lua/loc/typo.lua")
+    vim.api.nvim_buf_set_lines(0, 0, -1, false, {})
+    for _, case in ipairs({
+      { "location", { "bogus" } },
+      { "timestamp", { "isoo" } },
+      { "date", { "isoo" } },
+      { "uuid", { "bogus" } },
+    }) do
+      commands._dispatch(case[1], case[2], "cursor")
+    end
+    notify.error = original_error
+    H.eq(#errs, 4, "typo'd args to location/timestamp/date/uuid each report one error")
+    H.eq(
+      table.concat(vim.api.nvim_buf_get_lines(0, 0, -1, false), "\n"),
+      "",
+      "typo'd args insert nothing into the buffer"
+    )
+  end
+
   -- filepath
   local opts = filepath_op.parse_args({})
   H.eq(opts.mode, "cwd", "filepath parse_args default mode")

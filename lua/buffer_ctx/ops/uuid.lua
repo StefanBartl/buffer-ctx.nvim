@@ -54,11 +54,24 @@ function M.get(fmt)
   return M.format(M.generate(), fmt or "standard")
 end
 
+---Every accepted style, in completion order (also feeds commands.lua).
+---@type string[]
+M.FORMATS = { "standard", "compact", "upper", "braced" }
+
 ---Parse fargs for uuid subcommand
 ---@param args string[]
----@return BufferCtx.UUIDFormat
+---@return BufferCtx.UUIDFormat fmt, string|nil err  err set for a style outside M.FORMATS
 function M.parse_args(args)
-  return (args and args[1]) and args[1]:lower() or "standard"
+  local arg = args and args[1]
+  if not arg then
+    return "standard", nil
+  end
+  local lo = arg:lower()
+  if vim.tbl_contains(M.FORMATS, lo) then
+    return lo, nil
+  end
+  return "standard",
+    string.format("unknown argument(s): %s (valid: %s)", arg, table.concat(M.FORMATS, ", "))
 end
 
 return M

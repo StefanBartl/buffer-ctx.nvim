@@ -14,6 +14,30 @@ local FORMATS = {
   time = "%H:%M:%S",
 }
 
+---Every accepted format name, in completion order. The single source for the
+---argument check below and for the tab-completion in commands.lua.
+---@type string[]
+M.FORMAT_NAMES = {
+  "iso",
+  "iso-date",
+  "iso-time",
+  "unix",
+  "human",
+  "short",
+  "log",
+  "filename",
+  "long",
+  "weekday",
+  "time",
+  "12h",
+  "rfc2822",
+}
+
+local VALID = {}
+for _, name in ipairs(M.FORMAT_NAMES) do
+  VALID[name] = true
+end
+
 -- %A/%a (weekday) and %B/%b (month) are locale-dependent in os.date (e.g. German
 -- locale renders %a as "Di" instead of "Tue"), so "long"/"weekday"/"rfc2822" are
 -- built from fixed English names instead, matching the plain-English "human" format.
@@ -89,30 +113,43 @@ end
 
 ---@param args string[]
 ---@param default_fmt BufferCtx.TimestampFormat
----@return BufferCtx.TimestampFormat, boolean
+---@return BufferCtx.TimestampFormat fmt, boolean utc, string|nil err
 local function parse_common(args, default_fmt)
   local fmt = default_fmt
   local utc = false
+  local unknown = {}
   for _, a in ipairs(args or {}) do
-    if a == "--utc" then
+    local lo = a:lower()
+    if lo == "--utc" then
       utc = true
+    elseif VALID[lo] then
+      fmt = lo
     else
-      fmt = a:lower()
+      unknown[#unknown + 1] = a
     end
   end
-  return fmt, utc
+  if #unknown > 0 then
+    return fmt,
+      utc,
+      string.format(
+        "unknown argument(s): %s (valid: %s, --utc)",
+        table.concat(unknown, ", "),
+        table.concat(M.FORMAT_NAMES, ", ")
+      )
+  end
+  return fmt, utc, nil
 end
 
 ---Parse fargs for timestamp subcommand
 ---@param args string[]
----@return BufferCtx.TimestampFormat, boolean
+---@return BufferCtx.TimestampFormat fmt, boolean utc, string|nil err
 function M.parse_args(args)
   return parse_common(args, "iso")
 end
 
 ---Parse fargs for the `date` subcommand (same grammar, defaults to iso-date)
 ---@param args string[]
----@return BufferCtx.TimestampFormat, boolean
+---@return BufferCtx.TimestampFormat fmt, boolean utc, string|nil err
 function M.parse_date_args(args)
   return parse_common(args, "iso-date")
 end

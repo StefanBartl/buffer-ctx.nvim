@@ -177,14 +177,22 @@ local DISPATCH = {
   end,
 
   timestamp = function(fargs, sink)
-    local fmt, utc = timestamp.parse_args(fargs)
+    local fmt, utc, parse_err = timestamp.parse_args(fargs)
+    if parse_err then
+      notify.error(parse_err)
+      return
+    end
     -- Sticky config UTC; an explicit --utc can only turn it on, never off.
     local result = timestamp.format_timestamp(fmt, utc or cfg("timestamp").utc == true)
     sink_text(result, sink)
   end,
 
   date = function(fargs, sink)
-    local fmt, utc = timestamp.parse_date_args(fargs)
+    local fmt, utc, parse_err = timestamp.parse_date_args(fargs)
+    if parse_err then
+      notify.error(parse_err)
+      return
+    end
     -- Sticky config UTC; an explicit --utc can only turn it on, never off.
     local result = timestamp.format_timestamp(fmt, utc or cfg("timestamp").utc == true)
     sink_text(result, sink)
@@ -254,7 +262,11 @@ local DISPATCH = {
   end,
 
   uuid = function(fargs, sink)
-    local fmt = uuid_op.parse_args(fargs)
+    local fmt, parse_err = uuid_op.parse_args(fargs)
+    if parse_err then
+      notify.error(parse_err)
+      return
+    end
     sink_text(uuid_op.get(fmt), sink)
   end,
 
@@ -273,7 +285,11 @@ local DISPATCH = {
   end,
 
   location = function(fargs, sink, ctx)
-    local mode, want_range = location.parse_args(fargs)
+    local mode, want_range, parse_err = location.parse_args(fargs)
+    if parse_err then
+      notify.error(parse_err)
+      return
+    end
     local result, err
     if want_range then
       result, err = location.get_range(mode, ctx and ctx.line1, ctx and ctx.line2)
@@ -373,22 +389,7 @@ local ANNOTATION_TYPES = {
   "deprecated",
 }
 
-local TIMESTAMP_FORMATS = {
-  "iso",
-  "iso-date",
-  "iso-time",
-  "unix",
-  "human",
-  "short",
-  "log",
-  "filename",
-  "long",
-  "weekday",
-  "time",
-  "12h",
-  "rfc2822",
-  "--utc",
-}
+local TIMESTAMP_FORMATS = vim.list_extend(vim.deepcopy(timestamp.FORMAT_NAMES), { "--utc" })
 
 -- Shared by "filepath" and "mdlink": the latter wraps whatever
 -- "filepath" would produce in a Markdown link, so both accept the exact same
@@ -419,9 +420,9 @@ local SUBCMD_ARGS = {
   git = { "hash", "short", "branch", "tag" },
   timestamp = TIMESTAMP_FORMATS,
   date = TIMESTAMP_FORMATS,
-  uuid = { "standard", "compact", "upper", "braced" },
+  uuid = uuid_op.FORMATS,
   annotation = ANNOTATION_TYPES,
-  location = { "cwd", "abs", "lua", "range" },
+  location = vim.list_extend(vim.deepcopy(location.MODES), { "range" }),
   boilerplate = nil, -- populated lazily from boiler.list_keys()
   snippet = nil, -- populated lazily from snippet.list_keys()
   env = nil, -- populated lazily from env_op.list_names()

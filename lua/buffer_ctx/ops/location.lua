@@ -7,37 +7,9 @@ local api = vim.api
 local fn = vim.fn
 local pu = require("buffer_ctx.util.path")
 
----Get the current buffer location as "path:line"
----@param mode? BufferCtx.LocationMode  default "cwd"
----@return string|nil result, string|nil err
-function M.get(mode)
-  local bufnr = api.nvim_get_current_buf()
-  if not api.nvim_buf_is_valid(bufnr) then
-    return nil, "no valid buffer"
-  end
-
-  local name = api.nvim_buf_get_name(bufnr)
-  if not name or name == "" then
-    return nil, "unnamed buffer"
-  end
-
-  local win = api.nvim_get_current_win()
-  local line = api.nvim_win_is_valid(win) and api.nvim_win_get_cursor(win)[1] or 1
-
-  local abs = fn.fnamemodify(name, ":p")
-  local filepath
-
-  mode = (mode or "cwd"):lower()
-  if mode == "abs" then
-    filepath = pu.normalize_sep(abs)
-  elseif mode == "lua" then
-    filepath = pu.get_module_path(abs) or pu.relative_to_cwd(abs)
-  else
-    filepath = pu.relative_to_cwd(abs)
-  end
-
-  return filepath .. ":" .. line, nil
-end
+---Every accepted path mode, in completion order (also feeds commands.lua).
+---@type string[]
+M.MODES = { "cwd", "abs", "lua" }
 
 ---@internal
 ---Resolve the path part of a location, without the line suffix
@@ -62,6 +34,20 @@ local function resolve_path(mode)
     return pu.get_module_path(abs) or pu.relative_to_cwd(abs), nil
   end
   return pu.relative_to_cwd(abs), nil
+end
+
+---Get the current buffer location as "path:line"
+---@param mode? BufferCtx.LocationMode  default "cwd"
+---@return string|nil result, string|nil err
+function M.get(mode)
+  local filepath, err = resolve_path(mode)
+  if not filepath then
+    return nil, err
+  end
+
+  local win = api.nvim_get_current_win()
+  local line = api.nvim_win_is_valid(win) and api.nvim_win_get_cursor(win)[1] or 1
+  return filepath .. ":" .. line, nil
 end
 
 ---Get a line-range location as "path:L1-L2"
@@ -108,19 +94,33 @@ end
 
 ---Parse fargs for location subcommand
 ---@param args string[]
----@return BufferCtx.LocationMode mode, boolean range
+---@return BufferCtx.LocationMode mode, boolean range, string|nil err
+--- err is set when a token is neither "range" nor one of M.MODES (a typo must
+--- not silently behave like "no argument given")
 function M.parse_args(args)
   local mode = "cwd"
   local range = false
+  local unknown = {}
   for _, a in ipairs(args or {}) do
     local lo = a:lower()
     if lo == "range" then
       range = true
-    else
+    elseif vim.tbl_contains(M.MODES, lo) then
       mode = lo
+    else
+      unknown[#unknown + 1] = a
     end
   end
-  return mode, range
+  if #unknown > 0 then
+    return mode,
+      range,
+      string.format(
+        "unknown argument(s): %s (valid: %s, range)",
+        table.concat(unknown, ", "),
+        table.concat(M.MODES, ", ")
+      )
+  end
+  return mode, range, nil
 end
 
 return M

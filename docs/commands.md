@@ -240,6 +240,10 @@ the same `[format]` values and `--utc` flag.
 | `upper` | `550E8400-E29B-41D4-A716-446655440000` |
 | `braced` | `{550e8400-e29b-41d4-a716-446655440000}` |
 
+`location`, `timestamp`, `date` and `uuid` reject an unknown argument with an
+error listing the valid values (nothing is copied or inserted), the same as
+`filepath` does.
+
 ### `annotation {type} [args…]`
 
 | Type | Args | Output |
