@@ -62,16 +62,26 @@ M.FORMATS = { "standard", "compact", "upper", "braced" }
 ---@param args string[]
 ---@return BufferCtx.UUIDFormat fmt, string|nil err  err set for a style outside M.FORMATS
 function M.parse_args(args)
-  local arg = args and args[1]
-  if not arg then
-    return "standard", nil
+  local fmt = "standard"
+  local unknown = {}
+  for i, arg in ipairs(args or {}) do
+    local lo = arg:lower()
+    -- Only the first token can be a style; a second one is as much a typo as an unknown name.
+    if i == 1 and vim.tbl_contains(M.FORMATS, lo) then
+      fmt = lo
+    else
+      unknown[#unknown + 1] = arg
+    end
   end
-  local lo = arg:lower()
-  if vim.tbl_contains(M.FORMATS, lo) then
-    return lo, nil
+  if #unknown > 0 then
+    return "standard",
+      string.format(
+        "unknown argument(s): %s (valid: %s)",
+        table.concat(unknown, ", "),
+        table.concat(M.FORMATS, ", ")
+      )
   end
-  return "standard",
-    string.format("unknown argument(s): %s (valid: %s)", arg, table.concat(M.FORMATS, ", "))
+  return fmt, nil
 end
 
 return M

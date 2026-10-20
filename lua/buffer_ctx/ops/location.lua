@@ -167,7 +167,8 @@ function M.get_remote(line1, line2)
   local warn
   if vim.bo.modified then
     warn = "buffer has unsaved changes: line numbers may differ from the commit"
-  elseif not lib_git.run({ "diff", "--quiet", "HEAD", "--", abs }, opts).ok then
+  elseif lib_git.run({ "diff", "--quiet", "HEAD", "--", abs }, opts).code == 1 then
+    -- Exit 1 is "differs"; any other failure (git error, timeout) says nothing about the file.
     warn = "file differs from HEAD: line numbers may differ from the commit"
   end
   return url, nil, warn
@@ -183,6 +184,7 @@ function M.parse_args(args)
   local mode = "cwd"
   local range = false
   local remote = false
+  local mode_given = false
   local unknown = {}
   for _, a in ipairs(args or {}) do
     local lo = a:lower()
@@ -192,6 +194,7 @@ function M.parse_args(args)
       remote = true
     elseif vim.tbl_contains(M.MODES, lo) then
       mode = lo
+      mode_given = true
     else
       unknown[#unknown + 1] = a
     end
@@ -205,6 +208,9 @@ function M.parse_args(args)
         table.concat(M.MODES, ", ")
       ),
       remote
+  end
+  if remote and mode_given then
+    return mode, range, "remote takes no path mode (the link is repo-relative)", remote
   end
   return mode, range, nil, remote
 end

@@ -384,7 +384,7 @@ return function(H)
         url = "git@github.com:me/proj.git",
         rel = "lua/p/x.lua",
         sha = sha,
-        diff_ok = true,
+        diff_code = 0,
       }
     end
     local orig = {}
@@ -402,7 +402,7 @@ return function(H)
         return state.sha
       end,
       run = function()
-        return { ok = state.diff_ok }
+        return { ok = state.diff_code == 0, code = state.diff_code }
       end,
     }
     for k, v in pairs(stubs) do
@@ -432,10 +432,51 @@ return function(H)
     reset()
     local _, _, clean_warn = loc.get_remote(1, 1)
     H.eq(clean_warn, nil, "get_remote: a clean file raises no warning")
-    state.diff_ok = false
+    state.diff_code = 1
     local _, _, dirty_warn = loc.get_remote(1, 1)
     H.match(dirty_warn or "", "differs from HEAD", "get_remote: a changed file warns")
     H.ok(loc.get_remote(1, 1) ~= nil, "get_remote: a changed file still yields a link")
+    state.diff_code = 128
+    local _, _, failed_warn = loc.get_remote(1, 1)
+    H.eq(failed_warn, nil, "get_remote: a failing git diff is not reported as a changed file")
+
+    -- Through the command: without `range`, a command range / stale visual marks
+    -- must not turn the link into a span; with `range` they do.
+    reset()
+    do
+      local commands = require("buffer_ctx.commands")
+      local notify = require("buffer_ctx.util.notify")
+      local original_error = notify.error
+      local errs = {}
+      notify.error = function(msg)
+        errs[#errs + 1] = msg
+      end
+      local base = "https://github.com/me/proj/blob/" .. sha .. "/lua/p/x.lua"
+      local function inserted(lines)
+        -- The cursor sink inserts in front of the line's own text, so match the anchor only.
+        return table.concat(lines, "\n"):match(vim.pesc(base) .. "#L%d+%-?L?%d*")
+      end
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { "a", "b", "c", "d", "e" })
+      vim.api.nvim_win_set_cursor(0, { 2, 0 })
+      commands._dispatch("location", { "remote" }, "cursor", { line1 = 3, line2 = 5 })
+      H.eq(
+        inserted(vim.api.nvim_buf_get_lines(0, 0, -1, false)),
+        base .. "#L2",
+        "location remote without range links the cursor line only"
+      )
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, { "a", "b", "c", "d", "e" })
+      vim.api.nvim_win_set_cursor(0, { 2, 0 })
+      commands._dispatch("location", { "remote", "range" }, "cursor", { line1 = 3, line2 = 5 })
+      H.eq(
+        inserted(vim.api.nvim_buf_get_lines(0, 0, -1, false)),
+        base .. "#L3-L5",
+        "location remote range links the command range"
+      )
+      commands._dispatch("location", { "remote", "abs" }, "cursor", { line1 = 3, line2 = 3 })
+      notify.error = original_error
+      H.eq(#errs, 1, "location remote with a path mode reports an error")
+      H.match(errs[1] or "", "no path mode", "the error names the conflict")
+    end
 
     reset()
     state.repo = false

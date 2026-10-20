@@ -293,7 +293,14 @@ local DISPATCH = {
     local result, err
     if want_remote then
       local warn
-      result, err, warn = location.get_remote(ctx and ctx.line1, ctx and ctx.line2)
+      local line1, line2 = ctx and ctx.line1, ctx and ctx.line2
+      if not want_range then
+        -- Like the plain path:line form: without `range`, a command range or a
+        -- stale visual selection must not turn the link into a span.
+        line1 = vim.api.nvim_win_get_cursor(0)[1]
+        line2 = line1
+      end
+      result, err, warn = location.get_remote(line1, line2)
       if result and warn then
         notify.warn(warn)
       end

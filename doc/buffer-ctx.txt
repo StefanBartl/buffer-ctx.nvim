@@ -329,7 +329,8 @@ range ~
 
 remote ~
   Emit a forge permalink (GitHub, GitLab, Codeberg) to the current commit with
-  a line anchor, instead of `path:line`; combine with a range for a span. An
+  a line anchor, instead of `path:line`; add `range` for a span (without it
+  the cursor line is linked). It takes no path mode. An
   error outside a git repo, without an `origin`, for an unknown host or an
   untracked file; a file with local changes still yields the link plus a
   warning that the line numbers may differ.

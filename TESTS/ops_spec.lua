@@ -101,6 +101,16 @@ return function(H)
   local _, uuid_typo = uuid_op.parse_args({ "bogus" })
   H.match(uuid_typo or "", "bogus", "uuid parse_args: unknown style is named in the error")
   H.eq(select(2, uuid_op.parse_args({ "Compact" })), nil, "uuid parse_args: valid style is fine")
+  H.match(
+    select(2, uuid_op.parse_args({ "compact", "bogus" })) or "",
+    "bogus",
+    "uuid parse_args: a trailing token is reported, not ignored"
+  )
+  H.match(
+    select(2, uuid_op.parse_args({ "compact", "upper" })) or "",
+    "upper",
+    "uuid parse_args: a second valid style is still one argument too many"
+  )
 
   do
     local commands = require("buffer_ctx.commands")

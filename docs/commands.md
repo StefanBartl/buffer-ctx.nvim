@@ -204,6 +204,9 @@ cursor line, or a line span as with `range`:
 :'<,'>Copy location remote       → https://github.com/me/proj/blob/<sha>/lua/x.lua#L10-L20
 ```
 
+Without `range` it always links the cursor line, like the plain form; `remote`
+takes no path mode (`remote abs` is rejected, the link is repo-relative).
+
 It reports an error outside a git repository, without an `origin` remote, for
 an unknown host or for an untracked file. A file with local changes still
 yields the link, with a warning that the line numbers may differ.

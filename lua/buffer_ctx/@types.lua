@@ -22,7 +22,7 @@
 
 ---@alias BufferCtx.AnnotationType "module" | "class" | "field" | "param" | "return" | "function" | "alias" | "overload" | "diagnostic" | "deprecated"
 
----@alias BufferCtx.LocationMode "cwd" | "abs" | "lua"
+---@alias BufferCtx.LocationMode "cwd" | "abs" | "lua" | "nvim" | "repos" | "env"
 
 ---@alias BufferCtx.GitMode "hash" | "short" | "branch" | "tag"
 
