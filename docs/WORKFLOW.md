@@ -57,7 +57,7 @@ line."
 
 The README's own suggested pairing is worth calling out here too: use
 `:Copy location`/`:Copy module` to drop a `path:line` or `require(...)`
-reference *out*, and [gopath.nvim](https://github.com/StefanBartl/gopath.nvim)
+reference *out*, and [gopath.nvim](https://github.com/WKDSteve/gopath.nvim)
 to jump straight back to it from anywhere later — the two are built to be
 used together, not overlapping.
 

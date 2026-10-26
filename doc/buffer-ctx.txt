@@ -71,7 +71,7 @@ out to the `git` executable. Every other subcommand is shell-free.
 2. REQUIREMENTS                                    *buffer-ctx-requirements*
 
   - Neovim 0.9 or later
-  - lib.nvim (https://github.com/StefanBartl/lib.nvim) — REQUIRED
+  - lib.nvim (https://github.com/WKDSteve/lib.nvim) — REQUIRED
     The `:Insert`/`:Copy`/`:Format`/`:Mark` command layer is built on
     `lib.nvim.bindings.usercmd.composer`. `notify`/`map` remain a soft dependency on
     top of that (nicer formatting when installed, falls back to plain
@@ -82,13 +82,13 @@ out to the `git` executable. Every other subcommand is shell-free.
     (https://github.com/nvim-telescope/telescope.nvim)
     Enables the boilerplate picker, see |buffer-ctx-telescope|.
   - (optional) `git` in $PATH — only for the |:Insert-git| subcommand.
-  - (optional) open.nvim (https://github.com/StefanBartl/open.nvim)
+  - (optional) open.nvim (https://github.com/WKDSteve/open.nvim)
     |:OpenInBrowser| delegates to its `browser` handler when installed;
     falls back to |vim.ui.open| (Neovim 0.10+) otherwise.
-  - (optional) markdown.nvim (https://github.com/StefanBartl/markdown.nvim)
+  - (optional) markdown.nvim (https://github.com/WKDSteve/markdown.nvim)
     |:Insert-mdlink| delegates to its own link builder when installed;
     falls back to a literal "[title](path)" otherwise.
-  - (optional) images.nvim (https://github.com/StefanBartl/images.nvim)
+  - (optional) images.nvim (https://github.com/WKDSteve/images.nvim)
     |:Insert-imagepaste| delegates to its `paste` feature. No local
     fallback — the subcommand fails without images.nvim installed.
 
@@ -97,24 +97,24 @@ out to the `git` executable. Every other subcommand is shell-free.
 
 lazy.nvim, recommended (load shortly after startup): >lua
   {
-    "stefanbartl/buffer-ctx.nvim",
-    dependencies = { "stefanbartl/lib.nvim" },
+    "WKDSteve/buffer-ctx.nvim",
+    dependencies = { "WKDSteve/lib.nvim" },
     event = "VeryLazy",
     opts  = {},
   }
 <
 lazy.nvim, lazy-loaded on command use: >lua
   {
-    "stefanbartl/buffer-ctx.nvim",
-    dependencies = { "stefanbartl/lib.nvim" },
+    "WKDSteve/buffer-ctx.nvim",
+    dependencies = { "WKDSteve/lib.nvim" },
     cmd  = { "Insert", "Copy", "Format", "Mark", "RevealInFm", "OpenInBrowser" },
     opts = {},
   }
 <
 packer: >lua
   use {
-    "stefanbartl/buffer-ctx.nvim",
-    requires = { "stefanbartl/lib.nvim" },
+    "WKDSteve/buffer-ctx.nvim",
+    requires = { "WKDSteve/lib.nvim" },
     config = function()
       require("buffer_ctx").setup()
     end,

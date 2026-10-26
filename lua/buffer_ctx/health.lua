@@ -42,7 +42,7 @@ function M.check()
   else
     vim.health.error(
       "lib.nvim not found — commands will fail to register",
-      { 'Install "StefanBartl/lib.nvim"' }
+      { 'Install "WKDSteve/lib.nvim"' }
     )
   end
 
@@ -258,7 +258,7 @@ function M.check()
     else
       vim.health.error(
         "lib.nvim.cross.reveal_in_fm not found -- :RevealInFm will fail",
-        { 'Install "StefanBartl/lib.nvim"' }
+        { 'Install "WKDSteve/lib.nvim"' }
       )
     end
 

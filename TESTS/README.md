@@ -15,7 +15,7 @@ bash scripts/test.sh --file format   # only spec files whose name contains "form
 bash scripts/test.sh --json ir.json  # also write the machine-readable result
 ```
 
-The runner is [testing.nvim](https://github.com/StefanBartl/testing.nvim)
+The runner is [testing.nvim](https://github.com/WKDSteve/testing.nvim)
 (configured in `.testing.lua`, dialect `h` = the shared `harness.lua`). It
 prints one line per spec, exits non-zero when a spec fails or a dependency is
 missing, and prints `BUFFER_CTX_TESTS_OK` on a fully green run. `testing.nvim`

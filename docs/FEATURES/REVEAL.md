@@ -41,7 +41,7 @@ Opens the current buffer with the OS-registered application for it — a
 browser for a URL-shaped buffer or an `.html` file, whatever program the OS
 associates with anything else.
 
-Prefers [open.nvim](https://github.com/StefanBartl/open.nvim)'s own
+Prefers [open.nvim](https://github.com/WKDSteve/open.nvim)'s own
 `browser` handler when it is installed (soft dependency, the same
 `pcall(require, ...)` convention `buffer_ctx.commands`'s `resolve_kit()`
 uses for `ui.kit`):

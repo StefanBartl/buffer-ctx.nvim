@@ -18,10 +18,10 @@
 [![Neovim](https://img.shields.io/badge/Neovim-0.9%2B-57A143?logo=neovim&logoColor=white)](https://neovim.io)
 [![Lua](https://img.shields.io/badge/Lua-5.1%2FLuaJIT-2C2D72?logo=lua&logoColor=white)](https://www.lua.org)
 ![Status](https://img.shields.io/badge/status-beta-orange)
-[![CI](https://github.com/StefanBartl/buffer-ctx.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/StefanBartl/buffer-ctx.nvim/actions/workflows/ci.yml)
-[![wkd](https://img.shields.io/badge/wkd-family-c6ff3d)](https://stefanbartl.github.io/wkd/p/buffer-ctx/)
+[![CI](https://github.com/WKDSteve/buffer-ctx.nvim/actions/workflows/ci.yml/badge.svg)](https://github.com/WKDSteve/buffer-ctx.nvim/actions/workflows/ci.yml)
+[![wkd](https://img.shields.io/badge/wkd-family-c6ff3d)](https://wkdsteve.github.io/wkd/p/buffer-ctx/)
 
-> Part of the [wkd](https://stefanbartl.github.io/wkd/) family — see this plugin's [page](https://stefanbartl.github.io/wkd/p/buffer-ctx/) on the site.
+> Part of the [wkd](https://wkdsteve.github.io/wkd/) family — see this plugin's [page](https://wkdsteve.github.io/wkd/p/buffer-ctx/) on the site.
 
 Everything the current buffer already knows about itself, as text you can insert
 or copy: its path, its Lua module name, the line you are on, a timestamp, a UUID,
@@ -56,7 +56,7 @@ each page answers.
 - [Architecture](docs/architecture.md) — source tree layout and module responsibilities.
 - [Health check](docs/health.md) — what `:checkhealth buffer_ctx` reports, section by section.
 - [Contributing](docs/CONTRIBUTING.md) — ground rules and project layout.
-- [Feedback](https://github.com/StefanBartl/buffer-ctx.nvim/issues) — bugs, features, questions.
+- [Feedback](https://github.com/WKDSteve/buffer-ctx.nvim/issues) — bugs, features, questions.
 - [Tests](TESTS/README.md) — how to run the spec suite.
 
 `:help buffer-ctx` is the same reference inside the editor.

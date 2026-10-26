@@ -1,7 +1,7 @@
 # Contributing to buffer-ctx.nvim
 
 Thank you for your interest! Bugs, ideas and questions are welcome in the
-[issue tracker](https://github.com/StefanBartl/buffer-ctx.nvim/issues); pull
+[issue tracker](https://github.com/WKDSteve/buffer-ctx.nvim/issues); pull
 requests very welcome.
 
 ## Getting the repository into a session
@@ -60,7 +60,7 @@ require("buffer_ctx").setup({})
 
 ## Tests
 
-`TESTS/` is a headless suite run by [testing.nvim](https://github.com/StefanBartl/testing.nvim)
+`TESTS/` is a headless suite run by [testing.nvim](https://github.com/WKDSteve/testing.nvim)
 (`bash scripts/test.sh`); [`TESTS/README.md`](../TESTS/README.md) has the invocation.
 [GitHub Actions](../.github/workflows/ci.yml) runs it on every push and PR to
 `main`.
