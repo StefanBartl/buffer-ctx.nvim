@@ -52,11 +52,13 @@ function M.guard_interactive(cb)
           name = "condition",
           label = "Condition to check (empty for 'condition'): ",
           default = "condition",
+          required = true, -- <Esc> dismisses the whole form: on a field that is not required it only takes the default
         },
         {
           name = "negation",
           label = "Use 'not' prefix? (y/n): ",
           default = "n",
+          required = true,
         },
       },
       on_submit = function(values)

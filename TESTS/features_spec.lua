@@ -176,14 +176,24 @@ return function(H)
   do
     -- ERR-11: a cancelled interactive prompt (<Esc> on the form) is not the same outcome as generation actually
     -- failing -- the third callback value lets a caller tell the two apart.
+    local fields
     package.loaded["ui.kit"] = {
       form = function(opts)
+        fields = opts.fields
         opts.on_cancel()
         return {}
       end,
     }
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
     local got = generate("guard-clause")
+    -- the real kit.form takes <Esc> on a field that is not `required` as "use the default" and goes on
+    for _, field in ipairs(fields) do
+      H.eq(
+        field.required,
+        true,
+        "guard-clause: <Esc> on '" .. field.name .. "' dismisses the whole form"
+      )
+    end
     H.eq(got.lines, nil, "guard-clause cancel: no lines produced")
     H.eq(got.err, nil, "guard-clause cancel: no error object -- a cancel is not a failure")
     H.eq(
