@@ -253,7 +253,6 @@ return function(H)
     package.loaded["ui.kit"] = nil
     package.loaded["lib.nvim.ui.kit"] = { not_a_kit = true } -- loads, but has no `form`
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
-    local real_lib_kit = package.loaded["lib.nvim.ui.kit"]
     package.preload["ui.kit"] = function()
       error("module 'ui.kit' not found")
     end
@@ -274,7 +273,6 @@ return function(H)
     package.preload["ui.kit"] = nil
     package.loaded["lib.nvim.ui.kit"] = nil
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
-    H.ok(real_lib_kit ~= nil)
 
     H.eq(got.cancelled, true, "guard-clause fallback cancel: reported as a cancel")
     H.eq(#input_calls, 1, "guard-clause fallback cancel: the second prompt never fires")
