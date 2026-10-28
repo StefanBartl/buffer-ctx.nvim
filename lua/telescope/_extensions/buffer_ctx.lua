@@ -33,7 +33,7 @@ local function preview_template(entry, bufnr)
   local lines
   if boiler.is_interactive(entry.value) then
     -- Interactive templates (guard-clause) prompt via kit.form -- must not
-    -- pop that prompt (and block on kit.sync's vim.wait) as a side effect of
+    -- pop that prompt as a side effect of
     -- the cursor merely hovering this entry in the picker, so show a static
     -- placeholder instead.
     lines = { "-- interactive template: prompts for input when selected" }
@@ -85,16 +85,16 @@ local function boilerplate_picker(opts)
           if not entry then
             return
           end
-          -- For an interactive entry (guard-clause) this blocks on kit.sync's
-          -- kit.form prompt before returning -- same as any other template.
-          local lines, err, cancelled = boiler.get(entry.value, nil)
-          if not lines then
-            if not cancelled then
-              require("buffer_ctx.util.notify").error(err or "boilerplate failed")
+          -- An interactive entry (guard-clause) asks in a kit.form and inserts when it is answered.
+          boiler.get_async(entry.value, nil, function(lines, err, cancelled)
+            if not lines then
+              if not cancelled then
+                require("buffer_ctx.util.notify").error(err or "boilerplate failed")
+              end
+              return
             end
-            return
-          end
-          require("buffer_ctx.util.cursor").insert_lines(lines)
+            require("buffer_ctx.util.cursor").insert_lines(lines)
+          end)
         end)
         return true
       end,

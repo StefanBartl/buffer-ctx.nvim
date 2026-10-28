@@ -343,14 +343,15 @@ local DISPATCH = {
         if not choice then
           return
         end
-        local lines, err, cancelled = boiler.get(choice, nil)
-        if not lines then
-          if not cancelled then
-            notify.error(err or "boilerplate failed")
+        boiler.get_async(choice, nil, function(lines, err, cancelled)
+          if not lines then
+            if not cancelled then
+              notify.error(err or "boilerplate failed")
+            end
+            return
           end
-          return
-        end
-        sink_lines(lines, sink)
+          sink_lines(lines, sink)
+        end)
       end
       local ok_kit, kit = resolve_kit()
       if ok_kit then
@@ -360,14 +361,15 @@ local DISPATCH = {
       end
       return
     end
-    local lines, err, cancelled = boiler.get(key, name)
-    if not lines then
-      if not cancelled then
-        notify.error(err or "boilerplate failed")
+    boiler.get_async(key, name, function(lines, err, cancelled)
+      if not lines then
+        if not cancelled then
+          notify.error(err or "boilerplate failed")
+        end
+        return
       end
-      return
-    end
-    sink_lines(lines, sink)
+      sink_lines(lines, sink)
+    end)
   end,
 }
 

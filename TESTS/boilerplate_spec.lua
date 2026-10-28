@@ -3,7 +3,7 @@
 -- template module (lua/html/nvim/markdown/utils), and the registry's
 -- unknown-key error path.
 --
--- guard-clause (interactive, via kit.form + kit.sync) is covered end-to-end
+-- guard-clause (interactive, asynchronous, via kit.form) is covered end-to-end
 -- in features_spec.lua; this file only exercises its plain M.guard() helper.
 
 return function(H)

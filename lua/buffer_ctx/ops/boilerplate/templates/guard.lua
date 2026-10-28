@@ -19,24 +19,34 @@ function M.guard(condition, is_negated)
   }
 end
 
----Interactive guard clause generation. Plain synchronous function, like
----every other template's generator -- kit.sync (ui.nvim's vim.wait bridge,
----see lib.nvim's UI-KIT-CONCEPT.md §13a) blocks on the kit.form prompt and unwraps its
----result here, so callers don't need a callback. Neither field is
----`required`, so a cancelled kit.sync (<Esc> on a field) can only happen if
----the whole form is dismissed some other way -- kit.form's own cancel value
----then falls through to the `not values` check below.
+---Interactive guard clause generation. Asynchronous: the two fields are asked in a `kit.form` and `cb(lines)` is called
+---when the form is answered -- `cb(nil)` when it is dismissed (<Esc>). The editor keeps running while the form is
+---open; the earlier `kit.sync` blocked in `vim.wait`, during which Neovim does not run typed keys, so the form never saw
+---them and the call returned after the timeout.
 ---
----Soft dependency on ui.nvim's ui.kit, matching util/notify.lua's convention
----(docs/installation.md documents ui.nvim as optional): without it, the two
----fields are collected synchronously via vim.fn.input instead, guarded by
----pcall so CTRL-C during either prompt cancels cleanly rather than raising.
----@return string[]|nil
-function M.guard_interactive()
-  local ok_kit, kit = pcall(require, "ui.kit")
-  local values, cancelled
-  if ok_kit then
-    values, cancelled = kit.sync(kit.form, {
+---The kit is `ui.kit` (ui.nvim's presets) or the copy in lib.nvim (one code base). Without any kit the two fields are
+---collected with `vim.fn.input`, guarded by pcall so CTRL-C during either prompt cancels cleanly rather than raising.
+---@param cb fun(lines: string[]|nil)
+function M.guard_interactive(cb)
+  local done = false
+  local inner = cb
+  cb = function(lines)
+    if done then
+      return
+    end
+    done = true
+    inner(lines)
+  end
+  local kit
+  for _, name in ipairs({ "ui.kit", "lib.nvim.ui.kit" }) do
+    local ok_kit, mod = pcall(require, name)
+    if ok_kit and type(mod) == "table" and type(mod.form) == "function" then
+      kit = mod
+      break
+    end
+  end
+  if kit then
+    local opened = kit.form({
       fields = {
         {
           name = "condition",
@@ -49,26 +59,32 @@ function M.guard_interactive()
           default = "n",
         },
       },
+      on_submit = function(values)
+        cb(M.guard(values.condition, tostring(values.negation):lower() == "y"))
+      end,
+      on_cancel = function()
+        cb(nil)
+      end,
     })
-  else
-    local ok_condition, condition =
-      pcall(vim.fn.input, "Condition to check (empty for 'condition'): ", "condition")
-    -- Cancel the whole form on the first prompt, like kit.form does: without
-    -- this, CTRL-C here still fell through to the second vim.fn.input call
-    -- instead of returning immediately.
-    if not ok_condition then
-      return nil
+    if opened == nil then
+      cb(nil) -- the form could not open: a cancel (the callbacks were not called)
     end
-    local ok_negation, negation = pcall(vim.fn.input, "Use 'not' prefix? (y/n): ", "n")
-    if not ok_negation then
-      return nil
-    end
-    values, cancelled = { condition = condition, negation = negation }, false
+    return
   end
-  if cancelled or not values then
-    return nil
+  local ok_condition, condition =
+    pcall(vim.fn.input, "Condition to check (empty for 'condition'): ", "condition")
+  -- Cancel the whole form on the first prompt, like kit.form does: a CTRL-C here must not fall through to the second
+  -- vim.fn.input call.
+  if not ok_condition then
+    cb(nil)
+    return
   end
-  return M.guard(values.condition, tostring(values.negation):lower() == "y")
+  local ok_negation, negation = pcall(vim.fn.input, "Use 'not' prefix? (y/n): ", "n")
+  if not ok_negation then
+    cb(nil)
+    return
+  end
+  cb(M.guard(condition, tostring(negation):lower() == "y"))
 end
 
 return M

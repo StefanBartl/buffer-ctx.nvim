@@ -12,14 +12,13 @@ local M = {}
 ---@field desc string
 ---@field has_id boolean         true if the generator accepts an id/name argument
 ---@field is_interactive? boolean true if the generator prompts interactively
----                               (only guard-clause so far, via kit.form +
----                               kit.sync) -- still a plain `gen()`/`gen(name)`
----                               returning lines synchronously like every
----                               other template, but a caller that must not
----                               pop a prompt as a side effect (e.g. a
----                               live-preview pane on cursor movement) should
----                               check this first and skip/placeholder
----                               instead of calling `M.get`
+---                               (only guard-clause so far, in a kit.form):
+---                               its generator is `fn(cb)`, asynchronous, and
+---                               `M.get_async` is the call for it; `M.get`
+---                               refuses it. A caller that must not pop a
+---                               prompt as a side effect (e.g. a live-preview
+---                               pane on cursor movement) checks this first
+---                               and skips/placeholders
 
 local REGISTRY = {
   {
@@ -63,7 +62,7 @@ local REGISTRY = {
     fn = "guard_interactive",
     desc = "Guard clause pattern",
     has_id = false,
-    is_interactive = true, -- guard_interactive() prompts via kit.form + kit.sync
+    is_interactive = true, -- guard_interactive(cb) asks in a kit.form: asynchronous, use `M.get_async`
   },
   {
     key = "html-figure",
@@ -171,13 +170,10 @@ function M.list_keys()
   return keys
 end
 
----True when `key`'s generator prompts interactively (currently only
----guard-clause, via kit.form + kit.sync). It's still a plain synchronous
----`M.get` call like any other template -- this is only for a caller that
----must not trigger a prompt as a side effect of something other than an
----explicit user selection (e.g. a live-preview pane on cursor movement),
----which should check this first and skip/placeholder instead of calling
----`M.get`.
+---True when `key`'s generator prompts interactively (currently only guard-clause, in a kit.form). Its
+---generator is asynchronous: ask `M.get_async`. This is also for a caller that must not trigger a prompt as a side
+---effect of something other than an explicit user selection (e.g. a live-preview pane on cursor movement), which
+---should check this first and skip/placeholder.
 ---@param key string
 ---@return boolean
 function M.is_interactive(key)
@@ -193,8 +189,6 @@ end
 ---@param key string
 ---@param name? string  optional id/name arg passed to the generator
 ---@return string[]|nil lines, string|nil err
----@return boolean|nil cancelled  true when an interactive generator returned
---- nil because the user cancelled the prompt, not because generation failed
 function M.get(key, name)
   for _, entry in ipairs(REGISTRY) do
     if entry.key == key then
@@ -207,6 +201,9 @@ function M.get(key, name)
       if type(gen) ~= "function" then
         return nil, "template function not found: " .. entry.fn
       end
+      if entry.is_interactive then
+        return nil, "interactive template '" .. key .. "': use boilerplate.get_async"
+      end
 
       local lines
       if entry.has_id and name and name ~= "" then
@@ -214,13 +211,39 @@ function M.get(key, name)
       else
         lines = gen()
       end
-      if lines == nil and entry.is_interactive then
-        return nil, nil, true
-      end
       return lines, nil
     end
   end
   return nil, "unknown template: " .. tostring(key)
+end
+
+---Generate template lines, asking the user when the template is interactive. `cb(lines, err, cancelled)` is called once:
+---`cancelled` is true when an interactive generator returned nil because the user dismissed the prompt, not because
+---generation failed. A template that is not interactive answers at once (inside this call).
+---@param key string
+---@param name? string
+---@param cb fun(lines: string[]|nil, err: string|nil, cancelled: boolean|nil)
+function M.get_async(key, name, cb)
+  for _, entry in ipairs(REGISTRY) do
+    if entry.key == key and entry.is_interactive then
+      local ok, tmod = pcall(require, "buffer_ctx.ops.boilerplate.templates." .. entry.module)
+      local gen = ok and tmod[entry.fn] or nil
+      if type(gen) ~= "function" then
+        cb(nil, "template function not found: " .. entry.fn)
+        return
+      end
+      gen(function(lines)
+        if lines == nil then
+          cb(nil, nil, true)
+        else
+          cb(lines, nil)
+        end
+      end)
+      return
+    end
+  end
+  local lines, err = M.get(key, name)
+  cb(lines, err)
 end
 
 return M

@@ -126,45 +126,47 @@ return function(H)
     "boilerplate honours the id arg"
   )
 
-  -- guard-clause is interactive (prompts via kit.form + kit.sync, blocking
-  -- until answered): is_interactive() lets a caller that must not trigger a
-  -- prompt as a side effect (e.g. a live-preview pane on cursor movement)
-  -- detect and skip it instead. M.get itself is still a plain synchronous
-  -- call for every template, guard-clause included.
+  -- guard-clause is interactive (asks in a kit.form, asynchronously): is_interactive() lets a caller that must not
+  -- trigger a prompt as a side effect (e.g. a live-preview pane on cursor movement) detect and skip it, `get_async`
+  -- is how it is generated, and `get` refuses it with a message instead of blocking.
   H.ok(boiler.is_interactive("guard-clause"), "boiler.is_interactive('guard-clause') is true")
   H.ok(not boiler.is_interactive("lua-test"), "boiler.is_interactive('lua-test') is false")
   H.ok(
     not boiler.is_interactive("does-not-exist"),
     "boiler.is_interactive(unknown key) is false, not an error"
   )
+  do
+    local refused_lines, refused_err = boiler.get("guard-clause", nil)
+    H.eq(refused_lines, nil, "boiler.get refuses an interactive template")
+    H.match(refused_err, "get_async", "and names the asynchronous call")
+  end
+
+  --- Run `get_async` and return what the callback got (nothing if it never ran).
+  ---@param key string
+  ---@return table|nil results  { lines, err, cancelled, calls = n }
+  local function generate(key)
+    local got = { calls = 0 }
+    boiler.get_async(key, nil, function(lines, err, cancelled)
+      got.calls = got.calls + 1
+      got.lines, got.err, got.cancelled = lines, err, cancelled
+    end)
+    return got
+  end
 
   do
-    -- Stub kit.form (resolves synchronously, as if the user answered
-    -- instantly) and kit.sync with a lightweight equivalent of the real
-    -- ui.kit.sync.open contract (wraps on_submit/on_cancel, returns
-    -- the result) -- guard.lua calls kit.sync(kit.form, {...}) directly.
+    -- kit.form answered at once, as if the user pressed <CR> on the defaults of "ready" / "y"
     package.loaded["ui.kit"] = {
       form = function(opts)
         opts.on_submit({ condition = "ready", negation = "y" })
-      end,
-      sync = function(open_fn, sync_opts)
-        local result, cancelled
-        open_fn(vim.tbl_extend("force", sync_opts, {
-          on_submit = function(v)
-            result = v
-          end,
-          on_cancel = function()
-            cancelled = true
-          end,
-        }))
-        return result, cancelled or false, false
+        return {}
       end,
     }
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
-    local lines, err = boiler.get("guard-clause", nil)
-    H.eq(err, nil, "guard-clause: no error")
+    local got = generate("guard-clause")
+    H.eq(got.calls, 1, "guard-clause: the callback ran once")
+    H.eq(got.err, nil, "guard-clause: no error")
     H.ok(
-      lines ~= nil and lines[1] == "if not ready then",
+      got.lines ~= nil and got.lines[1] == "if not ready then",
       "guard-clause: negation applied, condition substituted"
     )
     package.loaded["ui.kit"] = nil
@@ -172,44 +174,75 @@ return function(H)
   end
 
   do
-    -- ERR-11: a cancelled interactive prompt (<Esc> on the form) is not the
-    -- same outcome as generation actually failing -- boiler.get's third
-    -- return value must let a caller tell the two apart instead of both
-    -- collapsing onto "nil, some-error".
+    -- ERR-11: a cancelled interactive prompt (<Esc> on the form) is not the same outcome as generation actually
+    -- failing -- the third callback value lets a caller tell the two apart.
     package.loaded["ui.kit"] = {
       form = function(opts)
         opts.on_cancel()
-      end,
-      sync = function(open_fn, sync_opts)
-        local result, cancelled
-        open_fn(vim.tbl_extend("force", sync_opts, {
-          on_submit = function(v)
-            result = v
-          end,
-          on_cancel = function()
-            cancelled = true
-          end,
-        }))
-        return result, cancelled or false, false
+        return {}
       end,
     }
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
-    local cancel_lines, cancel_err, cancelled = boiler.get("guard-clause", nil)
-    H.eq(cancel_lines, nil, "guard-clause cancel: no lines produced")
-    H.eq(cancel_err, nil, "guard-clause cancel: no error object -- a cancel is not a failure")
-    H.eq(cancelled, true, "guard-clause cancel: the cancelled flag distinguishes it from a failure")
+    local got = generate("guard-clause")
+    H.eq(got.lines, nil, "guard-clause cancel: no lines produced")
+    H.eq(got.err, nil, "guard-clause cancel: no error object -- a cancel is not a failure")
+    H.eq(got.cancelled, true, "guard-clause cancel: the cancelled flag distinguishes it from a failure")
     package.loaded["ui.kit"] = nil
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
   end
 
   do
-    -- LLS-31: the vim.fn.input fallback (ui.kit absent) used to run its
-    -- second prompt unconditionally, even when the first was cancelled with
-    -- CTRL-C -- a cancel must short-circuit the whole form, matching
-    -- kit.form's cancel semantics above, not surface a second, unwanted
-    -- prompt before finally returning nil.
-    package.loaded["ui.kit"] = nil -- no stub: require("ui.kit") fails for real here
+    -- the form answers later (the editor keeps running while it is open): nothing is produced before, the callback
+    -- runs once after; a form that cannot open (nil, no callbacks) is a cancel, and a form that cancels AND returns
+    -- nil does not call back twice
+    local submit
+    package.loaded["ui.kit"] = {
+      form = function(opts)
+        submit = opts.on_submit
+        return {}
+      end,
+    }
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+    local got = generate("guard-clause")
+    H.eq(got.calls, 0, "guard-clause: nothing is produced while the form is open")
+    submit({ condition = "x", negation = "n" })
+    H.eq(got.calls, 1, "guard-clause: the callback runs when the form is answered")
+    H.eq(got.lines[1], "if x then", "guard-clause: and carries the answer")
+
+    package.loaded["ui.kit"] = {
+      form = function()
+        return nil
+      end,
+    }
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+    got = generate("guard-clause")
+    H.eq(got.calls, 1, "guard-clause: a form that cannot open calls back once")
+    H.eq(got.cancelled, true, "guard-clause: and it is a cancel")
+
+    package.loaded["ui.kit"] = {
+      form = function(opts)
+        opts.on_cancel()
+        return nil
+      end,
+    }
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+    got = generate("guard-clause")
+    H.eq(got.calls, 1, "guard-clause: cancel and nil do not call back twice")
+    package.loaded["ui.kit"] = nil
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+  end
+
+  do
+    -- LLS-31: the vim.fn.input fallback (no kit at all) used to run its second prompt unconditionally, even when the
+    -- first was cancelled with CTRL-C -- a cancel must short-circuit the whole form, matching kit.form's cancel
+    -- semantics above, not surface a second, unwanted prompt before finally returning nil.
+    package.loaded["ui.kit"] = nil
+    package.loaded["lib.nvim.ui.kit"] = { not_a_kit = true } -- loads, but has no `form`
+    package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+    local real_lib_kit = package.loaded["lib.nvim.ui.kit"]
+    package.preload["ui.kit"] = function()
+      error("module 'ui.kit' not found")
+    end
 
     local orig_input = vim.fn.input
     local input_calls = {}
@@ -221,13 +254,15 @@ return function(H)
       return default
     end
 
-    local guard = require("buffer_ctx.ops.boilerplate.templates.guard")
-    local result = guard.guard_interactive()
+    local got = generate("guard-clause")
 
     vim.fn.input = orig_input
+    package.preload["ui.kit"] = nil
+    package.loaded["lib.nvim.ui.kit"] = nil
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
+    H.ok(real_lib_kit ~= nil)
 
-    H.eq(result, nil, "guard-clause fallback cancel: returns nil")
+    H.eq(got.cancelled, true, "guard-clause fallback cancel: reported as a cancel")
     H.eq(#input_calls, 1, "guard-clause fallback cancel: the second prompt never fires")
   end
 
