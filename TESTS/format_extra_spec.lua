@@ -367,26 +367,48 @@ return function(H)
     local orig_cwd = vim.fn.chdir(scope_dir)
 
     local test_ok, test_err = pcall(function()
-      -- vim.fn.confirm() is stubbed to answer "No" (index 2) explicitly, so the
-      -- spec does not depend on the headless default answer: an unconfirmed
-      -- bulk format must be a no-op, not a silent rewrite.
-      local orig_confirm = vim.fn.confirm
-      local confirm_calls = 0
-      vim.fn.confirm = function()
-        confirm_calls = confirm_calls + 1
-        return 2 -- "No"
+      -- The question is the shared dialog: the double keeps its callback, so the spec answers when it likes
+      -- (never inside the call, as the real dialog does). An unconfirmed bulk format must be a no-op.
+      local dialog = require("lib.nvim.ui.dialog")
+      local orig_yesno = dialog.yesno
+      local asked, answer = 0, nil
+      dialog.yesno = function(_, _, cb)
+        asked = asked + 1
+        answer = cb
       end
-      local declined_pcall_ok, declined_ok =
-        pcall(table_fmt.format_tables_in_scope, { scope = "cwd" })
-      vim.fn.confirm = orig_confirm
-      H.ok(declined_pcall_ok, "format_tables_in_scope(cwd) does not raise when declined")
-      H.eq(confirm_calls, 1, "UI-01: the bulk format asks exactly once")
-      H.ok(declined_ok, "format_tables_in_scope(cwd) reports ok even when declined")
+      local done = {}
+      local pending_pcall_ok, pending_ok = pcall(table_fmt.format_tables_in_scope, {
+        scope = "cwd",
+        on_done = function(ok, err)
+          done[#done + 1] = { ok = ok, err = err }
+        end,
+      })
+      H.ok(pending_pcall_ok, "format_tables_in_scope(cwd) does not raise while it asks")
+      H.eq(asked, 1, "UI-01: the bulk format asks exactly once")
+      H.ok(pending_ok, "format_tables_in_scope(cwd) returns ok at once while the question is open")
+      H.eq(#done, 0, "on_done waits for the answer")
+      answer(false)
+      H.eq(#done, 1, "on_done runs once after the answer")
+      H.ok(done[1].ok, "a 'no' is reported as ok")
       H.eq(
         vim.fn.readfile(scope_md)[1],
         "| a | b |",
         "UI-01: cwd-scope bulk format does not touch disk before confirmation"
       )
+
+      -- a 'yes' formats, and says so through on_done
+      pcall(table_fmt.format_tables_in_scope, {
+        scope = "cwd",
+        on_done = function(ok, err)
+          done[#done + 1] = { ok = ok, err = err }
+        end,
+      })
+      answer(true)
+      dialog.yesno = orig_yesno
+      H.eq(#done, 2, "on_done runs after the 'yes' too")
+      H.ok(done[2].ok, "the confirmed batch succeeded")
+      H.eq(vim.fn.readfile(scope_md)[1], "|  a  | b |", "a 'yes' formats the file")
+      vim.fn.writefile({ "| a | b |", "|---|---|", "| ccc | d |" }, scope_md)
 
       local confirmed_ok = table_fmt.format_tables_in_scope({ scope = "cwd", confirm = false })
       H.ok(confirmed_ok, "format_tables_in_scope(cwd, confirm=false) succeeds")

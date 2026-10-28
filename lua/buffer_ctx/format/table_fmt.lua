@@ -117,7 +117,9 @@ end
 
 ---Format tables in the given scope: "cursor" | "buffer" | "cwd" | a file path.
 ---@param opts table|nil  `opts.confirm = false` skips the "cwd" scope's
---- one-time confirmation prompt (for scripted/non-interactive callers)
+--- one-time confirmation question (for scripted/non-interactive callers); asked, it is the shared
+--- dialog, so the answer comes later: the call returns `true, nil` at once and `opts.on_done(ok, err)`
+--- gets the result of the batch (also `true` when the user said no)
 ---@return boolean, string|nil
 function M.format_tables_in_scope(opts)
   opts = opts or {}
@@ -149,48 +151,59 @@ function M.format_tables_in_scope(opts)
     -- Bulk/destructive: rewrites every matching file on disk, no buffer
     -- undo. One confirmation for the whole batch, not per file. `opts.confirm
     -- = false` lets a script/test opt out explicitly.
-    if opts.confirm ~= false then
-      local choice = vim.fn.confirm(
-        string.format("Format Markdown tables in %d file(s) under %q?", #files, cwd),
-        "&Yes\n&No",
-        2
-      )
-      if choice ~= 1 then
-        notify.info("[table] cwd formatting cancelled")
-        return true, nil
+    local function run_batch()
+      local prog = new_progress()
+      local errors, cnt = {}, 0
+      for i, path in ipairs(files) do
+        if prog then
+          prog:update({ text = vim.fn.fnamemodify(path, ":t"), current = i, total = #files })
+        end
+        local ok, err, _, warnings = lib_table.format_file(path, file_opts)
+        report_override_warnings(warnings)
+        if ok then
+          cnt = cnt + 1
+        else
+          errors[#errors + 1] = err
+        end
       end
-    end
-    local prog = new_progress()
-    local errors, cnt = {}, 0
-    for i, path in ipairs(files) do
       if prog then
-        prog:update({ text = vim.fn.fnamemodify(path, ":t"), current = i, total = #files })
+        prog:finish(string.format("Formatted %d/%d file(s)", cnt, #files))
       end
-      local ok, err, _, warnings = lib_table.format_file(path, file_opts)
-      report_override_warnings(warnings)
-      if ok then
-        cnt = cnt + 1
-      else
-        errors[#errors + 1] = err
-      end
-    end
-    if prog then
-      prog:finish(string.format("Formatted %d/%d file(s)", cnt, #files))
-    end
-    if #errors > 0 then
-      notify.warn(
-        string.format(
-          "Formatted %d/%d files; %d error(s):\n  %s",
-          cnt,
-          #files,
-          #errors,
-          table.concat(errors, "\n  ")
+      if #errors > 0 then
+        notify.warn(
+          string.format(
+            "Formatted %d/%d files; %d error(s):\n  %s",
+            cnt,
+            #files,
+            #errors,
+            table.concat(errors, "\n  ")
+          )
         )
-      )
-    else
-      notify.info(string.format("Formatted tables in %d file(s)", cnt))
+      else
+        notify.info(string.format("Formatted tables in %d file(s)", cnt))
+      end
+      return #errors == 0, #errors > 0 and table.concat(errors, "; ") or nil
     end
-    return #errors == 0, #errors > 0 and table.concat(errors, "; ") or nil
+
+    if opts.confirm ~= false then
+      require("lib.nvim.ui.dialog").yesno(
+        string.format("Format Markdown tables in %d file(s) under %q?", #files, cwd),
+        "format",
+        function(yes)
+          local ok, err = true, nil
+          if yes then
+            ok, err = run_batch()
+          else
+            notify.info("[table] cwd formatting cancelled")
+          end
+          if opts.on_done then
+            opts.on_done(ok, err)
+          end
+        end
+      )
+      return true, nil
+    end
+    return run_batch()
   else
     -- Pure ~/env expansion only -- no shell, no globbing, no Vim specials
     -- (%, #, <cfile>, <cword>), unlike vim.fn.expand() on this same
@@ -303,6 +316,12 @@ function M.setup(register_fn, notify_mod)
       if scope == "cursor" then
         success, err = M.format_table_at_cursor(vim.api.nvim_get_current_buf(), opts)
       else
+        -- the bulk question of the cwd scope is asked asynchronously: its result arrives here
+        opts.on_done = function(ok, e)
+          if not ok then
+            n.warn(string.format("[table] %s", e or "Unknown error"))
+          end
+        end
         success, err = M.format_tables_in_scope(opts)
       end
       if not success then
