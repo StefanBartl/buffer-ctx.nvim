@@ -186,7 +186,11 @@ return function(H)
     local got = generate("guard-clause")
     H.eq(got.lines, nil, "guard-clause cancel: no lines produced")
     H.eq(got.err, nil, "guard-clause cancel: no error object -- a cancel is not a failure")
-    H.eq(got.cancelled, true, "guard-clause cancel: the cancelled flag distinguishes it from a failure")
+    H.eq(
+      got.cancelled,
+      true,
+      "guard-clause cancel: the cancelled flag distinguishes it from a failure"
+    )
     package.loaded["ui.kit"] = nil
     package.loaded["buffer_ctx.ops.boilerplate.templates.guard"] = nil
   end
